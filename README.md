@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ⚖️ CRM Legal - Iturri & Asociados
 
-## Getting Started
+**Desarrollador:** [Ariel Fabricio Tarqui Villalba]
+**Fase:** Desarrollo Local (MVP 4 Meses)
+**Stack Tecnológico:** Next.js (App Router), Tailwind CSS, Supabase (PostgreSQL + Auth + Storage), Docker.
 
-First, run the development server:
+## 🚀 Bitácora de Desarrollo - Día 1
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 1. Definición de Alcance y Requerimientos
+* Actualización del Documento de Requerimientos blindando el alcance del MVP.
+* Definición de infraestructura (Ampliación RAM/SSD y licencia de IA).
+* Definición de integración de Facturación Electrónica (SIAT) en el backend.
+* Definición del modelo de "Agente Ligero" de IA mediante prompts de sistema (API Gemini).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Arquitectura de Usuarios (RBAC)
+Se definió un sistema de control de acceso basado en 3 roles estrictos:
+* **Administrador (God Mode):** Control total de la firma, reportes y asignación.
+* **Abogado:** Vista restringida a sus casos asignados y gestión de clientes.
+* **Cliente (Viewer):** Acceso hiperminimalista de solo lectura para ver el estado de su caso.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Configuración de Entorno Local
+* Inicialización de proyecto con Next.js 15+ y Tailwind CSS.
+* Despliegue de backend local utilizando **Supabase CLI y Docker**, aislando la base de datos, autenticación y almacenamiento en la máquina local.
+* Configuración de `allowedDevOrigins` en `next.config.ts` para red local.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Base de Datos y Seguridad (Laboratorio 1)
+* Creación de esquema personalizado `rol_usuario` (ENUM).
+* Creación de la tabla `perfiles` vinculada a `auth.users` mediante UUID.
+* Implementación de políticas de Seguridad a Nivel de Fila (RLS).
 
-## Learn More
+### 5. Desarrollo de Interfaz (UI)
+* Creación del puente cliente de Supabase.
+* Desarrollo de la vista de Autenticación (`/login`) con conexión exitosa.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠️ Instrucciones de Despliegue Local
+1. Clonar el repositorio.
+2. Asegurarse de tener Docker Desktop corriendo.
+3. Ejecutar `npm install` para las dependencias del frontend.
+4. Ejecutar `npx supabase start` para levantar la base de datos local.
+5. Configurar el archivo `.env.local` con las credenciales de la terminal.
+6. Ejecutar `npm run dev` para levantar el servidor web en `localhost:3000`.

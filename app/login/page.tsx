@@ -11,7 +11,6 @@ export default function LoginPage() {
 
   const supabase = createClient();
 
-  // Función para Iniciar Sesión
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -26,12 +25,10 @@ export default function LoginPage() {
       setMensaje("❌ Error al iniciar sesión: " + error.message);
     } else {
       setMensaje("✅ ¡Login exitoso! Entrando al sistema...");
-      // Aquí luego agregaremos la redirección al Dashboard
     }
     setLoading(false);
   };
 
-  // Función exclusiva para el Laboratorio: Registrar al Administrador
   const handleRegistro = async (e: React.MouseEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -43,9 +40,9 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setMensaje("❌ Error al registrar: " + error.message);
+      setMensaje("Error al registrar: " + error.message);
     } else {
-      setMensaje("✅ ¡Usuario creado! Revisa tu Supabase Studio local.");
+      setMensaje("¡Usuario creado! Revisa tu Supabase Studio local.");
     }
     setLoading(false);
   };
@@ -62,7 +59,7 @@ export default function LoginPage() {
 
         {/* Mensajes de Alerta */}
         {mensaje && (
-          <div className={`p-3 mb-6 text-sm rounded-md ${mensaje.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          <div className={`p-3 mb-6 text-sm rounded-md ${mensaje.includes('Bien') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
             {mensaje}
           </div>
         )}
