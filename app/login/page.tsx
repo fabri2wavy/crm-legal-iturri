@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "../../utils/supabase/client";
+import { useRouter } from "next/navigation"; 
+import { createClient } from "../../infrastructure/supabase/client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState("");
+  const router = useRouter(); 
 
   const supabase = createClient();
 
@@ -22,11 +24,12 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setMensaje("❌ Error al iniciar sesión: " + error.message);
+      setMensaje("Error al iniciar sesión: " + error.message);
+      setLoading(false);
     } else {
-      setMensaje("✅ ¡Login exitoso! Entrando al sistema...");
+      setMensaje("¡Login exitoso! Entrando al sistema...");
+      router.push("/dashboard"); 
     }
-    setLoading(false);
   };
 
   const handleRegistro = async (e: React.MouseEvent) => {
@@ -42,7 +45,7 @@ export default function LoginPage() {
     if (error) {
       setMensaje("Error al registrar: " + error.message);
     } else {
-      setMensaje("¡Usuario creado! Revisa tu Supabase Studio local.");
+      setMensaje("¡Usuario creado en auth y perfiles!");
     }
     setLoading(false);
   };
@@ -50,21 +53,17 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-slate-200">
-        
-        {/* Cabecera del Formulario */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-slate-800">Iturri & Asociados</h1>
           <p className="text-sm text-slate-500 mt-2">Acceso al Sistema de Gestión Legal</p>
         </div>
 
-        {/* Mensajes de Alerta */}
         {mensaje && (
-          <div className={`p-3 mb-6 text-sm rounded-md ${mensaje.includes('Bien') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          <div className={`p-3 mb-6 text-sm rounded-md ${mensaje.includes(' ') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
             {mensaje}
           </div>
         )}
 
-        {/* Formulario */}
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -94,7 +93,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Botones */}
           <div className="pt-2">
             <button
               type="submit"
@@ -104,7 +102,6 @@ export default function LoginPage() {
               {loading ? "Procesando..." : "Iniciar Sesión"}
             </button>
             
-            {/* Botón temporal de registro para ti como desarrollador */}
             <button
               type="button"
               onClick={handleRegistro}

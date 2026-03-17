@@ -1,0 +1,310 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
+
+/* ── Variables ─────────────────────────────────────────────── */
+:root {
+  --gold:        #c9a84c;
+  --gold-light:  #e2c97e;
+  --gold-dim:    rgba(201, 168, 76, 0.15);
+  --navy:        #0d1b2a;
+  --navy-mid:    #122236;
+  --navy-card:   #162840;
+  --navy-border: rgba(201, 168, 76, 0.2);
+  --text-primary:#f0ead8;
+  --text-muted:  #8a9ab0;
+}
+
+/* ── Root / background ─────────────────────────────────────── */
+.root {
+  min-height: 100vh;
+  background-color: var(--navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  font-family: 'Jost', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.root::before {
+  content: '';
+  position: absolute;
+  top: -200px; right: -200px;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.root::after {
+  content: '';
+  position: absolute;
+  bottom: -150px; left: -150px;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Corner ornaments ──────────────────────────────────────── */
+.ornament {
+  position: absolute;
+  width: 120px; height: 120px;
+  opacity: 0.18;
+}
+
+.ornamentTl {
+  top: 24px; left: 24px;
+  border-top: 1px solid var(--gold);
+  border-left: 1px solid var(--gold);
+}
+
+.ornamentBr {
+  bottom: 24px; right: 24px;
+  border-bottom: 1px solid var(--gold);
+  border-right: 1px solid var(--gold);
+}
+
+/* ── Card ──────────────────────────────────────────────────── */
+.card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--navy-card);
+  border: 1px solid var(--navy-border);
+  border-radius: 4px;
+  padding: 3rem 2.5rem;
+  position: relative;
+  animation: cardIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow:
+    0 0 0 1px rgba(201,168,76,0.06),
+    0 40px 80px rgba(0,0,0,0.5),
+    0 0 120px rgba(201,168,76,0.04);
+}
+
+.cardAccent {
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  animation: fadeUp 0.6s 0.1s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+.emblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px; height: 52px;
+  border: 1px solid var(--gold-light);
+  border-radius: 50%;
+  margin-bottom: 1.25rem;
+  color: var(--gold-light);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  background: var(--gold-dim);
+}
+
+.firmName {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  margin: 0 0 0.35rem;
+}
+
+.firmName span { color: var(--gold); }
+
+.tagline {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* ── Divider ───────────────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 auto 2rem;
+  width: 60%;
+  animation: fadeUp 0.6s 0.15s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--navy-border);
+}
+
+.dividerDot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--gold);
+  opacity: 0.6;
+}
+
+/* ── Alert ─────────────────────────────────────────────────── */
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.02em;
+  animation: fadeUp 0.3s ease both;
+}
+
+.alertSuccess {
+  background: rgba(52,211,153,0.08);
+  border: 1px solid rgba(52,211,153,0.25);
+  color: #6ee7b7;
+}
+
+.alertError {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  color: #fca5a5;
+}
+
+/* ── Form fields ───────────────────────────────────────────── */
+.formGroup {
+  margin-bottom: 1.25rem;
+  animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+.formGroup:nth-child(1) { animation-delay: 0.2s; }
+.formGroup:nth-child(2) { animation-delay: 0.28s; }
+
+.label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--navy-mid);
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 300;
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  box-sizing: border-box;
+}
+
+.input::placeholder { color: rgba(138,154,176,0.45); }
+
+.input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.08), inset 0 0 0 1px rgba(201,168,76,0.06);
+}
+
+/* ── Buttons ───────────────────────────────────────────────── */
+.btnGroup {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  animation: fadeUp 0.6s 0.36s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+.btn {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 3px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:disabled { cursor: not-allowed; opacity: 0.5; }
+
+.btnPrimary {
+  background: linear-gradient(135deg, #b8922e, var(--gold), #c9a84c);
+  color: var(--navy);
+  box-shadow: 0 4px 20px rgba(201,168,76,0.25);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  box-shadow: 0 6px 28px rgba(201,168,76,0.4);
+  transform: translateY(-1px);
+}
+
+.btnPrimary:active:not(:disabled) { transform: translateY(0); }
+
+.btnSecondary {
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid rgba(201,168,76,0.3);
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: var(--gold-dim);
+  border-color: rgba(201,168,76,0.55);
+}
+
+/* ── Footer ────────────────────────────────────────────────── */
+.footer {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: rgba(138,154,176,0.4);
+  text-transform: uppercase;
+  animation: fadeUp 0.6s 0.44s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── Spinner ───────────────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border: 2px solid rgba(13,27,42,0.3);
+  border-top-color: var(--navy);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* ── Keyframes ─────────────────────────────────────────────── */
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
