@@ -1,6 +1,6 @@
 # ⚖️ CRM Legal - Iturri & Asociados
 
-**Desarrollador:** [Ariel Fabricio Tarqui Villalba]
+**Desarrollador:** Ariel Fabricio Tarqui Villalba
 **Fase:** Desarrollo Local (MVP 4 Meses)
 **Stack Tecnológico:** Next.js (App Router), Tailwind CSS, Supabase (PostgreSQL + Auth + Storage), Docker.
 
@@ -31,6 +31,34 @@ Se definió un sistema de control de acceso basado en 3 roles estrictos:
 ### 5. Desarrollo de Interfaz (UI)
 * Creación del puente cliente de Supabase.
 * Desarrollo de la vista de Autenticación (`/login`) con conexión exitosa.
+
+---
+
+## 🚀 Bitácora de Desarrollo - Día 2 y 3
+
+### 1. Automatización de Base de Datos (Triggers)
+* Creación de Funciones PL/pgSQL y Triggers en Supabase para interceptar la creación de usuarios en `auth.users`.
+* Asignación automática del rol `cliente` por defecto en la tabla `perfiles`.
+* Optimización de rendimiento en políticas RLS usando subconsultas `(select auth.uid())` para evitar cuellos de botella.
+
+### 2. Seguridad en Rutas y Autenticación
+* Implementación de **Next.js Proxy (Middleware)** para protección de grado bancario en las rutas privadas (`/dashboard`).
+* Redirección inteligente de usuarios sin sesión activa.
+* Implementación del flujo completo de cierre de sesión (`signOut`) y limpieza de caché del enrutador.
+
+### 3. Refactorización a Clean Architecture
+Reestructuración completa del proyecto para garantizar escalabilidad a largo plazo:
+* **Capa Domain:** Creación de Entidades e Interfaces puras en TypeScript (`Cliente.ts`, `Expediente.ts`).
+* **Capa Infrastructure:** Aislamiento de las llamadas a Supabase mediante el patrón Repository (`clienteRepository.ts`, `perfilRepository.ts`).
+* **Capa Application/Presentation:** Limpieza de componentes de React para que solo consuman datos procesados.
+
+### 4. Modelado del Core del CRM Legal
+* Creación de ENUM `estado_expediente` (`en_espera`, `mediacion`, `juicio`, `cerrado`).
+* Modelado y creación de la tabla `clientes` (con validación `UNIQUE` para carnet de identidad).
+* Modelado y creación de la tabla `expedientes` con llaves foráneas strictas hacia clientes y abogados.
+* Ejecución exitosa de un "Vertical Slice" conectando la UI con la base de datos a través del repositorio de clientes.
+
+---
 
 ## 🛠️ Instrucciones de Despliegue Local
 1. Clonar el repositorio.
