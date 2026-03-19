@@ -1,16 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { createClient } from "../../infrastructure/supabase/client";
-import styles from "./LoginPage.module.css";
+
+import { AuthCard } from "../../components/ui/AuthCard";
+import { FormField } from "../../components/ui/FormField";
+import { Alert } from "../../components/ui/Alert";
+import { Button } from "../../components/ui/Button";
+import styles from "./page.module.css";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState("");
-  const router = useRouter(); 
+  const router = useRouter();
 
   const supabase = createClient();
 
@@ -29,7 +34,7 @@ export default function LoginPage() {
       setLoading(false);
     } else {
       setMensaje("¡Login exitoso! Entrando al sistema...");
-      router.push("/dashboard"); 
+      router.push("/dashboard");
     }
   };
 
@@ -51,101 +56,61 @@ export default function LoginPage() {
     setLoading(false);
   };
 
-  const isSuccess = mensaje && !mensaje.toLowerCase().includes("error");
+  const isError = mensaje.toLowerCase().includes("error");
 
   return (
-    <main className={styles.root}>
-      {/* Ornamentos decorativos de esquina */}
-      <div className={`${styles.ornament} ${styles.ornamentTl}`} />
-      <div className={`${styles.ornament} ${styles.ornamentBr}`} />
+    <AuthCard>
+      <Alert
+        variant={isError ? "error" : "success"}
+        visible={!!mensaje}
+      >
+        {mensaje}
+      </Alert>
 
-      <div className={styles.card}>
-        {/* Acento dorado superior */}
-        <div className={styles.cardAccent} />
+      <form onSubmit={handleLogin} className={styles.form}>
+        <FormField
+          label="Correo Electrónico"
+          id="login-email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          placeholder="admin@iturri.com"
+        />
 
-        {/* Cabecera de marca */}
-        <div className={styles.header}>
-          <div className={styles.emblem}>I&A</div>
-          <h1 className={styles.firmName}>
-            Iturri <span>&</span> Asociados
-          </h1>
-          <p className={styles.tagline}>Sistema de Gestión Legal</p>
-        </div>
+        <FormField
+          label="Contraseña"
+          id="login-password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          placeholder="••••••••"
+        />
 
-        {/* Divider decorativo */}
-        <div className={styles.divider}>
-          <span className={styles.dividerDot} />
-        </div>
-
-        {/* Mensaje de alerta */}
-        {mensaje && (
-          <div
-            className={`${styles.alert} ${
-              isSuccess ? styles.alertSuccess : styles.alertError
-            }`}
+        <div className={styles.buttonGroup}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            loading={loading}
           >
-            {mensaje}
-          </div>
-        )}
+            {loading ? "Procesando…" : "Iniciar Sesión"}
+          </Button>
 
-        {/* Formulario */}
-        <form onSubmit={handleLogin}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Correo Electrónico</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className={styles.input}
-              placeholder="admin@iturri.com"
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Contraseña</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className={styles.input}
-              placeholder="••••••••"
-            />
-          </div>
-
-          <div className={styles.btnGroup}>
-            <button
-              type="submit"
-              disabled={loading}
-              className={`${styles.btn} ${styles.btnPrimary}`}
-            >
-              {loading ? (
-                <>
-                  <span className={styles.spinner} />
-                  Procesando…
-                </>
-              ) : (
-                "Iniciar Sesión"
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleRegistro}
-              disabled={loading}
-              className={`${styles.btn} ${styles.btnSecondary}`}
-            >
-              Crear Usuario (Dev)
-            </button>
-          </div>
-        </form>
-
-        {/* Footer */}
-        <p className={styles.footer}>
-          Abogatech &copy; {new Date().getFullYear()}
-        </p>
-      </div>
-    </main>
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            fullWidth
+            disabled={loading}
+            onClick={handleRegistro}
+          >
+            Crear Usuario (Dev)
+          </Button>
+        </div>
+      </form>
+    </AuthCard>
   );
 }
