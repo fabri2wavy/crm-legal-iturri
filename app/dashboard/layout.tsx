@@ -1,53 +1,218 @@
+"use client";
+
+import { useState } from "react";
+import { usePathname } from "next/navigation";
 import BotonSalir from "../../components/BotonSalir";
 import PerfilUsuario from "../../components/PerfilUsuario";
+
+const NAV_ITEMS = [
+  {
+    href: "/dashboard",
+    label: "Inicio",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
+      </svg>
+    ),
+  },
+  {
+    href: "/dashboard/casos",
+    label: "Expedientes",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <polyline points="10 9 9 9 8 9" />
+      </svg>
+    ),
+  },
+  {
+    href: "/dashboard/clientes",
+    label: "Clientes",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
+  {
+    href: "/dashboard/casos",
+    label: "Casos",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    ),
+  },
+];
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === "/dashboard") return pathname === "/dashboard";
+    return pathname.startsWith(href);
+  };
+
   return (
-    <div className="flex h-screen bg-slate-50">
-      {/* Barra Lateral (Sidebar) */}
-      <aside className="w-64 bg-blue-900 text-white flex flex-col">
-        <div className="p-6 border-b border-blue-800">
-          <h2 className="text-xl font-bold tracking-tight">
-            Iturri & Asociados
-          </h2>
-          <p className="text-blue-300 text-sm mt-1">CRM Legal</p>
+    <div className="flex h-screen" style={{ background: "var(--color-surface)" }}>
+      {/* ── Overlay mobile ──────────────────────────────────── */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 lg:hidden"
+          style={{ background: "rgba(13, 27, 42, 0.6)", backdropFilter: "blur(4px)" }}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── Sidebar ─────────────────────────────────────────── */}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 w-[272px] flex flex-col
+          transform transition-transform duration-300 ease-in-out
+          lg:relative lg:translate-x-0
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
+        style={{
+          background: "linear-gradient(180deg, var(--color-navy) 0%, #0a1422 100%)",
+          borderRight: "1px solid var(--color-navy-border)",
+        }}
+      >
+        {/* Logo / brand */}
+        <div
+          className="px-6 py-5 flex items-center gap-3"
+          style={{ borderBottom: "1px solid rgba(201, 168, 76, 0.12)" }}
+        >
+          <div
+            className="flex items-center justify-center w-10 h-10 rounded-full text-sm font-light tracking-wide"
+            style={{
+              background: "var(--color-gold-dim)",
+              border: "1px solid var(--color-gold-light)",
+              color: "var(--color-gold-light)",
+              fontFamily: "var(--font-brand)",
+            }}
+          >
+            I&A
+          </div>
+          <div>
+            <h2
+              className="text-lg font-semibold leading-tight"
+              style={{
+                color: "var(--color-text-on-dark)",
+                fontFamily: "var(--font-brand)",
+                letterSpacing: "0.02em",
+              }}
+            >
+              Iturri <span style={{ color: "var(--color-gold)" }}>&</span> Asociados
+            </h2>
+            <p
+              className="text-xs tracking-widest uppercase"
+              style={{ color: "var(--color-text-muted)", letterSpacing: "0.15em" }}
+            >
+              CRM Legal
+            </p>
+          </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
-          {/* Aquí luego agregaremos links interactivos */}
-          <a
-            href="#"
-            className="block px-4 py-2.5 bg-blue-800 rounded-lg font-medium transition-colors"
-          >
-            Inicio
-          </a>
-          <a
-            href="#"
-            className="block px-4 py-2.5 hover:bg-blue-800/50 rounded-lg text-blue-100 transition-colors"
-          >
-            Expedientes
-          </a>
-          <a
-            href="#"
-            className="block px-4 py-2.5 hover:bg-blue-800/50 rounded-lg text-blue-100 transition-colors"
-          >
-            Clientes
-          </a>
+        {/* Navegación */}
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <a
+                key={item.label}
+                href={item.href}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+                style={{
+                  background: active
+                    ? "rgba(201, 168, 76, 0.12)"
+                    : "transparent",
+                  color: active
+                    ? "var(--color-gold-light)"
+                    : "rgba(200, 210, 225, 0.7)",
+                  borderLeft: active
+                    ? "3px solid var(--color-gold)"
+                    : "3px solid transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                    e.currentTarget.style.color = "rgba(240, 234, 216, 0.95)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "rgba(200, 210, 225, 0.7)";
+                  }
+                }}
+              >
+                {item.icon}
+                {item.label}
+              </a>
+            );
+          })}
         </nav>
 
-        <div className="p-4 border-t border-blue-800">
-          <div className="p-4 border-t border-blue-800">
-            <PerfilUsuario />
-            <BotonSalir />
-          </div>
+        {/* Footer con perfil y salir */}
+        <div
+          className="px-4 py-4"
+          style={{ borderTop: "1px solid rgba(201, 168, 76, 0.12)" }}
+        >
+          <PerfilUsuario />
+          <BotonSalir />
         </div>
       </aside>
 
-      {/* Contenido Principal (Aquí se inyectan las páginas) */}
-      <main className="flex-1 p-8 overflow-y-auto">{children}</main>
+      {/* ── Main Content ────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top bar mobile */}
+        <header
+          className="lg:hidden flex items-center justify-between px-4 py-3"
+          style={{
+            background: "var(--color-navy)",
+            borderBottom: "1px solid var(--color-navy-border)",
+          }}
+        >
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: "var(--color-gold-light)" }}
+            aria-label="Abrir menú"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+          <span
+            className="text-sm font-semibold"
+            style={{ color: "var(--color-text-on-dark)", fontFamily: "var(--font-brand)" }}
+          >
+            Abogatech
+          </span>
+          <div className="w-10" /> {/* Spacer para centrar el título */}
+        </header>
+
+        {/* Área de contenido */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

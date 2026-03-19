@@ -20,25 +20,60 @@ export default function TestBaseDatos() {
       return;
     }
 
-    setResultado(`Cliente creado con ID: ${nuevo.id}. ⏳ 2. Obteniendo lista...`);
+    setResultado(`Cliente creado con ID: ${nuevo.id}.2. Obteniendo lista...`);
     const lista = await obtenerClientes();
     
     if (lista.length > 0) {
-      setResultado(`✅ ¡Éxito total! Hay ${lista.length} cliente(s) en la base de datos.`);
+      setResultado(`¡Éxito total! Hay ${lista.length} cliente(s) en la base de datos.`);
       console.log("Datos de los clientes en BD:", lista);
     }
   };
 
   return (
-    <div className="mt-8 p-6 bg-slate-200 rounded-xl border-2 border-dashed border-slate-400">
-      <h3 className="text-lg font-bold text-slate-700 mb-2">Laboratorio de Pruebas (Borrar después)</h3>
+    <div
+      className="mt-8 p-6 rounded-xl animate-fade-up"
+      style={{
+        background: "var(--color-surface-card)",
+        border: "1px solid var(--color-surface-border)",
+        boxShadow: "var(--shadow-sm)",
+      }}
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 3h6M12 3v7l5.5 8.5a1 1 0 0 1-.9 1.5H7.4a1 1 0 0 1-.9-1.5L12 10V3" />
+        </svg>
+        <h3
+          className="text-base font-bold"
+          style={{ color: "var(--color-text-primary)" }}
+        >
+          Laboratorio de Pruebas (Borrar después)
+        </h3>
+      </div>
       <button 
         onClick={ejecutarPrueba}
-        className="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 transition-colors"
+        className="px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+        style={{
+          background: "var(--color-success)",
+          color: "#ffffff",
+          boxShadow: "0 2px 8px rgba(16, 185, 129, 0.25)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-1px)";
+          e.currentTarget.style.boxShadow = "0 4px 14px rgba(16, 185, 129, 0.35)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "0 2px 8px rgba(16, 185, 129, 0.25)";
+        }}
       >
         Ejecutar Prueba de Repositorio
       </button>
-      <p className="mt-3 text-sm font-mono text-slate-800 font-semibold">{resultado}</p>
+      <p
+        className="mt-3 text-sm font-mono font-semibold"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
+        {resultado}
+      </p>
     </div>
   );
 }

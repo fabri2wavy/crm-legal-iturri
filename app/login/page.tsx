@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation"; 
 import { createClient } from "../../infrastructure/supabase/client";
+import styles from "./LoginPage.module.css";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -50,68 +51,100 @@ export default function LoginPage() {
     setLoading(false);
   };
 
+  const isSuccess = mensaje && !mensaje.toLowerCase().includes("error");
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-slate-200">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-800">Iturri & Asociados</h1>
-          <p className="text-sm text-slate-500 mt-2">Acceso al Sistema de Gestión Legal</p>
+    <main className={styles.root}>
+      {/* Ornamentos decorativos de esquina */}
+      <div className={`${styles.ornament} ${styles.ornamentTl}`} />
+      <div className={`${styles.ornament} ${styles.ornamentBr}`} />
+
+      <div className={styles.card}>
+        {/* Acento dorado superior */}
+        <div className={styles.cardAccent} />
+
+        {/* Cabecera de marca */}
+        <div className={styles.header}>
+          <div className={styles.emblem}>I&A</div>
+          <h1 className={styles.firmName}>
+            Iturri <span>&</span> Asociados
+          </h1>
+          <p className={styles.tagline}>Sistema de Gestión Legal</p>
         </div>
 
+        {/* Divider decorativo */}
+        <div className={styles.divider}>
+          <span className={styles.dividerDot} />
+        </div>
+
+        {/* Mensaje de alerta */}
         {mensaje && (
-          <div className={`p-3 mb-6 text-sm rounded-md ${mensaje.includes(' ') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          <div
+            className={`${styles.alert} ${
+              isSuccess ? styles.alertSuccess : styles.alertError
+            }`}
+          >
             {mensaje}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Correo Electrónico
-            </label>
+        {/* Formulario */}
+        <form onSubmit={handleLogin}>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Correo Electrónico</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-blue-900 outline-none transition-all"
+              className={styles.input}
               placeholder="admin@iturri.com"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Contraseña
-            </label>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Contraseña</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-blue-900 outline-none transition-all"
+              className={styles.input}
               placeholder="••••••••"
             />
           </div>
 
-          <div className="pt-2">
+          <div className={styles.btnGroup}>
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-900 text-white font-semibold py-2.5 rounded-lg hover:bg-blue-800 transition-colors disabled:bg-slate-400"
+              className={`${styles.btn} ${styles.btnPrimary}`}
             >
-              {loading ? "Procesando..." : "Iniciar Sesión"}
+              {loading ? (
+                <>
+                  <span className={styles.spinner} />
+                  Procesando…
+                </>
+              ) : (
+                "Iniciar Sesión"
+              )}
             </button>
-            
+
             <button
               type="button"
               onClick={handleRegistro}
               disabled={loading}
-              className="w-full mt-3 bg-white text-blue-900 border border-blue-900 font-semibold py-2.5 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
+              className={`${styles.btn} ${styles.btnSecondary}`}
             >
               Crear Usuario (Dev)
             </button>
           </div>
         </form>
+
+        {/* Footer */}
+        <p className={styles.footer}>
+          Abogatech &copy; {new Date().getFullYear()}
+        </p>
       </div>
     </main>
   );

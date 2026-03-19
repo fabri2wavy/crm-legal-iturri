@@ -32,12 +32,51 @@ export default function PerfilUsuario() {
     obtenerPerfil();
   }, []);
 
+  /* Generar iniciales del email para el avatar */
+  const iniciales = email
+    ? email.substring(0, 2).toUpperCase()
+    : "??";
+
   return (
-    <div className="mb-4 p-3 bg-blue-950 rounded-lg border border-blue-800">
-      <p className="text-xs text-blue-300 truncate">{email}</p>
-      <div className="flex items-center gap-2 mt-1">
-        <span className="flex h-2 w-2 rounded-full bg-green-400"></span>
-        <p className="text-sm font-semibold text-white capitalize">{rol}</p>
+    <div
+      className="mb-3 p-3 rounded-lg"
+      style={{
+        background: "var(--color-navy-card)",
+        border: "1px solid rgba(201, 168, 76, 0.12)",
+      }}
+    >
+      <div className="flex items-center gap-3">
+        {/* Avatar con iniciales */}
+        <div
+          className="flex items-center justify-center w-9 h-9 rounded-full text-xs font-semibold shrink-0"
+          style={{
+            background: "var(--color-gold-dim)",
+            color: "var(--color-gold-light)",
+            border: "1px solid rgba(201, 168, 76, 0.25)",
+          }}
+        >
+          {iniciales}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p
+            className="text-xs truncate"
+            style={{ color: "var(--color-text-muted)" }}
+          >
+            {email}
+          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span
+              className="flex h-2 w-2 rounded-full shrink-0"
+              style={{ background: "var(--color-success)" }}
+            />
+            <p
+              className="text-sm font-semibold capitalize truncate"
+              style={{ color: "var(--color-text-on-dark)" }}
+            >
+              {rol}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
