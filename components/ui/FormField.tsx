@@ -6,6 +6,7 @@ interface FormFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   id: string;
   error?: string;
+  variant?: "dark" | "light";
 }
 
 /* ── Component ─────────────────────────────────────────────── */
@@ -13,11 +14,13 @@ export function FormField({
   label,
   id,
   error,
+  variant = "dark",
   className,
   ...inputProps
 }: FormFieldProps) {
   const inputClasses = [
     styles.input,
+    styles[variant],
     error ? styles.inputError : "",
     className ?? "",
   ]

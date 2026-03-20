@@ -60,6 +60,35 @@ Reestructuración completa del proyecto para garantizar escalabilidad a largo pl
 
 ---
 
+## 🚀 Bitácora de Desarrollo - Día 4 (Sistema de Diseño Atómico)
+
+### 1. Tokens Globales
+Centralización de variables de diseño (colores navy/gold, tipografía) en `tokens.css` como única fuente de verdad.
+
+### 2. Componentes UI (Atomic Design)
+Creación de la carpeta `components/ui/` con componentes base reutilizables (`Button`, `FormField`, `Alert`, `AuthCard`).
+
+### 3. Vertical Slice
+Refactorización total de la vista de `/login` para abandonar la deuda técnica de CSS y consumir el nuevo sistema de diseño manteniendo la lógica de Supabase intacta.
+
+---
+
+## 🚀 Bitácora de Desarrollo - Día 5 (Directorio y Perfil de Clientes)
+
+### 1. Capa de Datos (Repositorio)
+Ampliación de `clienteRepository.ts` para soportar lectura por ID, historial de expedientes asociados, actualización y eliminación de clientes.
+
+### 2. Integridad Referencial (Seguridad)
+Implementación de captura inteligente de errores de llave foránea (Foreign Key) para impedir el borrado accidental de clientes que poseen expedientes legales activos o históricos.
+
+### 3. Vista de Perfil 360
+Creación de la ruta dinámica `/dashboard/clientes/[id]` dividida en dos módulos: Gestión de Identidad (CRUD) y Portafolio Legal (Expedientes asociados).
+
+### 4. Refactorización UI
+Actualización de la tabla principal de clientes y modales para consumir los nuevos componentes atómicos y enrutar correctamente hacia el perfil individual.
+
+---
+
 ## 🛠️ Instrucciones de Despliegue Local
 1. Clonar el repositorio.
 2. Asegurarse de tener Docker Desktop corriendo.
