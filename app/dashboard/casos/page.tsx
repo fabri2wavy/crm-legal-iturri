@@ -1,50 +1,77 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   obtenerExpedientes,
   crearExpediente,
 } from "../../../infrastructure/repositories/expedienteRepository";
 import { obtenerClientes } from "../../../infrastructure/repositories/clienteRepository";
 import { Cliente } from "../../../domain/entities/Cliente";
+import { Button } from "../../../components/ui/Button";
+import { FormField } from "../../../components/ui/FormField";
+import { SelectField } from "../../../components/ui/SelectField";
+import { Alert } from "../../../components/ui/Alert";
 
-/* Mapa de colores semánticos por estado */
+/* ── Mapa de colores semánticos por estado ─────────────────── */
 const ESTADO_STYLES: Record<string, { bg: string; color: string; label: string }> = {
-  en_espera:  { bg: "var(--color-warning-bg)", color: "var(--color-warning)", label: "En Espera" },
-  mediacion:  { bg: "var(--color-info-bg)",    color: "var(--color-info)",    label: "Mediación" },
-  juicio:     { bg: "var(--color-danger-bg)",   color: "var(--color-danger)",  label: "En Juicio" },
-  cerrado:    { bg: "var(--color-success-bg)",  color: "var(--color-success)", label: "Cerrado" },
+  en_espera: { bg: "var(--color-warning-bg)", color: "var(--color-warning)", label: "En Espera" },
+  mediacion: { bg: "var(--color-info-bg)", color: "var(--color-info)", label: "Mediación" },
+  juicio:    { bg: "var(--color-danger-bg)", color: "var(--color-danger)", label: "En Juicio" },
+  cerrado:   { bg: "var(--color-success-bg)", color: "var(--color-success)", label: "Cerrado" },
 };
 
 function getEstadoStyle(estado: string) {
   return ESTADO_STYLES[estado] || ESTADO_STYLES["en_espera"];
 }
 
+/* ── Opciones estáticas de filtro de estado ─────────────────── */
+const ESTADO_FILTER_OPTIONS = [
+  { value: "en_espera", label: "En Espera" },
+  { value: "mediacion", label: "Mediación" },
+  { value: "juicio", label: "En Juicio" },
+  { value: "cerrado", label: "Cerrado" },
+];
+
+/* ── Opciones de materia ───────────────────────────────────── */
+const MATERIA_OPTIONS = [
+  { value: "Civil", label: "Civil" },
+  { value: "Comercial", label: "Comercial" },
+  { value: "Penal", label: "Penal" },
+  { value: "Laboral", label: "Laboral" },
+  { value: "Familiar", label: "Familiar" },
+  { value: "Administrativo", label: "Administrativo" },
+];
+
 export default function CasosPage() {
   const [expedientes, setExpedientes] = useState<any[]>([]);
   const [listaClientes, setListaClientes] = useState<Cliente[]>([]);
   const [cargando, setCargando] = useState(true);
 
-  // Estados para el Modal
+  /* ── Estados de filtro ─────────────────────────────────────── */
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  /* ── Estados para el Modal ──────────────────────────────────── */
   const [mostrarModal, setMostrarModal] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [formError, setFormError] = useState("");
 
-  // Estado del Formulario
+  /* ── Estado del Formulario ──────────────────────────────────── */
   const [formData, setFormData] = useState({
     clienteId: "",
     numeroCaso: "",
     titulo: "",
-    materia: "Civil", // Valor por defecto
+    materia: "Civil",
     juzgado: "",
     parteContraria: "",
     informeDespacho: "Caso iniciado en plataforma.",
     informeCliente: "Su caso ha sido ingresado al sistema.",
-    abogadoAsignadoId: "uuid-temporal", // En la Fase 2 lo tomaremos del login del abogado
+    abogadoAsignadoId: "uuid-temporal",
   });
 
+  /* ── Carga inicial ──────────────────────────────────────────── */
   useEffect(() => {
     async function cargarDatosIniciales() {
-      // Cargamos ambas cosas en paralelo para mayor velocidad
       const [dataCasos, dataClientes] = await Promise.all([
         obtenerExpedientes(),
         obtenerClientes(),
@@ -56,23 +83,45 @@ export default function CasosPage() {
     cargarDatosIniciales();
   }, []);
 
+  /* ── Filtrado dinámico ──────────────────────────────────────── */
+  const expedientesFiltrados = useMemo(() => {
+    return expedientes.filter((caso) => {
+      /* Filtro de estado */
+      if (statusFilter && caso.estado !== statusFilter) return false;
+
+      /* Filtro de texto (case-insensitive) */
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const matchesText =
+          (caso.numeroCaso ?? "").toLowerCase().includes(term) ||
+          (caso.titulo ?? "").toLowerCase().includes(term) ||
+          (caso.nombreCliente ?? "").toLowerCase().includes(term) ||
+          (caso.parteContraria ?? "").toLowerCase().includes(term);
+        if (!matchesText) return false;
+      }
+
+      return true;
+    });
+  }, [expedientes, searchTerm, statusFilter]);
+
+  /* ── Guardar nuevo caso ─────────────────────────────────────── */
   const handleGuardarCaso = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!formData.clienteId) {
-      alert("Debes seleccionar un cliente del directorio.");
+      setFormError("Debes seleccionar un cliente del directorio.");
       return;
     }
 
+    setFormError("");
     setGuardando(true);
 
     const nuevo = await crearExpediente(formData);
 
     if (nuevo) {
-      // Recargamos la lista para traer el nombre del cliente con el nuevo caso
       const dataActualizada = await obtenerExpedientes();
       setExpedientes(dataActualizada);
 
-      // Limpiamos y cerramos
       setFormData({
         ...formData,
         numeroCaso: "",
@@ -82,152 +131,106 @@ export default function CasosPage() {
       });
       setMostrarModal(false);
     } else {
-      alert("Error al crear el caso. Revisa la consola.");
+      setFormError("Error al crear el caso. Verifica los datos e intenta de nuevo.");
     }
 
     setGuardando(false);
   };
 
-  /* ── Estilos reutilizables para inputs del modal ──────── */
-  const inputStyle = {
-    border: "1px solid var(--color-surface-border)",
-    color: "var(--color-text-primary)",
-    background: "var(--color-surface)",
+  /* ── Cerrar modal (limpia errores) ──────────────────────────── */
+  const handleCerrarModal = () => {
+    setFormError("");
+    setMostrarModal(false);
   };
 
-  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
-    e.currentTarget.style.borderColor = "var(--color-gold)";
-    e.currentTarget.style.boxShadow = "0 0 0 3px var(--color-gold-glow)";
-  };
-
-  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
-    e.currentTarget.style.borderColor = "var(--color-surface-border)";
-    e.currentTarget.style.boxShadow = "none";
-  };
+  /* ── Opciones de clientes para el select ─────────────────────── */
+  const clienteOptions = listaClientes.map((c) => ({
+    value: c.id,
+    label: `${c.nombreCompleto} (${c.carnetIdentidad})`,
+  }));
 
   return (
     <div className="max-w-7xl mx-auto relative">
-      {/* Cabecera */}
+      {/* ── Cabecera ──────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 animate-fade-up">
         <div>
-          <h1
-            className="text-2xl sm:text-3xl font-bold"
-            style={{ color: "var(--color-text-primary)" }}
-          >
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-primary)]">
             Expedientes Activos
           </h1>
-          <p className="mt-1" style={{ color: "var(--color-text-secondary)" }}>
+          <p className="mt-1 text-[var(--color-text-secondary)]">
             Gestión y seguimiento de causas legales.
           </p>
         </div>
-        <button
+        <Button
+          variant="primary"
+          size="md"
           onClick={() => setMostrarModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 shrink-0"
-          style={{
-            background: "linear-gradient(135deg, #b8922e, var(--color-gold))",
-            color: "var(--color-text-on-gold)",
-            boxShadow: "var(--shadow-gold)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-1px)";
-            e.currentTarget.style.boxShadow = "0 6px 24px rgba(201, 168, 76, 0.35)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "var(--shadow-gold)";
-          }}
+          className="shrink-0"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           Nuevo Caso
-        </button>
+        </Button>
       </div>
 
-      {/* Barra de Filtros */}
+      {/* ── Barra de Filtros ──────────────────────────────────── */}
       <div
-        className="p-4 rounded-xl mb-6 flex flex-col sm:flex-row gap-3 animate-fade-up"
-        style={{
-          background: "var(--color-surface-card)",
-          border: "1px solid var(--color-surface-border)",
-          boxShadow: "var(--shadow-sm)",
-          animationDelay: "50ms",
-        }}
+        className="p-4 rounded-xl mb-6 flex flex-col sm:flex-row gap-3 animate-fade-up
+                   bg-[var(--color-surface-card)] border border-[var(--color-surface-border)]
+                   shadow-[var(--shadow-sm)]"
+        style={{ animationDelay: "50ms" }}
       >
         <div className="flex-1 relative">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2"
+            className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
             width="16" height="16" viewBox="0 0 24 24" fill="none"
             stroke="var(--color-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
           >
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input
+          <FormField
+            variant="light"
+            label=""
+            id="filter-search"
             type="text"
             placeholder="Buscar por NUREJ, Cliente o Parte Contraria..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm outline-none transition-all duration-200"
-            style={{
-              border: "1px solid var(--color-surface-border)",
-              color: "var(--color-text-primary)",
-              background: "var(--color-surface)",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-gold)";
-              e.currentTarget.style.boxShadow = "0 0 0 3px var(--color-gold-glow)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-surface-border)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="!pl-10 !mb-0"
           />
         </div>
-        <select
-          className="px-4 py-2.5 rounded-lg text-sm outline-none transition-all duration-200 min-w-[180px]"
-          style={{
-            border: "1px solid var(--color-surface-border)",
-            color: "var(--color-text-primary)",
-            background: "var(--color-surface)",
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = "var(--color-gold)";
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = "var(--color-surface-border)";
-          }}
-        >
-          <option>Todos los estados</option>
-          <option>En Espera</option>
-          <option>En Juicio</option>
-        </select>
+        <SelectField
+          variant="light"
+          label=""
+          id="filter-status"
+          options={ESTADO_FILTER_OPTIONS}
+          placeholder="Todos los estados"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="min-w-[180px] !mb-0"
+        />
       </div>
 
-      {/* Tabla de Expedientes */}
+      {/* ── Tabla de Expedientes ───────────────────────────────── */}
       <div
-        className="rounded-xl overflow-hidden animate-fade-up"
-        style={{
-          background: "var(--color-surface-card)",
-          border: "1px solid var(--color-surface-border)",
-          boxShadow: "var(--shadow-sm)",
-          animationDelay: "100ms",
-        }}
+        className="rounded-xl overflow-hidden animate-fade-up
+                   bg-[var(--color-surface-card)] border border-[var(--color-surface-border)]
+                   shadow-[var(--shadow-sm)]"
+        style={{ animationDelay: "100ms" }}
       >
         {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr
-                style={{
-                  background: "var(--color-navy)",
-                  borderBottom: "1px solid var(--color-navy-border)",
-                }}
-              >
-                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--color-gold-light)" }}>NUREJ / Caso</th>
-                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--color-gold-light)" }}>Materia y Juzgado</th>
-                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--color-gold-light)" }}>Partes</th>
-                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--color-gold-light)" }}>Estado</th>
-                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider text-right" style={{ color: "var(--color-gold-light)" }}>Acciones</th>
+              <tr className="bg-[var(--color-navy)] border-b border-[var(--color-navy-border)]">
+                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider text-[var(--color-gold-light)]">NUREJ / Caso</th>
+                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider text-[var(--color-gold-light)]">Materia y Juzgado</th>
+                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider text-[var(--color-gold-light)]">Partes</th>
+                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider text-[var(--color-gold-light)]">Estado</th>
+                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider text-right text-[var(--color-gold-light)]">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -236,19 +239,16 @@ export default function CasosPage() {
                   <td colSpan={5} className="py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div
-                        className="w-8 h-8 rounded-full border-2"
-                        style={{
-                          borderColor: "var(--color-surface-border)",
-                          borderTopColor: "var(--color-gold)",
-                          animation: "spin 0.8s linear infinite",
-                        }}
+                        className="w-8 h-8 rounded-full border-2 border-[var(--color-surface-border)]
+                                   border-t-[var(--color-gold)] animate-spin"
                       />
-                      <span style={{ color: "var(--color-text-muted)" }}>Cargando expedientes...</span>
+                      <span className="text-[var(--color-text-muted)]">Cargando expedientes...</span>
                     </div>
                   </td>
                 </tr>
               )}
-              {!cargando && expedientes.length === 0 && (
+
+              {!cargando && expedientesFiltrados.length === 0 && (
                 <tr>
                   <td colSpan={5} className="py-16 text-center">
                     <div className="mb-3 opacity-50">
@@ -259,38 +259,35 @@ export default function CasosPage() {
                         <line x1="16" y1="17" x2="8" y2="17" />
                       </svg>
                     </div>
-                    <p className="font-medium" style={{ color: "var(--color-text-secondary)" }}>
-                      No hay casos registrados
+                    <p className="font-medium text-[var(--color-text-secondary)]">
+                      {searchTerm || statusFilter
+                        ? "No se encontraron expedientes con esos filtros"
+                        : "No hay casos registrados"}
                     </p>
-                    <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
-                      Abre tu primer expediente usando el botón de arriba.
+                    <p className="text-sm mt-1 text-[var(--color-text-muted)]">
+                      {searchTerm || statusFilter
+                        ? "Intenta ajustar los criterios de búsqueda."
+                        : "Abre tu primer expediente usando el botón de arriba."}
                     </p>
                   </td>
                 </tr>
               )}
 
               {!cargando &&
-                expedientes.map((caso) => {
+                expedientesFiltrados.map((caso) => {
                   const estadoStyle = getEstadoStyle(caso.estado);
                   return (
                     <tr
                       key={caso.id}
-                      className="transition-colors duration-150"
-                      style={{ borderBottom: "1px solid var(--color-surface-border)" }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "var(--color-surface-hover)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "transparent";
-                      }}
+                      className="transition-colors duration-150 border-b border-[var(--color-surface-border)]
+                                 hover:bg-[var(--color-surface-hover)]"
                     >
                       <td className="py-4 px-6">
-                        <div className="font-bold" style={{ color: "var(--color-navy)" }}>
+                        <div className="font-bold text-[var(--color-navy)]">
                           {caso.numeroCaso}
                         </div>
                         <div
-                          className="text-xs truncate max-w-[200px]"
-                          style={{ color: "var(--color-text-muted)" }}
+                          className="text-xs truncate max-w-[200px] text-[var(--color-text-muted)]"
                           title={caso.titulo}
                         >
                           {caso.titulo}
@@ -298,33 +295,27 @@ export default function CasosPage() {
                       </td>
                       <td className="py-4 px-6">
                         <span
-                          className="inline-block px-2.5 py-1 text-xs rounded-md font-medium mb-1"
-                          style={{
-                            background: "var(--color-surface-hover)",
-                            color: "var(--color-text-secondary)",
-                          }}
+                          className="inline-block px-2.5 py-1 text-xs rounded-md font-medium mb-1
+                                     bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)]"
                         >
                           {caso.materia}
                         </span>
-                        <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                        <div className="text-xs text-[var(--color-text-muted)]">
                           {caso.juzgado}
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+                        <div className="text-sm font-medium text-[var(--color-text-primary)]">
                           {caso.nombreCliente}
                         </div>
-                        <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                        <div className="text-xs text-[var(--color-text-muted)]">
                           vs. {caso.parteContraria}
                         </div>
                       </td>
                       <td className="py-4 px-6">
                         <span
                           className="capitalize text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1.5"
-                          style={{
-                            background: estadoStyle.bg,
-                            color: estadoStyle.color,
-                          }}
+                          style={{ background: estadoStyle.bg, color: estadoStyle.color }}
                         >
                           <span
                             className="w-1.5 h-1.5 rounded-full"
@@ -336,17 +327,8 @@ export default function CasosPage() {
                       <td className="py-4 px-6 text-right">
                         <a
                           href={`/dashboard/casos/${caso.id}`}
-                          className="text-sm font-medium px-3 py-1.5 rounded-md transition-all duration-200 inline-block"
-                          style={{
-                            color: "var(--color-gold)",
-                            background: "transparent",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "var(--color-gold-dim)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "transparent";
-                          }}
+                          className="text-sm font-medium px-3 py-1.5 rounded-md transition-all duration-200
+                                     inline-block text-[var(--color-gold)] hover:bg-[var(--color-gold-dim)]"
                         >
                           Abrir Expediente →
                         </a>
@@ -359,21 +341,17 @@ export default function CasosPage() {
         </div>
 
         {/* Mobile Card View */}
-        <div className="md:hidden divide-y" style={{ borderColor: "var(--color-surface-border)" }}>
+        <div className="md:hidden divide-y divide-[var(--color-surface-border)]">
           {cargando && (
             <div className="py-12 text-center">
               <div
-                className="w-8 h-8 rounded-full border-2 mx-auto mb-3"
-                style={{
-                  borderColor: "var(--color-surface-border)",
-                  borderTopColor: "var(--color-gold)",
-                  animation: "spin 0.8s linear infinite",
-                }}
+                className="w-8 h-8 rounded-full border-2 mx-auto mb-3
+                           border-[var(--color-surface-border)] border-t-[var(--color-gold)] animate-spin"
               />
-              <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>Cargando...</span>
+              <span className="text-sm text-[var(--color-text-muted)]">Cargando...</span>
             </div>
           )}
-          {!cargando && expedientes.length === 0 && (
+          {!cargando && expedientesFiltrados.length === 0 && (
             <div className="py-12 text-center">
               <div className="mb-2 opacity-50">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
@@ -383,21 +361,23 @@ export default function CasosPage() {
                   <line x1="16" y1="17" x2="8" y2="17" />
                 </svg>
               </div>
-              <p className="text-sm font-medium" style={{ color: "var(--color-text-secondary)" }}>
-                No hay casos registrados
+              <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+                {searchTerm || statusFilter
+                  ? "Sin resultados para estos filtros"
+                  : "No hay casos registrados"}
               </p>
             </div>
           )}
-          {!cargando && expedientes.map((caso) => {
+          {!cargando && expedientesFiltrados.map((caso) => {
             const estadoStyle = getEstadoStyle(caso.estado);
             return (
-              <div key={caso.id} className="p-4 space-y-2" style={{ borderColor: "var(--color-surface-border)" }}>
+              <div key={caso.id} className="p-4 space-y-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="font-bold text-sm" style={{ color: "var(--color-navy)" }}>
+                    <span className="font-bold text-sm text-[var(--color-navy)]">
                       {caso.numeroCaso}
                     </span>
-                    <div className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>{caso.titulo}</div>
+                    <div className="text-xs mt-0.5 text-[var(--color-text-muted)]">{caso.titulo}</div>
                   </div>
                   <span
                     className="text-xs font-bold px-2.5 py-1 rounded-full shrink-0"
@@ -406,20 +386,17 @@ export default function CasosPage() {
                     {estadoStyle.label}
                   </span>
                 </div>
-                <div className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                <div className="text-xs text-[var(--color-text-secondary)]">
                   {caso.nombreCliente} vs. {caso.parteContraria}
                 </div>
                 <div className="flex justify-between items-center">
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-md"
-                    style={{ background: "var(--color-surface-hover)", color: "var(--color-text-muted)" }}
-                  >
+                  <span className="text-xs px-2 py-0.5 rounded-md bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]">
                     {caso.materia}
                   </span>
                   <a
                     href={`/dashboard/casos/${caso.id}`}
-                    className="text-xs font-medium px-3 py-1.5 rounded-md"
-                    style={{ color: "var(--color-gold)", background: "var(--color-gold-dim)" }}
+                    className="text-xs font-medium px-3 py-1.5 rounded-md
+                               text-[var(--color-gold)] bg-[var(--color-gold-dim)]"
                   >
                     Abrir →
                   </a>
@@ -430,214 +407,141 @@ export default function CasosPage() {
         </div>
       </div>
 
-      {/* MODAL DE NUEVO CASO */}
+      {/* ── MODAL DE NUEVO CASO ───────────────────────────────── */}
       {mostrarModal && (
         <div
-          className="fixed inset-0 flex items-center justify-center z-50 p-4"
-          style={{
-            background: "rgba(13, 27, 42, 0.7)",
-            backdropFilter: "blur(6px)",
-          }}
+          className="fixed inset-0 flex items-center justify-center z-50 p-4
+                     bg-[rgba(13,27,42,0.7)] backdrop-blur-sm"
         >
           <div
-            className="w-full max-w-2xl overflow-hidden animate-card-in"
-            style={{
-              background: "var(--color-surface-card)",
-              borderRadius: "var(--radius-xl)",
-              boxShadow: "var(--shadow-lg)",
-              border: "1px solid var(--color-surface-border)",
-              maxHeight: "90vh",
-              overflowY: "auto",
-            }}
+            className="w-full max-w-2xl overflow-hidden animate-card-in
+                       bg-[var(--color-surface-card)] rounded-[var(--radius-xl)]
+                       shadow-[var(--shadow-lg)] border border-[var(--color-surface-border)]
+                       max-h-[90vh] overflow-y-auto"
           >
             {/* Header del modal */}
-            <div
-              className="px-6 py-4 flex justify-between items-center sticky top-0 z-10"
-              style={{
-                background: "var(--color-navy)",
-                borderBottom: "1px solid var(--color-navy-border)",
-              }}
-            >
-              <h3 className="text-base font-bold" style={{ color: "var(--color-text-on-dark)" }}>
+            <div className="px-6 py-4 flex justify-between items-center sticky top-0 z-10
+                            bg-[var(--color-navy)] border-b border-[var(--color-navy-border)]">
+              <h3 className="text-base font-bold text-[var(--color-text-on-dark)]">
                 Aperturar Nuevo Expediente
               </h3>
               <button
-                onClick={() => setMostrarModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-md text-lg transition-colors duration-150"
-                style={{ color: "var(--color-text-muted)" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                onClick={handleCerrarModal}
+                className="w-8 h-8 flex items-center justify-center rounded-md text-lg
+                           transition-colors duration-150 text-[var(--color-text-muted)]
+                           hover:bg-white/[0.08]"
               >
                 &times;
               </button>
             </div>
 
             <form onSubmit={handleGuardarCaso} className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
+              {/* Error Alert */}
+              <Alert variant="error" visible={!!formError}>
+                {formError}
+              </Alert>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-1">
                 {/* Columna Izquierda */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--color-text-secondary)" }}>
-                      Cliente *
-                    </label>
-                    <select
-                      required
-                      className="w-full px-3.5 py-2.5 rounded-lg text-sm outline-none transition-all duration-200"
-                      style={inputStyle}
-                      onFocus={handleInputFocus}
-                      onBlur={handleInputBlur}
-                      value={formData.clienteId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, clienteId: e.target.value })
-                      }
-                    >
-                      <option value="">-- Seleccionar Cliente --</option>
-                      {listaClientes.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.nombreCompleto} ({c.carnetIdentidad})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--color-text-secondary)" }}>
-                      NUREJ / N° de Caso *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ej: CB-2025-000890"
-                      className="w-full px-3.5 py-2.5 rounded-lg text-sm outline-none transition-all duration-200"
-                      style={inputStyle}
-                      onFocus={handleInputFocus}
-                      onBlur={handleInputBlur}
-                      value={formData.numeroCaso}
-                      onChange={(e) =>
-                        setFormData({ ...formData, numeroCaso: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--color-text-secondary)" }}>
-                      Materia *
-                    </label>
-                    <select
-                      required
-                      className="w-full px-3.5 py-2.5 rounded-lg text-sm outline-none transition-all duration-200"
-                      style={inputStyle}
-                      onFocus={handleInputFocus}
-                      onBlur={handleInputBlur}
-                      value={formData.materia}
-                      onChange={(e) =>
-                        setFormData({ ...formData, materia: e.target.value })
-                      }
-                    >
-                      <option value="Civil">Civil</option>
-                      <option value="Comercial">Comercial</option>
-                      <option value="Penal">Penal</option>
-                      <option value="Laboral">Laboral</option>
-                      <option value="Familiar">Familiar</option>
-                      <option value="Administrativo">Administrativo</option>
-                    </select>
-                  </div>
+                <div>
+                  <SelectField
+                    variant="light"
+                    label="Cliente *"
+                    id="modal-cliente"
+                    options={clienteOptions}
+                    placeholder="-- Seleccionar Cliente --"
+                    required
+                    value={formData.clienteId}
+                    onChange={(e) => {
+                      setFormError("");
+                      setFormData({ ...formData, clienteId: e.target.value });
+                    }}
+                  />
+                  <FormField
+                    variant="light"
+                    label="NUREJ / N° de Caso *"
+                    id="modal-numero-caso"
+                    type="text"
+                    required
+                    placeholder="Ej: CB-2025-000890"
+                    value={formData.numeroCaso}
+                    onChange={(e) =>
+                      setFormData({ ...formData, numeroCaso: e.target.value })
+                    }
+                  />
+                  <SelectField
+                    variant="light"
+                    label="Materia *"
+                    id="modal-materia"
+                    options={MATERIA_OPTIONS}
+                    required
+                    value={formData.materia}
+                    onChange={(e) =>
+                      setFormData({ ...formData, materia: e.target.value })
+                    }
+                  />
                 </div>
 
                 {/* Columna Derecha */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--color-text-secondary)" }}>
-                      Parte Contraria *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ej: Empresa ACME Ltda."
-                      className="w-full px-3.5 py-2.5 rounded-lg text-sm outline-none transition-all duration-200"
-                      style={inputStyle}
-                      onFocus={handleInputFocus}
-                      onBlur={handleInputBlur}
-                      value={formData.parteContraria}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          parteContraria: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--color-text-secondary)" }}>
-                      Juzgado o Tribunal *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ej: Juzgado 3ro Civil y Comercial"
-                      className="w-full px-3.5 py-2.5 rounded-lg text-sm outline-none transition-all duration-200"
-                      style={inputStyle}
-                      onFocus={handleInputFocus}
-                      onBlur={handleInputBlur}
-                      value={formData.juzgado}
-                      onChange={(e) =>
-                        setFormData({ ...formData, juzgado: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--color-text-secondary)" }}>
-                      Título o Resumen Corto *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ej: Demanda por incumplimiento"
-                      className="w-full px-3.5 py-2.5 rounded-lg text-sm outline-none transition-all duration-200"
-                      style={inputStyle}
-                      onFocus={handleInputFocus}
-                      onBlur={handleInputBlur}
-                      value={formData.titulo}
-                      onChange={(e) =>
-                        setFormData({ ...formData, titulo: e.target.value })
-                      }
-                    />
-                  </div>
+                <div>
+                  <FormField
+                    variant="light"
+                    label="Parte Contraria *"
+                    id="modal-parte-contraria"
+                    type="text"
+                    required
+                    placeholder="Ej: Empresa ACME Ltda."
+                    value={formData.parteContraria}
+                    onChange={(e) =>
+                      setFormData({ ...formData, parteContraria: e.target.value })
+                    }
+                  />
+                  <FormField
+                    variant="light"
+                    label="Juzgado o Tribunal *"
+                    id="modal-juzgado"
+                    type="text"
+                    required
+                    placeholder="Ej: Juzgado 3ro Civil y Comercial"
+                    value={formData.juzgado}
+                    onChange={(e) =>
+                      setFormData({ ...formData, juzgado: e.target.value })
+                    }
+                  />
+                  <FormField
+                    variant="light"
+                    label="Título o Resumen Corto *"
+                    id="modal-titulo"
+                    type="text"
+                    required
+                    placeholder="Ej: Demanda por incumplimiento"
+                    value={formData.titulo}
+                    onChange={(e) =>
+                      setFormData({ ...formData, titulo: e.target.value })
+                    }
+                  />
                 </div>
               </div>
 
-              <div
-                className="pt-5 mt-2 flex flex-col-reverse sm:flex-row gap-3"
-                style={{ borderTop: "1px solid var(--color-surface-border)" }}
-              >
-                <button
+              <div className="pt-5 mt-2 flex flex-col-reverse sm:flex-row gap-3 border-t border-[var(--color-surface-border)]">
+                <Button
                   type="button"
-                  onClick={() => setMostrarModal(false)}
-                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
-                  style={{
-                    border: "1px solid var(--color-surface-border)",
-                    color: "var(--color-text-secondary)",
-                    background: "transparent",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "var(--color-surface-hover)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                  }}
+                  variant="secondary"
+                  size="md"
+                  fullWidth
+                  onClick={handleCerrarModal}
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  disabled={guardando}
-                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    background: "linear-gradient(135deg, #b8922e, var(--color-gold))",
-                    color: "var(--color-text-on-gold)",
-                    boxShadow: "var(--shadow-gold)",
-                  }}
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  loading={guardando}
                 >
                   {guardando ? "Aperturando..." : "Aperturar Expediente"}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

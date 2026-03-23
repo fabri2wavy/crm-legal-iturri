@@ -1,7 +1,20 @@
--- Actualización del Core: Agregando campos descubiertos en el Benchmarking
-ALTER TABLE public.expedientes 
-ADD COLUMN materia text DEFAULT 'No especificada',
-ADD COLUMN juzgado text DEFAULT 'No especificado',
-ADD COLUMN parte_contraria text DEFAULT 'Sin asignar',
-ADD COLUMN informe_despacho text DEFAULT '',
-ADD COLUMN informe_cliente text DEFAULT '';
+-- 1. Optimizar la tabla CLIENTES
+DROP POLICY IF EXISTS "Acceso total a usuarios autenticados" ON public.clientes;
+
+CREATE POLICY "Acceso total a usuarios autenticados" 
+ON public.clientes 
+FOR ALL 
+TO authenticated 
+USING ( (select auth.uid()) IS NOT NULL )
+WITH CHECK ( (select auth.uid()) IS NOT NULL );
+
+
+-- 2. Optimizar la tabla EXPEDIENTES
+DROP POLICY IF EXISTS "Acceso total a usuarios autenticados" ON public.expedientes;
+
+CREATE POLICY "Acceso total a usuarios autenticados" 
+ON public.expedientes 
+FOR ALL 
+TO authenticated 
+USING ( (select auth.uid()) IS NOT NULL )
+WITH CHECK ( (select auth.uid()) IS NOT NULL );
