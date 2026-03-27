@@ -325,67 +325,77 @@ export default function CasosPage() {
 
       {/* ── MODAL: NUEVO EXPEDIENTE ──────────────────────────── */}
       {mostrarModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-xl border border-gray-200 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-gray-200 flex flex-col max-h-[90vh]">
             
-            <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <FileSignature className="w-5 h-5 text-gray-400" />
+            <div className="px-8 py-5 flex items-center justify-between border-b border-gray-100">
+              <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <FileSignature className="w-6 h-6 text-blue-600" />
                 Apertura de Expediente
               </h3>
               <button 
                 onClick={handleCerrarModal} 
-                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors"
               >
-                &times;
+                <span className="text-2xl leading-none">&times;</span>
               </button>
             </div>
 
-            <div className="px-6 py-4 overflow-y-auto">
-              <form id="expediente-form" onSubmit={handleGuardarCaso} className="space-y-6">
+            <div className="px-8 py-6 overflow-y-auto">
+              <form id="expediente-form" onSubmit={handleGuardarCaso} className="space-y-8">
                 
                 {formError && (
-                  <div className="p-4 rounded-lg bg-red-50 border border-red-200 flex gap-3 text-red-800 text-sm">
-                    <ShieldAlert className="w-5 h-5 flex-shrink-0" />
+                  <div className="p-4 rounded-xl bg-red-50 border border-red-200 flex gap-3 text-red-800 text-base font-medium">
+                    <ShieldAlert className="w-6 h-6 flex-shrink-0" />
                     {formError}
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   {/* COMBO: Identidad y Partes */}
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Sujetos</h4>
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium text-gray-700 block">Cliente Patrocinado *</label>
+                  <div className="space-y-6">
+                    <h4 className="text-sm font-extrabold text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-100 pb-2">
+                       Sujetos
+                    </h4>
+                    <div className="space-y-2">
+                      <label className="text-base font-semibold text-gray-900 block">Cliente Patrocinado *</label>
                       <select 
                         required
-                        className="w-full text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50"
                         value={formData.clienteId}
                         onChange={(e) => setFormData({ ...formData, clienteId: e.target.value })}
                       >
-                        <option value="" disabled>Seleccione cliente</option>
-                        {listaClientes.map(c => <option key={c.id} value={c.id}>{c.nombre_completo}</option>)}
+                        <option value="" disabled>Ej. Marta Rodríguez G.</option>
+                        {listaClientes.map(cliente => (
+                          <option key={cliente.id} value={cliente.id}>
+                            {cliente.nombreCompleto}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium text-gray-700 block">Abogado Responsable *</label>
+                    <div className="space-y-2">
+                      <label className="text-base font-semibold text-gray-900 block">Abogado Responsable *</label>
                       <select 
                         required
-                        className="w-full text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50"
                         value={formData.abogado_id}
                         onChange={(e) => setFormData({ ...formData, abogado_id: e.target.value })}
                       >
-                        <option value="" disabled>Asigne un abogado</option>
-                        {listaAbogados.map(a => <option key={a.id} value={a.id}>{a.nombre_completo}</option>)}
+                        <option value="" disabled>Ej. Lic. Jorge Pérez</option>
+                        {listaAbogados.map(abogado => (
+                          <option key={abogado.id} value={abogado.id}>
+                            {abogado.nombre_completo}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium text-gray-700 block">Parte Contraria *</label>
+                    <div className="space-y-2">
+                      <label className="text-base font-semibold text-gray-900 block">Parte Contraria *</label>
                       <input 
                         required type="text" placeholder="Ej: ACME Corp."
-                        className="w-full text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 placeholder:text-gray-400"
                         value={formData.parteContraria}
                         onChange={(e) => setFormData({ ...formData, parteContraria: e.target.value })}
                       />
@@ -393,29 +403,31 @@ export default function CasosPage() {
                   </div>
 
                   {/* COMBO: Datos del Caso y Flujo Legal */}
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Clasificación Legal</h4>
+                  <div className="space-y-6">
+                    <h4 className="text-sm font-extrabold text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-100 pb-2">
+                      Clasificación Legal
+                    </h4>
                     
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700 block">NUREJ / N° Caso *</label>
+                    <div className="grid grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="text-base font-semibold text-gray-900 block">NUREJ / N° Caso *</label>
                         <div className="relative">
-                          <Hash className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <Hash className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
                           <input 
                             required type="text" placeholder="2024-..."
-                            className="w-full pl-9 text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            className="w-full pl-11 pr-4 py-3 text-base lg:text-lg rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 placeholder:text-gray-400"
                             value={formData.numeroCaso}
                             onChange={(e) => setFormData({ ...formData, numeroCaso: e.target.value })}
                           />
                         </div>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-sm font-medium text-gray-700 block">Juzgado *</label>
+                      <div className="space-y-2">
+                        <label className="text-base font-semibold text-gray-900 block">Juzgado *</label>
                         <div className="relative">
-                          <Gavel className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <Gavel className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
                           <input 
-                            required type="text" placeholder="3ro Público"
-                            className="w-full pl-9 text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            required type="text" placeholder="Ej. 3ro Público"
+                            className="w-full pl-11 pr-4 py-3 text-base lg:text-lg rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 placeholder:text-gray-400"
                             value={formData.juzgado}
                             onChange={(e) => setFormData({ ...formData, juzgado: e.target.value })}
                           />
@@ -423,22 +435,22 @@ export default function CasosPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium text-gray-700 block">Síntesis (Título) *</label>
+                    <div className="space-y-2">
+                      <label className="text-base font-semibold text-gray-900 block">Síntesis (Título) *</label>
                       <input 
-                        required type="text" placeholder="Demanda por..."
-                        className="w-full text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required type="text" placeholder="Ej. Demanda por Divorcio..."
+                        className="w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 placeholder:text-gray-400"
                         value={formData.titulo}
                         onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
                       />
                     </div>
 
                     {/* SELECTS DINÁMICOS DEPENDIENTES */}
-                    <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 mt-2">
-                       <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Materia</label>
+                    <div className="grid grid-cols-2 gap-4 p-5 bg-blue-50/40 rounded-2xl border border-blue-100 mt-4">
+                       <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-800 uppercase tracking-wider block">Materia</label>
                         <select 
-                          className="w-full text-sm py-1.5 px-2 bg-white rounded border-gray-200 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm"
+                          className="w-full text-base lg:text-lg px-3 py-2.5 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition-all"
                           value={formData.materiaSelect}
                           onChange={handleMateriaChange}
                         >
@@ -446,11 +458,11 @@ export default function CasosPage() {
                         </select>
                       </div>
 
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Estado Inicial</label>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-800 uppercase tracking-wider block">Estado Inicial</label>
                         {formData.materiaSelect !== "Otro" ? (
                           <select 
-                            className="w-full text-sm py-1.5 px-2 bg-white rounded border-gray-200 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm"
+                            className="w-full text-base lg:text-lg px-3 py-2.5 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition-all"
                             value={formData.estadoSelect}
                             onChange={(e) => setFormData({ ...formData, estadoSelect: e.target.value })}
                           >
@@ -459,7 +471,7 @@ export default function CasosPage() {
                             ))}
                           </select>
                         ) : (
-                          <div className="h-8 flex items-center text-xs text-gray-400 italic px-2 bg-gray-100 rounded">
+                          <div className="h-[46px] flex items-center text-sm lg:text-base text-gray-500 italic px-4 bg-white border border-gray-200 rounded-lg shadow-sm">
                             Definir manualmente
                           </div>
                         )}
@@ -468,17 +480,17 @@ export default function CasosPage() {
                       {/* Manual Overrides si es "Otro" */}
                       {formData.materiaSelect === "Otro" && (
                         <>
-                          <div className="col-span-1 mt-2">
+                          <div className="col-span-1 mt-1">
                             <input 
                               type="text" required placeholder="Especifique materia..."
-                              className="w-full text-sm py-1.5 px-2 bg-white rounded box-border border border-blue-200 focus:border-blue-500 outline-none shadow-sm"
+                              className="w-full text-base lg:text-lg px-3 py-2.5 bg-white rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition-all placeholder:text-gray-400"
                               value={formData.materiaManual} onChange={(e) => setFormData({...formData, materiaManual: e.target.value})}
                             />
                           </div>
-                          <div className="col-span-1 mt-2">
+                          <div className="col-span-1 mt-1">
                             <input 
                               type="text" required placeholder="Especifique estado..."
-                              className="w-full text-sm py-1.5 px-2 bg-white rounded box-border border border-blue-200 focus:border-blue-500 outline-none shadow-sm"
+                              className="w-full text-base lg:text-lg px-3 py-2.5 bg-white rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition-all placeholder:text-gray-400"
                               value={formData.estadoManual} onChange={(e) => setFormData({...formData, estadoManual: e.target.value})}
                             />
                           </div>
@@ -491,11 +503,11 @@ export default function CasosPage() {
               </form>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 rounded-b-2xl">
+            <div className="px-8 py-5 border-t border-gray-200 bg-gray-50/80 flex justify-end gap-4 rounded-b-2xl">
               <button 
                 type="button" 
                 onClick={handleCerrarModal}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                className="px-6 py-3 text-base font-bold text-gray-700 bg-white border border-gray-300 rounded-xl shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors"
                 disabled={guardando}
               >
                 Cancelar
@@ -503,15 +515,15 @@ export default function CasosPage() {
               <button 
                 type="submit" 
                 form="expediente-form"
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center justify-center min-w-[120px]"
+                className="px-8 py-3 text-base font-bold text-white bg-blue-600 border border-transparent rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all flex items-center justify-center min-w-[160px]"
                 disabled={guardando}
               >
                 {guardando ? (
-                  <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                 ) : (
                   <>
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Registrar
+                    <CheckCircle2 className="w-5 h-5 mr-2" strokeWidth={2.5} />
+                    Registrar Expediente
                   </>
                 )}
               </button>
