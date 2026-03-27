@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
+import { User, Mail, Phone, ExternalLink, Gavel, Hash, FileText, Pencil, Users, UploadCloud, Download, Trash2, FileImage, File, FileSpreadsheet, AlertTriangle } from "lucide-react";
 import { obtenerExpedientePorId, actualizarExpediente } from "../../../../infrastructure/repositories/expedienteRepository";
 import { 
   obtenerDocumentos, 
   subirDocumento, 
   obtenerUrlDescarga, 
-  eliminarDocumento 
+  eliminarDocumento,
+  actualizarVisibilidad 
 } from "../../../../infrastructure/repositories/documentoRepository";
 import { Documento } from "../../../../domain/entities/Documento";
 import { obtenerAbogados } from "../../../../infrastructure/repositories/usuarioRepository";
@@ -73,6 +76,57 @@ export default function DetalleExpedientePage() {
   const [subiendo, setSubiendo] = useState(false);
   const [docError, setDocError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [visibleParaCliente, setVisibleParaCliente] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  /* ── Modal de Eliminación de Documentos ─────────────────────── */
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [documentoToDelete, setDocumentoToDelete] = useState<Documento | null>(null);
+  const [eliminandoDoc, setEliminandoDoc] = useState(false);
+
+  /* ── Helpers para íconos de tipo de archivo ─────────────────── */
+  const getFileIcon = (nombre: string) => {
+    const ext = nombre.split('.').pop()?.toLowerCase() || '';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return <FileImage className="w-5 h-5" />;
+    if (['xls', 'xlsx', 'csv'].includes(ext)) return <FileSpreadsheet className="w-5 h-5" />;
+    if (['doc', 'docx', 'txt', 'pdf'].includes(ext)) return <FileText className="w-5 h-5" />;
+    return <File className="w-5 h-5" />;
+  };
+
+  const handleToggleVisibilidad = async (docId: string, nuevoValor: boolean) => {
+    const exito = await actualizarVisibilidad(docId, nuevoValor);
+    if (exito) {
+      setDocumentos(prev => prev.map(d => d.id === docId ? { ...d, visibleCliente: nuevoValor } : d));
+    } else {
+      setDocError('No se pudo cambiar la visibilidad del documento.');
+    }
+  };
+
+  /* ── Drag & Drop handlers ───────────────────────────────────── */
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      // Reutiliza la lógica existente: simula un evento de input
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      if (fileInputRef.current) {
+        fileInputRef.current.files = dataTransfer.files;
+        fileInputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+  }, []);
 
   useEffect(() => {
     async function cargarDetalle() {
@@ -136,7 +190,7 @@ export default function DetalleExpedientePage() {
     setDocError("");
     
     try {
-      const nuevoDoc = await subirDocumento(idCaso, file);
+      const nuevoDoc = await subirDocumento(idCaso, file, visibleParaCliente);
       if (nuevoDoc) {
         await cargarListaDocumentos();
       } else {
@@ -160,16 +214,32 @@ export default function DetalleExpedientePage() {
     }
   };
 
-  const handleEliminar = async (ruta: string) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este documento permanentemente?")) return;
+  const handleEliminar = (doc: Documento) => {
+    setDocumentoToDelete(doc);
+    setIsDeleteModalOpen(true);
+  };
+
+  const cancelarEliminacion = () => {
+    setIsDeleteModalOpen(false);
+    setDocumentoToDelete(null);
+  };
+
+  const confirmarEliminacion = async () => {
+    if (!documentoToDelete) return;
     
+    setEliminandoDoc(true);
     setDocError("");
-    const exito = await eliminarDocumento(ruta);
+    
+    const exito = await eliminarDocumento(documentoToDelete.id, documentoToDelete.ruta);
     if (exito) {
       await cargarListaDocumentos();
+      setIsDeleteModalOpen(false);
+      setDocumentoToDelete(null);
     } else {
       setDocError("No se pudo eliminar el archivo. Puede que otra persona ya lo haya borrado.");
+      setIsDeleteModalOpen(false);
     }
+    setEliminandoDoc(false);
   };
 
   /* ── Cambiar estado del expediente ──────────────────────────── */
@@ -331,101 +401,209 @@ export default function DetalleExpedientePage() {
       >
 
         {pestañaActiva === "info" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-base font-bold mb-4 pb-2 flex items-center gap-2
-                             text-[var(--color-text-primary)] border-b border-[var(--color-surface-border)]">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg> Datos del Cliente
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Nombre</span>
-                  <p className="text-sm font-medium mt-0.5 text-[var(--color-text-primary)]">{caso.cliente.nombre_completo}</p>
-                </div>
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Email</span>
-                  <p className="text-sm font-medium mt-0.5 text-[var(--color-text-primary)]">{caso.cliente?.email || "No registrado"}</p>
-                </div>
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Teléfono</span>
-                  <p className="text-sm font-medium mt-0.5 text-[var(--color-text-primary)]">{"No registrado"}</p>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-base font-bold mb-4 pb-2 flex items-center gap-2
-                             text-[var(--color-text-primary)] border-b border-[var(--color-surface-border)]">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M12 2l10 5H2l10-5z" /></svg> Detalles Judiciales
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Juzgado</span>
-                  <p className="text-sm font-medium mt-0.5 text-[var(--color-text-primary)]">{caso.juzgado}</p>
-                </div>
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Título</span>
-                  <p className="text-sm font-medium mt-0.5 text-[var(--color-text-primary)]">{caso.titulo}</p>
-                </div>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-              <h3 className="text-base font-bold mt-8 mb-4 pb-2 flex items-center gap-2
-                             text-[var(--color-text-primary)] border-b border-[var(--color-surface-border)]">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg> Asignación Interna
-              </h3>
-              <div className="space-y-3">
+            {/* ── TARJETA 1: Datos del Cliente (Solo Lectura, Accionable) ── */}
+            <div className="p-5 sm:p-6 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-surface-border)] shadow-[var(--shadow-sm)]">
+              <div className="flex items-center justify-between mb-5 pb-3 border-b border-[var(--color-surface-border)]">
+                <h3 className="text-base font-bold flex items-center gap-2.5 text-[var(--color-text-primary)]">
+                  <User className="w-[18px] h-[18px] text-[var(--color-gold)]" strokeWidth={2} />
+                  Datos del Cliente
+                </h3>
+                <Link
+                  href={`/dashboard/clientes/${caso.clienteId || ''}`}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-gold)] hover:text-[var(--color-text-primary)] transition-colors px-2.5 py-1.5 rounded-md hover:bg-[var(--color-gold-dim)]"
+                >
+                  Ir al Perfil
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+              <div className="space-y-4">
                 <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Abogado Responsable</span>
-                  <div className="mt-1 flex items-center gap-2">
-                    <select
-                      value={caso.abogado_id || ""}
-                      onChange={(e) => handleChangeAbogado(e.target.value)}
-                      disabled={cambiandoAbogado}
-                      className="w-full px-3 py-2 text-sm rounded-md border border-[var(--color-surface-border)]
-                                 bg-[var(--color-surface-card)] text-[var(--color-text-primary)]
-                                 focus:outline-none focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)] disabled:opacity-50"
-                    >
-                      <option value="" disabled>Seleccione un abogado</option>
-                      {abogados.map(a => (
-                        <option key={a.id} value={a.id}>{a.nombre_completo}</option>
-                      ))}
-                    </select>
-                    {cambiandoAbogado && (
-                      <div className="w-4 h-4 rounded-full border-2 border-[var(--color-surface-border)] border-t-[var(--color-gold)] animate-spin shrink-0" />
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] block mb-1">Nombre</span>
+                  <div className="flex items-center gap-2.5">
+                    <User className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" strokeWidth={1.5} />
+                    <p className="text-base font-medium text-[var(--color-text-primary)]">{caso.cliente?.nombre_completo || "—"}</p>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] block mb-1">Email</span>
+                  <div className="flex items-center gap-2.5">
+                    <Mail className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" strokeWidth={1.5} />
+                    {caso.cliente?.email && caso.cliente.email !== "No registrado" ? (
+                      <a
+                        href={`mailto:${caso.cliente.email}`}
+                        className="text-base font-medium text-[var(--color-info)] hover:underline transition-colors"
+                      >
+                        {caso.cliente.email}
+                      </a>
+                    ) : (
+                      <p className="text-base font-medium text-[var(--color-text-muted)] italic">No registrado</p>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] block mb-1">Teléfono</span>
+                  <div className="flex items-center gap-2.5">
+                    <Phone className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" strokeWidth={1.5} />
+                    {caso.cliente?.telefono && caso.cliente.telefono !== "No registrado" ? (
+                      <a
+                        href={`https://wa.me/${caso.cliente.telefono.replace(/\s+/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-base font-medium text-[#25D366] hover:underline transition-colors"
+                      >
+                        {caso.cliente.telefono}
+                      </a>
+                    ) : (
+                      <p className="text-base font-medium text-[var(--color-text-muted)] italic">No registrado</p>
                     )}
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* ── TARJETA 2: Detalles Judiciales (Con NUREJ y Editar) ── */}
+            <div className="p-5 sm:p-6 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-surface-border)] shadow-[var(--shadow-sm)]">
+              <div className="flex items-center justify-between mb-5 pb-3 border-b border-[var(--color-surface-border)]">
+                <h3 className="text-base font-bold flex items-center gap-2.5 text-[var(--color-text-primary)]">
+                  <Gavel className="w-[18px] h-[18px] text-[var(--color-gold)]" strokeWidth={2} />
+                  Detalles Judiciales
+                </h3>
+                <button
+                  onClick={() => alert('Próximamente: Modal de edición de expediente')}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors px-2.5 py-1.5 rounded-md hover:bg-[var(--color-surface-hover)]"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Editar
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] block mb-1">NUREJ / Nº Caso</span>
+                  <div className="flex items-center gap-2.5">
+                    <Hash className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" strokeWidth={1.5} />
+                    <p className="text-base font-medium text-[var(--color-text-primary)]">{caso.numeroCaso || "—"}</p>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] block mb-1">Juzgado</span>
+                  <div className="flex items-center gap-2.5">
+                    <Gavel className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" strokeWidth={1.5} />
+                    <p className="text-base font-medium text-[var(--color-text-primary)]">{caso.juzgado || "—"}</p>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] block mb-1">Título / Síntesis</span>
+                  <div className="flex items-center gap-2.5">
+                    <FileText className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" strokeWidth={1.5} />
+                    <p className="text-base font-medium text-[var(--color-text-primary)]">{caso.titulo || "—"}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── TARJETA 3: Asignación Interna (col-span completo) ── */}
+            <div className="lg:col-span-2 p-5 sm:p-6 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-surface-border)] shadow-[var(--shadow-sm)]">
+              <div className="flex items-center justify-between mb-5 pb-3 border-b border-[var(--color-surface-border)]">
+                <h3 className="text-base font-bold flex items-center gap-2.5 text-[var(--color-text-primary)]">
+                  <Users className="w-[18px] h-[18px] text-[var(--color-gold)]" strokeWidth={2} />
+                  Asignación Interna
+                </h3>
+              </div>
+              <div className="max-w-md">
+                <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] block mb-2">Abogado Responsable</span>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={caso.abogado_id || ""}
+                    onChange={(e) => handleChangeAbogado(e.target.value)}
+                    disabled={cambiandoAbogado}
+                    className="w-full px-4 py-2.5 text-sm font-medium rounded-lg border border-gray-200
+                               bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm
+                               focus:outline-none focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)]
+                               disabled:opacity-50 transition-all"
+                  >
+                    <option value="" disabled>Seleccione un abogado</option>
+                    {abogados.map(a => (
+                      <option key={a.id} value={a.id}>{a.nombre_completo}</option>
+                    ))}
+                  </select>
+                  {cambiandoAbogado && (
+                    <div className="w-5 h-5 rounded-full border-2 border-[var(--color-surface-border)] border-t-[var(--color-gold)] animate-spin shrink-0" />
+                  )}
+                </div>
+              </div>
+            </div>
+
           </div>
         )}
 
         {pestañaActiva === "docs" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pb-3 border-b border-[var(--color-surface-border)]">
-              <h3 className="text-base font-bold text-[var(--color-text-primary)]">
-                Documentos Adjuntos
-              </h3>
-              <div className="flex items-center gap-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  onChange={handleSubirArchivo}
-                  disabled={subiendo}
-                />
-                <Button
-                  variant="primary"
-                  size="sm"
-                  loading={subiendo}
-                  onClick={handleTriggerFileInput}
+
+            {/* ── Zona de Drag & Drop + Toggle de Visibilidad ──── */}
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
+                isDragging
+                  ? 'border-blue-400 bg-blue-50/60 scale-[1.01]'
+                  : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+              }`}
+            >
+              <UploadCloud className={`w-10 h-10 mx-auto mb-3 transition-colors ${
+                isDragging ? 'text-blue-500' : 'text-gray-400'
+              }`} strokeWidth={1.5} />
+              <p className="text-sm font-semibold text-gray-700 mb-1">
+                Arrastra un archivo aquí
+              </p>
+              <p className="text-xs text-gray-500 mb-4">
+                o selecciona uno desde tu equipo
+              </p>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleSubirArchivo}
+                disabled={subiendo}
+              />
+              <button
+                onClick={handleTriggerFileInput}
+                disabled={subiendo}
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all disabled:opacity-50"
+              >
+                {subiendo ? (
+                  <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                ) : (
+                  <UploadCloud className="w-4 h-4" />
+                )}
+                {subiendo ? 'Subiendo...' : 'Seleccionar Archivo'}
+              </button>
+
+              {/* ── Toggle: Visible para el cliente ──────────────── */}
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={visibleParaCliente}
+                  onClick={() => setVisibleParaCliente(!visibleParaCliente)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                    visibleParaCliente ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
                 >
-                  {subiendo ? "Subiendo..." : "Subir Archivo"}
-                </Button>
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+                      visibleParaCliente ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+                <span className={`text-sm font-medium transition-colors ${
+                  visibleParaCliente ? 'text-green-700' : 'text-gray-500'
+                }`}>
+                  {visibleParaCliente ? 'Visible para el cliente' : 'Solo uso interno'}
+                </span>
               </div>
             </div>
 
@@ -433,69 +611,107 @@ export default function DetalleExpedientePage() {
               {docError}
             </Alert>
 
-            {cargandoDocs ? (
-              <div className="flex justify-center py-12">
-                <div className="w-8 h-8 rounded-full border-2 border-[var(--color-surface-border)] border-t-[var(--color-gold)] animate-spin" />
-              </div>
-            ) : documentos.length === 0 ? (
-              <div className="text-center py-12 bg-[var(--color-surface-hover)] border border-dashed border-[var(--color-surface-border)] rounded-xl">
-                <div className="mb-3 opacity-40">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                  </svg>
+            {/* ── Tabla de Documentos (Datos Reales) ─────────────── */}
+            <div className="bg-white shadow-sm border border-gray-100 rounded-xl overflow-hidden">
+              {cargandoDocs ? (
+                <div className="flex justify-center py-16">
+                  <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-blue-500 animate-spin" />
                 </div>
-                <p className="font-medium text-[var(--color-text-secondary)]">No hay documentos aún</p>
-                <p className="text-sm mt-1 text-[var(--color-text-muted)]">Sube el primer archivo para este expediente.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3">
-                {documentos.map((doc) => (
-                  <div 
-                    key={doc.ruta} 
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg bg-[var(--color-surface-hover)] border border-[var(--color-surface-border)] gap-4 transition-colors hover:bg-[var(--color-surface-card)]"
-                  >
-                    <div className="flex items-start gap-3 overflow-hidden">
-                      <div className="mt-1 text-[var(--color-gold)] shrink-0">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                          <polyline points="14 2 14 8 20 8" />
-                        </svg>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-[var(--color-text-primary)] truncate" title={doc.nombre}>
-                          {doc.nombre}
-                        </p>
-                        <div className="flex items-center gap-3 text-xs text-[var(--color-text-muted)] mt-1">
-                          <span>{(doc.tamaño / 1024 / 1024).toFixed(2)} MB</span>
-                          <span className="w-1 h-1 rounded-full bg-[var(--color-text-muted)] opacity-50"></span>
-                          <span>{doc.fechaSubida.toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDescargar(doc.ruta)}
-                        className="text-[var(--color-info)] hover:bg-[var(--color-info-bg)]"
-                      >
-                        Descargar
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEliminar(doc.ruta)}
-                        className="text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)]"
-                      >
-                        Eliminar
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+              ) : (
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-gray-50/80 border-b border-gray-200">
+                      <th className="py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nombre</th>
+                      <th className="py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Fecha</th>
+                      <th className="py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Subido Por</th>
+                      <th className="py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Visibilidad</th>
+                      <th className="py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {documentos.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-16 text-center">
+                          <File className="w-10 h-10 mx-auto text-gray-300 mb-3" strokeWidth={1.5} />
+                          <p className="text-sm font-medium text-gray-500">No hay documentos aún</p>
+                          <p className="text-xs text-gray-400 mt-1">Sube el primer archivo para este expediente.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      documentos.map((doc) => (
+                        <tr key={doc.id} className="hover:bg-gray-50/50 transition-colors group">
+                          {/* Nombre + Ícono */}
+                          <td className="py-3.5 px-5">
+                            <div className="flex items-center gap-3">
+                              <div className="text-gray-400 group-hover:text-blue-500 transition-colors shrink-0">
+                                {getFileIcon(doc.nombre)}
+                              </div>
+                              <span className="text-sm font-medium text-gray-900 truncate max-w-[200px]" title={doc.nombre}>
+                                {doc.nombre}
+                              </span>
+                            </div>
+                          </td>
+                          {/* Fecha */}
+                          <td className="py-3.5 px-5 hidden sm:table-cell">
+                            <span className="text-sm text-gray-600">{doc.fechaSubida.toLocaleDateString()}</span>
+                          </td>
+                          {/* Subido Por */}
+                          <td className="py-3.5 px-5 hidden md:table-cell">
+                            <span className="text-sm text-gray-600">{doc.subidoPor}</span>
+                          </td>
+                          {/* Visibilidad Badge + Mini Toggle */}
+                          <td className="py-3.5 px-5">
+                            <div className="flex items-center gap-2.5">
+                              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                doc.visibleCliente
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {doc.visibleCliente ? 'Público' : 'Interno'}
+                              </span>
+                              <button
+                                type="button"
+                                role="switch"
+                                aria-checked={doc.visibleCliente}
+                                onClick={() => handleToggleVisibilidad(doc.id, !doc.visibleCliente)}
+                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                                  doc.visibleCliente ? 'bg-green-500' : 'bg-gray-300'
+                                }`}
+                              >
+                                <span
+                                  className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200 ${
+                                    doc.visibleCliente ? 'translate-x-4' : 'translate-x-0'
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          </td>
+                          {/* Acciones */}
+                          <td className="py-3.5 px-5 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => handleDescargar(doc.ruta)}
+                                className="p-2 rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                title="Descargar"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleEliminar(doc)}
+                                className="p-2 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                title="Eliminar"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         )}
 
@@ -587,8 +803,57 @@ export default function DetalleExpedientePage() {
             </div>
           </div>
         )}
-
       </div>
+
+      {/* ── Modal de Confirmación de Eliminación ────────────────────── */}
+      {isDeleteModalOpen && documentoToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" 
+            onClick={cancelarEliminacion} 
+          />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-5">
+                <AlertTriangle className="h-8 w-8 text-red-600" aria-hidden="true" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                ¿Eliminar permanentemente?
+              </h3>
+              <p className="text-sm text-gray-500 mb-6 px-2">
+                Estás a punto de eliminar el archivo <span className="font-semibold text-gray-800">'{documentoToDelete.nombre}'</span>. Esta acción es irreversible y el documento se borrará del Storage y de la base de datos.
+              </p>
+              
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={cancelarEliminacion}
+                  disabled={eliminandoDoc}
+                  className="w-full inline-flex justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 sm:w-auto transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmarEliminacion}
+                  disabled={eliminandoDoc}
+                  className="w-full inline-flex justify-center rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 sm:w-auto transition-colors disabled:opacity-50"
+                >
+                  {eliminandoDoc ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      Eliminando...
+                    </div>
+                  ) : (
+                    "Sí, eliminar"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

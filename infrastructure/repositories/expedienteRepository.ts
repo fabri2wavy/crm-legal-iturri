@@ -86,7 +86,7 @@ export async function obtenerExpedientePorId(id: string): Promise<any | null> {
 
   const { data, error } = await supabase
     .from('expedientes')
-    .select('*, cliente:perfiles!cliente_id(nombre_completo), abogado:perfiles!abogado_asignado_id(nombre_completo)')
+    .select('*, cliente:perfiles!cliente_id(id, nombre_completo, telefono), abogado:perfiles!abogado_asignado_id(id, nombre_completo, telefono)')
     .eq('id', id)
     .single();
 
@@ -105,7 +105,13 @@ export async function obtenerExpedientePorId(id: string): Promise<any | null> {
     informeDespacho: data.informe_despacho,
     informeCliente: data.informe_cliente,
     estado: data.estado,
-    cliente: data.cliente,
+    clienteId: data.cliente_id,
+    cliente: {
+      id: data.cliente?.id || '',
+      nombre_completo: data.cliente?.nombre_completo || 'Cliente no asignado',
+      telefono: data.cliente?.telefono || 'No registrado',
+      email: 'No registrado' // No existe en la tabla perfiles
+    },
     abogado_id: data.abogado_asignado_id,
     abogado_nombre: data.abogado?.nombre_completo || 'Sin asignar',
     fechaCreacion: new Date(data.fecha_creacion)
