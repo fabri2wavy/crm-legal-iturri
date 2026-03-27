@@ -10,6 +10,7 @@ import {
   eliminarDocumento 
 } from "../../../../infrastructure/repositories/documentoRepository";
 import { Documento } from "../../../../domain/entities/Documento";
+import { obtenerAbogados } from "../../../../infrastructure/repositories/usuarioRepository";
 import { Button } from "../../../../components/ui/Button";
 import { FormField } from "../../../../components/ui/FormField";
 import { Alert } from "../../../../components/ui/Alert";
@@ -57,6 +58,8 @@ export default function DetalleExpedientePage() {
   const [caso, setCaso] = useState<any>(null);
   const [cargando, setCargando] = useState(true);
   const [pestañaActiva, setPestañaActiva] = useState("informe");
+  const [abogados, setAbogados] = useState<any[]>([]);
+  const [cambiandoAbogado, setCambiandoAbogado] = useState(false);
 
   /* ── Estados para la Edición ────────────────────────────────── */
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -73,8 +76,12 @@ export default function DetalleExpedientePage() {
 
   useEffect(() => {
     async function cargarDetalle() {
-      const data = await obtenerExpedientePorId(idCaso);
+      const [data, listaAbogados] = await Promise.all([
+        obtenerExpedientePorId(idCaso),
+        obtenerAbogados()
+      ]);
       setCaso(data);
+      setAbogados(listaAbogados);
       if (data) {
         setTextosEdicion({ despacho: data.informeDespacho, cliente: data.informeCliente });
       }
@@ -82,6 +89,19 @@ export default function DetalleExpedientePage() {
     }
     cargarDetalle();
   }, [idCaso]);
+
+  const handleChangeAbogado = async (nuevoId: string) => {
+    setErrorMsg("");
+    setCambiandoAbogado(true);
+    const exito = await actualizarExpediente(idCaso, { abogado_id: nuevoId });
+    if (exito) {
+      const abogadoSel = abogados.find(a => a.id === nuevoId);
+      setCaso((prev: any) => ({ ...prev, abogado_id: nuevoId, abogado_nombre: abogadoSel?.nombre_completo || "Sin asignar" }));
+    } else {
+      setErrorMsg("Error al reasignar el abogado.");
+    }
+    setCambiandoAbogado(false);
+  };
 
   /* ── Efecto para Cargar Documentos ──────────────────────────── */
   useEffect(() => {
@@ -323,12 +343,12 @@ export default function DetalleExpedientePage() {
                   <p className="text-sm font-medium mt-0.5 text-[var(--color-text-primary)]">{caso.cliente.nombre_completo}</p>
                 </div>
                 <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">CI</span>
-                  <p className="text-sm font-medium mt-0.5 text-[var(--color-text-primary)]">{caso.cliente.carnet_identidad}</p>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Email</span>
+                  <p className="text-sm font-medium mt-0.5 text-[var(--color-text-primary)]">{caso.cliente?.email || "No registrado"}</p>
                 </div>
                 <div>
                   <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Teléfono</span>
-                  <p className="text-sm font-medium mt-0.5 text-[var(--color-text-primary)]">{caso.cliente.telefono || "No registrado"}</p>
+                  <p className="text-sm font-medium mt-0.5 text-[var(--color-text-primary)]">{"No registrado"}</p>
                 </div>
               </div>
             </div>
@@ -345,6 +365,39 @@ export default function DetalleExpedientePage() {
                 <div>
                   <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Título</span>
                   <p className="text-sm font-medium mt-0.5 text-[var(--color-text-primary)]">{caso.titulo}</p>
+                </div>
+              </div>
+
+              <h3 className="text-base font-bold mt-8 mb-4 pb-2 flex items-center gap-2
+                             text-[var(--color-text-primary)] border-b border-[var(--color-surface-border)]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg> Asignación Interna
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Abogado Responsable</span>
+                  <div className="mt-1 flex items-center gap-2">
+                    <select
+                      value={caso.abogado_id || ""}
+                      onChange={(e) => handleChangeAbogado(e.target.value)}
+                      disabled={cambiandoAbogado}
+                      className="w-full px-3 py-2 text-sm rounded-md border border-[var(--color-surface-border)]
+                                 bg-[var(--color-surface-card)] text-[var(--color-text-primary)]
+                                 focus:outline-none focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)] disabled:opacity-50"
+                    >
+                      <option value="" disabled>Seleccione un abogado</option>
+                      {abogados.map(a => (
+                        <option key={a.id} value={a.id}>{a.nombre_completo}</option>
+                      ))}
+                    </select>
+                    {cambiandoAbogado && (
+                      <div className="w-4 h-4 rounded-full border-2 border-[var(--color-surface-border)] border-t-[var(--color-gold)] animate-spin shrink-0" />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

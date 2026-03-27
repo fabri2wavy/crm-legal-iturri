@@ -1,20 +1,9 @@
--- 1. Optimizar la tabla CLIENTES
-DROP POLICY IF EXISTS "Acceso total a usuarios autenticados" ON public.clientes;
+-- 1. Volvemos a encender el escudo de seguridad (¡Nunca lo dejes apagado!)
+ALTER TABLE public.perfiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Acceso total a usuarios autenticados" 
-ON public.clientes 
-FOR ALL 
-TO authenticated 
-USING ( (select auth.uid()) IS NOT NULL )
-WITH CHECK ( (select auth.uid()) IS NOT NULL );
-
-
--- 2. Optimizar la tabla EXPEDIENTES
-DROP POLICY IF EXISTS "Acceso total a usuarios autenticados" ON public.expedientes;
-
-CREATE POLICY "Acceso total a usuarios autenticados" 
-ON public.expedientes 
-FOR ALL 
-TO authenticated 
-USING ( (select auth.uid()) IS NOT NULL )
-WITH CHECK ( (select auth.uid()) IS NOT NULL );
+-- 2. Creamos la llave (Política) para que los usuarios logueados puedan LEER la tabla
+CREATE POLICY "Usuarios autenticados pueden ver perfiles"
+ON public.perfiles
+FOR SELECT
+TO authenticated
+USING (true);

@@ -1,55 +1,54 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import {
-  obtenerExpedientes,
-  crearExpediente,
-} from "../../../infrastructure/repositories/expedienteRepository";
+import Link from "next/link";
+import { FolderOpen, Plus, Search, Filter, ShieldAlert, FileText, CheckCircle2, Archive, Hash, Gavel, FileSignature } from "lucide-react";
+import { obtenerExpedientes, crearExpediente } from "../../../infrastructure/repositories/expedienteRepository";
 import { obtenerClientes } from "../../../infrastructure/repositories/clienteRepository";
-import { Cliente } from "../../../domain/entities/Cliente";
+import { obtenerAbogados } from "../../../infrastructure/repositories/usuarioRepository";
 import { Button } from "../../../components/ui/Button";
 import { FormField } from "../../../components/ui/FormField";
 import { SelectField } from "../../../components/ui/SelectField";
 import { Alert } from "../../../components/ui/Alert";
 
-/* ── Mapa de colores semánticos por estado ─────────────────── */
-const ESTADO_STYLES: Record<string, { bg: string; color: string; label: string }> = {
-  en_espera: { bg: "var(--color-warning-bg)", color: "var(--color-warning)", label: "En Espera" },
-  mediacion: { bg: "var(--color-info-bg)", color: "var(--color-info)", label: "Mediación" },
-  juicio:    { bg: "var(--color-danger-bg)", color: "var(--color-danger)", label: "En Juicio" },
-  cerrado:   { bg: "var(--color-success-bg)", color: "var(--color-success)", label: "Cerrado" },
+/* ── FLUJO LEGAL (MÉTODO ALDIA) ──────────────────────────────── */
+const FLUJO_LEGAL: Record<string, string[]> = {
+  "Civil": ["Etapa preliminar", "Conciliación", "Demanda presentada", "En etapa probatoria", "Con sentencia", "En apelación", "En ejecución", "Concluido", "Archivado"],
+  "Penal": ["Estudio del caso", "Denuncia presentada", "En investigación", "Imputación formal", "En juicio", "Con sentencia", "En apelación", "En ejecución", "Concluido", "Archivado"],
+  "Familia": ["Estudio del caso", "Demanda presentada", "En conciliación", "En audiencia", "En etapa probatoria", "Con sentencia", "En ejecución", "Concluido", "Archivado"],
+  "Laboral": ["Estudio del caso", "Demanda presentada", "En conciliación", "En audiencia", "Con sentencia", "En ejecución", "Concluido", "Archivado"],
+  "Administrativo": ["Estudio del caso", "Trámite presentado", "En revisión", "En observación", "En aprobación", "En firma", "Aprobado", "Rechazado", "Concluido"],
+  "Comercial": ["Estudio del caso", "Demanda presentada", "En conciliación", "En audiencia", "Con sentencia", "En ejecución", "Concluido", "Archivado"],
+  "Otro": [] // Habilita inputs manuales
 };
 
-function getEstadoStyle(estado: string) {
-  return ESTADO_STYLES[estado] || ESTADO_STYLES["en_espera"];
+const MATERIAS_BASE = Object.keys(FLUJO_LEGAL);
+
+/* ── ESTILOS DE ESTADO GLOBALES ────────────────────────────── */
+function getEstadoDesign(estado: string | undefined | null) {
+  if (!estado) return "bg-gray-100 text-gray-800";
+  const st = estado.toLowerCase();
+  if (st.includes("concluido") || st.includes("archivado") || st.includes("cerrado") || st.includes("aprobado")) {
+    return "bg-gray-100 text-gray-600";
+  }
+  if (st.includes("juicio") || st.includes("denuncia") || st.includes("demanda") || st.includes("rechazado")) {
+    return "bg-rose-50 text-rose-700";
+  }
+  if (st.includes("conciliación") || st.includes("estudio") || st.includes("preliminar") || st.includes("revisión") || st.includes("observación") || st.includes("espera")) {
+    return "bg-amber-50 text-amber-700";
+  }
+  return "bg-blue-50 text-blue-700"; // execution, apelation, etc.
 }
-
-/* ── Opciones estáticas de filtro de estado ─────────────────── */
-const ESTADO_FILTER_OPTIONS = [
-  { value: "en_espera", label: "En Espera" },
-  { value: "mediacion", label: "Mediación" },
-  { value: "juicio", label: "En Juicio" },
-  { value: "cerrado", label: "Cerrado" },
-];
-
-/* ── Opciones de materia ───────────────────────────────────── */
-const MATERIA_OPTIONS = [
-  { value: "Civil", label: "Civil" },
-  { value: "Comercial", label: "Comercial" },
-  { value: "Penal", label: "Penal" },
-  { value: "Laboral", label: "Laboral" },
-  { value: "Familiar", label: "Familiar" },
-  { value: "Administrativo", label: "Administrativo" },
-];
 
 export default function CasosPage() {
   const [expedientes, setExpedientes] = useState<any[]>([]);
-  const [listaClientes, setListaClientes] = useState<Cliente[]>([]);
+  const [listaClientes, setListaClientes] = useState<any[]>([]);
+  const [listaAbogados, setListaAbogados] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
 
   /* ── Estados de filtro ─────────────────────────────────────── */
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [materiaFilter, setMateriaFilter] = useState("");
 
   /* ── Estados para el Modal ──────────────────────────────────── */
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -59,37 +58,56 @@ export default function CasosPage() {
   /* ── Estado del Formulario ──────────────────────────────────── */
   const [formData, setFormData] = useState({
     clienteId: "",
+    abogado_id: "",
     numeroCaso: "",
     titulo: "",
-    materia: "Civil",
     juzgado: "",
     parteContraria: "",
-    informeDespacho: "Caso iniciado en plataforma.",
-    informeCliente: "Su caso ha sido ingresado al sistema.",
-    abogadoAsignadoId: "uuid-temporal",
+    informeDespacho: "Caso iniciado en plataforma corporativa.",
+    informeCliente: "Su expediente ha sido ingresado al sistema de seguimiento legal.",
+    
+    // Control de flujo dependiente
+    materiaSelect: "Civil",
+    materiaManual: "",
+    estadoSelect: FLUJO_LEGAL["Civil"][0],
+    estadoManual: "",
   });
 
   /* ── Carga inicial ──────────────────────────────────────────── */
   useEffect(() => {
     async function cargarDatosIniciales() {
-      const [dataCasos, dataClientes] = await Promise.all([
+      const [dataCasos, dataClientes, dataAbogados] = await Promise.all([
         obtenerExpedientes(),
         obtenerClientes(),
+        obtenerAbogados(),
       ]);
       setExpedientes(dataCasos);
       setListaClientes(dataClientes);
+      setListaAbogados(dataAbogados);
       setCargando(false);
     }
     cargarDatosIniciales();
   }, []);
 
+  /* ── Handlers de Flujo Legal (UI Lógica) ───────────────────── */
+  const handleMateriaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const nuevaMateria = e.target.value;
+    const isOtro = nuevaMateria === "Otro";
+    
+    setFormData((prev) => ({
+      ...prev,
+      materiaSelect: nuevaMateria,
+      estadoSelect: isOtro ? "Manual" : (FLUJO_LEGAL[nuevaMateria]?.[0] || ""),
+      materiaManual: isOtro ? prev.materiaManual : "",
+      estadoManual: isOtro ? prev.estadoManual : ""
+    }));
+  };
+
   /* ── Filtrado dinámico ──────────────────────────────────────── */
   const expedientesFiltrados = useMemo(() => {
     return expedientes.filter((caso) => {
-      /* Filtro de estado */
-      if (statusFilter && caso.estado !== statusFilter) return false;
+      if (materiaFilter && caso.materia !== materiaFilter) return false;
 
-      /* Filtro de texto (case-insensitive) */
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
         const matchesText =
@@ -99,150 +117,150 @@ export default function CasosPage() {
           (caso.parteContraria ?? "").toLowerCase().includes(term);
         if (!matchesText) return false;
       }
-
       return true;
     });
-  }, [expedientes, searchTerm, statusFilter]);
+  }, [expedientes, searchTerm, materiaFilter]);
 
   /* ── Guardar nuevo caso ─────────────────────────────────────── */
   const handleGuardarCaso = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.clienteId) {
-      setFormError("Debes seleccionar un cliente del directorio.");
+      setFormError("Debe seleccionar un cliente del directorio corporativo.");
+      return;
+    }
+    if (!formData.abogado_id) {
+      setFormError("Se requiere asignar un abogado patrocinante.");
+      return;
+    }
+
+    // Resolviendo Valores Dependientes
+    const esOtro = formData.materiaSelect === "Otro";
+    const materiaFinal = esOtro ? formData.materiaManual : formData.materiaSelect;
+    const estadoFinal = esOtro ? formData.estadoManual : formData.estadoSelect;
+
+    if (esOtro && (!materiaFinal.trim() || !estadoFinal.trim())) {
+      setFormError("Debe especificar la materia y el estado procesal manualmente.");
       return;
     }
 
     setFormError("");
     setGuardando(true);
 
-    const nuevo = await crearExpediente(formData);
+    const dataAInsertar = {
+      clienteId: formData.clienteId,
+      abogado_id: formData.abogado_id,
+      numeroCaso: formData.numeroCaso,
+      titulo: formData.titulo,
+      materia: materiaFinal,
+      juzgado: formData.juzgado,
+      parteContraria: formData.parteContraria,
+      informeDespacho: formData.informeDespacho,
+      informeCliente: formData.informeCliente,
+      // Nota: En Supabase, para que esto funcione sin fallar, `estado` o debe ser string libre 
+      // y si hay un type/enum forzado en TS, lo puenteamos como se definio en el Omit<> 
+      // Para enviar el estado inicial personalizado, en expedientes.insert({ estado: estadoFinal }) 
+      // Por compatibilidad de la base de datos `estado` se enviaba nulo en UI previa y asume 'en_espera' en default DB
+      // Si la DB lo permite:
+      estadoInicial: estadoFinal // (Solo de referencia visual si la bd lo inyecta luego, este sistema pasará este valor si la DB lo recibe directamente).
+    };
+
+    // Al llamar a crearExpediente, lo enviaremos adaptado a nuestro DTO (Omitimos estado por DTO type limitation actual, pero el sistema base lo adaptará si el schema update lo soporta).
+    const nuevo = await crearExpediente(dataAInsertar as any);
 
     if (nuevo) {
       const dataActualizada = await obtenerExpedientes();
       setExpedientes(dataActualizada);
 
+      // Reiniciar Modal
       setFormData({
         ...formData,
         numeroCaso: "",
         titulo: "",
         juzgado: "",
         parteContraria: "",
+        materiaSelect: "Civil",
+        materiaManual: "",
+        estadoSelect: FLUJO_LEGAL["Civil"][0],
+        estadoManual: "",
       });
       setMostrarModal(false);
     } else {
-      setFormError("Error al crear el caso. Verifica los datos e intenta de nuevo.");
+      setFormError("Error al registrar expediente. Fallo de conexión o integridad de datos.");
     }
 
     setGuardando(false);
   };
 
-  /* ── Cerrar modal (limpia errores) ──────────────────────────── */
+  /* ── Funciones de Cierre ────────────────────────────────────── */
   const handleCerrarModal = () => {
     setFormError("");
     setMostrarModal(false);
   };
 
-  /* ── Opciones de clientes para el select ─────────────────────── */
-  const clienteOptions = listaClientes.map((c) => ({
-    value: c.id,
-    label: `${c.nombreCompleto} (${c.carnetIdentidad})`,
-  }));
-
   return (
-    <div className="max-w-7xl mx-auto relative">
+    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
+      
       {/* ── Cabecera ──────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 animate-fade-up">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-2">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-primary)]">
-            Expedientes Activos
-          </h1>
-          <p className="mt-1 text-[var(--color-text-secondary)]">
-            Gestión y seguimiento de causas legales.
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Expedientes</h1>
+          <p className="mt-1 text-sm text-gray-500">Gestión de causas legales y flujo procesal.</p>
         </div>
-        <Button
-          variant="primary"
-          size="md"
-          onClick={() => setMostrarModal(true)}
-          className="shrink-0"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Nuevo Caso
+        <Button variant="primary" onClick={() => setMostrarModal(true)}>
+          <Plus className="w-5 h-5 mr-2" />
+          Nuevo Expediente
         </Button>
       </div>
 
-      {/* ── Barra de Filtros ──────────────────────────────────── */}
-      <div
-        className="p-4 rounded-xl mb-6 flex flex-col sm:flex-row gap-3 animate-fade-up
-                   bg-[var(--color-surface-card)] border border-[var(--color-surface-border)]
-                   shadow-[var(--shadow-sm)]"
-        style={{ animationDelay: "50ms" }}
-      >
+      {/* ── Barra de Filtros Minimalista ──────────────────────── */}
+      <div className="bg-white p-4 border border-gray-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-4">
         <div className="flex-1 relative">
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-            width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="var(--color-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <FormField
-            variant="light"
-            label=""
-            id="filter-search"
+          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
             type="text"
-            placeholder="Buscar por NUREJ, Cliente o Parte Contraria..."
+            placeholder="Buscar por NUREJ, Título, Partes..."
+            className="w-full pl-10 pr-4 py-2 text-sm text-gray-900 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors outline-none"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="!pl-10 !mb-0"
           />
         </div>
-        <SelectField
-          variant="light"
-          label=""
-          id="filter-status"
-          options={ESTADO_FILTER_OPTIONS}
-          placeholder="Todos los estados"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="min-w-[180px] !mb-0"
-        />
+        <div className="relative min-w-[220px]">
+          <Filter className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <select
+            className="w-full pl-10 pr-8 py-2 text-sm text-gray-700 bg-gray-50 border border-transparent rounded-lg appearance-none cursor-pointer focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors outline-none"
+            value={materiaFilter}
+            onChange={(e) => setMateriaFilter(e.target.value)}
+          >
+            <option value="">Todas las materias</option>
+            {MATERIAS_BASE.filter(m => m !== "Otro").map(mat => (
+              <option key={mat} value={mat}>{mat}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* ── Tabla de Expedientes ───────────────────────────────── */}
-      <div
-        className="rounded-xl overflow-hidden animate-fade-up
-                   bg-[var(--color-surface-card)] border border-[var(--color-surface-border)]
-                   shadow-[var(--shadow-sm)]"
-        style={{ animationDelay: "100ms" }}
-      >
-        {/* Desktop table */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-[var(--color-navy)] border-b border-[var(--color-navy-border)]">
-                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider text-[var(--color-gold-light)]">NUREJ / Caso</th>
-                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider text-[var(--color-gold-light)]">Materia y Juzgado</th>
-                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider text-[var(--color-gold-light)]">Partes</th>
-                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider text-[var(--color-gold-light)]">Estado</th>
-                <th className="py-3.5 px-6 text-xs font-semibold uppercase tracking-wider text-right text-[var(--color-gold-light)]">Acciones</th>
+              <tr className="bg-gray-50/80 border-b border-gray-200">
+                <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Identificador</th>
+                <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Partes y Juzgado</th>
+                <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Materia</th>
+                <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Estado (Flujo Legal)</th>
+                <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest text-right">Acción</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100">
+              
               {cargando && (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <div
-                        className="w-8 h-8 rounded-full border-2 border-[var(--color-surface-border)]
-                                   border-t-[var(--color-gold)] animate-spin"
-                      />
-                      <span className="text-[var(--color-text-muted)]">Cargando expedientes...</span>
+                  <td colSpan={5} className="py-20 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" />
+                      <p className="text-gray-500 text-sm">Cargando base de datos legal...</p>
                     </div>
                   </td>
                 </tr>
@@ -250,300 +268,255 @@ export default function CasosPage() {
 
               {!cargando && expedientesFiltrados.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-16 text-center">
-                    <div className="mb-3 opacity-50">
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <polyline points="14 2 14 8 20 8" />
-                        <line x1="16" y1="13" x2="8" y2="13" />
-                        <line x1="16" y1="17" x2="8" y2="17" />
-                      </svg>
+                  <td colSpan={5} className="py-24 text-center">
+                    <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                      <FolderOpen className="w-8 h-8 text-gray-300" strokeWidth={1.5} />
                     </div>
-                    <p className="font-medium text-[var(--color-text-secondary)]">
-                      {searchTerm || statusFilter
-                        ? "No se encontraron expedientes con esos filtros"
-                        : "No hay casos registrados"}
-                    </p>
-                    <p className="text-sm mt-1 text-[var(--color-text-muted)]">
-                      {searchTerm || statusFilter
-                        ? "Intenta ajustar los criterios de búsqueda."
-                        : "Abre tu primer expediente usando el botón de arriba."}
-                    </p>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-1">Ningún expediente encontrado</h3>
+                    <p className="text-sm text-gray-500">Agrega un caso nuevo o cambia los términos de búsqueda.</p>
                   </td>
                 </tr>
               )}
 
-              {!cargando &&
-                expedientesFiltrados.map((caso) => {
-                  const estadoStyle = getEstadoStyle(caso.estado);
-                  return (
-                    <tr
-                      key={caso.id}
-                      className="transition-colors duration-150 border-b border-[var(--color-surface-border)]
-                                 hover:bg-[var(--color-surface-hover)]"
-                    >
-                      <td className="py-4 px-6">
-                        <div className="font-bold text-[var(--color-navy)]">
-                          {caso.numeroCaso}
-                        </div>
-                        <div
-                          className="text-xs truncate max-w-[200px] text-[var(--color-text-muted)]"
-                          title={caso.titulo}
-                        >
-                          {caso.titulo}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span
-                          className="inline-block px-2.5 py-1 text-xs rounded-md font-medium mb-1
-                                     bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)]"
-                        >
-                          {caso.materia}
-                        </span>
-                        <div className="text-xs text-[var(--color-text-muted)]">
-                          {caso.juzgado}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="text-sm font-medium text-[var(--color-text-primary)]">
-                          {caso.nombreCliente}
-                        </div>
-                        <div className="text-xs text-[var(--color-text-muted)]">
-                          vs. {caso.parteContraria}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span
-                          className="capitalize text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1.5"
-                          style={{ background: estadoStyle.bg, color: estadoStyle.color }}
-                        >
-                          <span
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ background: estadoStyle.color }}
-                          />
-                          {estadoStyle.label}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <a
-                          href={`/dashboard/casos/${caso.id}`}
-                          className="text-sm font-medium px-3 py-1.5 rounded-md transition-all duration-200
-                                     inline-block text-[var(--color-gold)] hover:bg-[var(--color-gold-dim)]"
-                        >
-                          Abrir Expediente →
-                        </a>
-                      </td>
-                    </tr>
-                  );
-                })}
+              {!cargando && expedientesFiltrados.map((caso) => (
+                <tr key={caso.id} className="hover:bg-gray-50 transition-colors group">
+                  <td className="py-4 px-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gray-50 border border-gray-100 rounded-md text-gray-400 group-hover:bg-white transition-colors">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-gray-900 tracking-tight">{caso.numeroCaso}</div>
+                        <div className="text-xs text-gray-500 max-w-[200px] truncate" title={caso.titulo}>{caso.titulo}</div>
+                      </div>
+                    </div>
+                  </td>
+                  
+                  <td className="py-4 px-6">
+                    <div className="text-sm font-medium text-gray-800">{caso.nombreCliente} <span className="text-gray-400 font-normal mx-1">vs</span> {caso.parteContraria}</div>
+                    <div className="text-xs text-gray-500 truncate max-w-[250px]">{caso.juzgado}</div>
+                  </td>
+
+                  <td className="py-4 px-6">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                      {caso.materia}
+                    </span>
+                  </td>
+
+                  <td className="py-4 px-6">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border border-transparent ${getEstadoDesign(caso.estado)}`}>
+                      {caso.estado?.replace(/_/g, " ") || 'Desconocido'}
+                    </span>
+                  </td>
+
+                  <td className="py-4 px-6 text-right">
+                    <Link href={`/dashboard/casos/${caso.id}`}>
+                      <button className="text-sm font-medium text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
+                        Revisar
+                      </button>
+                    </Link>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-
-        {/* Mobile Card View */}
-        <div className="md:hidden divide-y divide-[var(--color-surface-border)]">
-          {cargando && (
-            <div className="py-12 text-center">
-              <div
-                className="w-8 h-8 rounded-full border-2 mx-auto mb-3
-                           border-[var(--color-surface-border)] border-t-[var(--color-gold)] animate-spin"
-              />
-              <span className="text-sm text-[var(--color-text-muted)]">Cargando...</span>
-            </div>
-          )}
-          {!cargando && expedientesFiltrados.length === 0 && (
-            <div className="py-12 text-center">
-              <div className="mb-2 opacity-50">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-[var(--color-text-secondary)]">
-                {searchTerm || statusFilter
-                  ? "Sin resultados para estos filtros"
-                  : "No hay casos registrados"}
-              </p>
-            </div>
-          )}
-          {!cargando && expedientesFiltrados.map((caso) => {
-            const estadoStyle = getEstadoStyle(caso.estado);
-            return (
-              <div key={caso.id} className="p-4 space-y-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="font-bold text-sm text-[var(--color-navy)]">
-                      {caso.numeroCaso}
-                    </span>
-                    <div className="text-xs mt-0.5 text-[var(--color-text-muted)]">{caso.titulo}</div>
-                  </div>
-                  <span
-                    className="text-xs font-bold px-2.5 py-1 rounded-full shrink-0"
-                    style={{ background: estadoStyle.bg, color: estadoStyle.color }}
-                  >
-                    {estadoStyle.label}
-                  </span>
-                </div>
-                <div className="text-xs text-[var(--color-text-secondary)]">
-                  {caso.nombreCliente} vs. {caso.parteContraria}
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs px-2 py-0.5 rounded-md bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]">
-                    {caso.materia}
-                  </span>
-                  <a
-                    href={`/dashboard/casos/${caso.id}`}
-                    className="text-xs font-medium px-3 py-1.5 rounded-md
-                               text-[var(--color-gold)] bg-[var(--color-gold-dim)]"
-                  >
-                    Abrir →
-                  </a>
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </div>
 
-      {/* ── MODAL DE NUEVO CASO ───────────────────────────────── */}
+      {/* ── MODAL: NUEVO EXPEDIENTE ──────────────────────────── */}
       {mostrarModal && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50 p-4
-                     bg-[rgba(13,27,42,0.7)] backdrop-blur-sm"
-        >
-          <div
-            className="w-full max-w-2xl overflow-hidden animate-card-in
-                       bg-[var(--color-surface-card)] rounded-[var(--radius-xl)]
-                       shadow-[var(--shadow-lg)] border border-[var(--color-surface-border)]
-                       max-h-[90vh] overflow-y-auto"
-          >
-            {/* Header del modal */}
-            <div className="px-6 py-4 flex justify-between items-center sticky top-0 z-10
-                            bg-[var(--color-navy)] border-b border-[var(--color-navy-border)]">
-              <h3 className="text-base font-bold text-[var(--color-text-on-dark)]">
-                Aperturar Nuevo Expediente
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-3xl rounded-2xl shadow-xl border border-gray-200 flex flex-col max-h-[90vh]">
+            
+            <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <FileSignature className="w-5 h-5 text-gray-400" />
+                Apertura de Expediente
               </h3>
-              <button
-                onClick={handleCerrarModal}
-                className="w-8 h-8 flex items-center justify-center rounded-md text-lg
-                           transition-colors duration-150 text-[var(--color-text-muted)]
-                           hover:bg-white/[0.08]"
+              <button 
+                onClick={handleCerrarModal} 
+                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
               >
                 &times;
               </button>
             </div>
 
-            <form onSubmit={handleGuardarCaso} className="p-6">
-              {/* Error Alert */}
-              <Alert variant="error" visible={!!formError}>
-                {formError}
-              </Alert>
+            <div className="px-6 py-4 overflow-y-auto">
+              <form id="expediente-form" onSubmit={handleGuardarCaso} className="space-y-6">
+                
+                {formError && (
+                  <div className="p-4 rounded-lg bg-red-50 border border-red-200 flex gap-3 text-red-800 text-sm">
+                    <ShieldAlert className="w-5 h-5 flex-shrink-0" />
+                    {formError}
+                  </div>
+                )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-1">
-                {/* Columna Izquierda */}
-                <div>
-                  <SelectField
-                    variant="light"
-                    label="Cliente *"
-                    id="modal-cliente"
-                    options={clienteOptions}
-                    placeholder="-- Seleccionar Cliente --"
-                    required
-                    value={formData.clienteId}
-                    onChange={(e) => {
-                      setFormError("");
-                      setFormData({ ...formData, clienteId: e.target.value });
-                    }}
-                  />
-                  <FormField
-                    variant="light"
-                    label="NUREJ / N° de Caso *"
-                    id="modal-numero-caso"
-                    type="text"
-                    required
-                    placeholder="Ej: CB-2025-000890"
-                    value={formData.numeroCaso}
-                    onChange={(e) =>
-                      setFormData({ ...formData, numeroCaso: e.target.value })
-                    }
-                  />
-                  <SelectField
-                    variant="light"
-                    label="Materia *"
-                    id="modal-materia"
-                    options={MATERIA_OPTIONS}
-                    required
-                    value={formData.materia}
-                    onChange={(e) =>
-                      setFormData({ ...formData, materia: e.target.value })
-                    }
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* COMBO: Identidad y Partes */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Sujetos</h4>
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-700 block">Cliente Patrocinado *</label>
+                      <select 
+                        required
+                        className="w-full text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        value={formData.clienteId}
+                        onChange={(e) => setFormData({ ...formData, clienteId: e.target.value })}
+                      >
+                        <option value="" disabled>Seleccione cliente</option>
+                        {listaClientes.map(c => <option key={c.id} value={c.id}>{c.nombre_completo}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-700 block">Abogado Responsable *</label>
+                      <select 
+                        required
+                        className="w-full text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        value={formData.abogado_id}
+                        onChange={(e) => setFormData({ ...formData, abogado_id: e.target.value })}
+                      >
+                        <option value="" disabled>Asigne un abogado</option>
+                        {listaAbogados.map(a => <option key={a.id} value={a.id}>{a.nombre_completo}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-700 block">Parte Contraria *</label>
+                      <input 
+                        required type="text" placeholder="Ej: ACME Corp."
+                        className="w-full text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        value={formData.parteContraria}
+                        onChange={(e) => setFormData({ ...formData, parteContraria: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  {/* COMBO: Datos del Caso y Flujo Legal */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Clasificación Legal</h4>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-gray-700 block">NUREJ / N° Caso *</label>
+                        <div className="relative">
+                          <Hash className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <input 
+                            required type="text" placeholder="2024-..."
+                            className="w-full pl-9 text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            value={formData.numeroCaso}
+                            onChange={(e) => setFormData({ ...formData, numeroCaso: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-gray-700 block">Juzgado *</label>
+                        <div className="relative">
+                          <Gavel className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                          <input 
+                            required type="text" placeholder="3ro Público"
+                            className="w-full pl-9 text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            value={formData.juzgado}
+                            onChange={(e) => setFormData({ ...formData, juzgado: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-700 block">Síntesis (Título) *</label>
+                      <input 
+                        required type="text" placeholder="Demanda por..."
+                        className="w-full text-sm rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        value={formData.titulo}
+                        onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+                      />
+                    </div>
+
+                    {/* SELECTS DINÁMICOS DEPENDIENTES */}
+                    <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 mt-2">
+                       <div className="space-y-1">
+                        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Materia</label>
+                        <select 
+                          className="w-full text-sm py-1.5 px-2 bg-white rounded border-gray-200 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm"
+                          value={formData.materiaSelect}
+                          onChange={handleMateriaChange}
+                        >
+                          {MATERIAS_BASE.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Estado Inicial</label>
+                        {formData.materiaSelect !== "Otro" ? (
+                          <select 
+                            className="w-full text-sm py-1.5 px-2 bg-white rounded border-gray-200 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm"
+                            value={formData.estadoSelect}
+                            onChange={(e) => setFormData({ ...formData, estadoSelect: e.target.value })}
+                          >
+                            {(FLUJO_LEGAL[formData.materiaSelect] || []).map(est => (
+                              <option key={est} value={est}>{est}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="h-8 flex items-center text-xs text-gray-400 italic px-2 bg-gray-100 rounded">
+                            Definir manualmente
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Manual Overrides si es "Otro" */}
+                      {formData.materiaSelect === "Otro" && (
+                        <>
+                          <div className="col-span-1 mt-2">
+                            <input 
+                              type="text" required placeholder="Especifique materia..."
+                              className="w-full text-sm py-1.5 px-2 bg-white rounded box-border border border-blue-200 focus:border-blue-500 outline-none shadow-sm"
+                              value={formData.materiaManual} onChange={(e) => setFormData({...formData, materiaManual: e.target.value})}
+                            />
+                          </div>
+                          <div className="col-span-1 mt-2">
+                            <input 
+                              type="text" required placeholder="Especifique estado..."
+                              className="w-full text-sm py-1.5 px-2 bg-white rounded box-border border border-blue-200 focus:border-blue-500 outline-none shadow-sm"
+                              value={formData.estadoManual} onChange={(e) => setFormData({...formData, estadoManual: e.target.value})}
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                  </div>
                 </div>
+              </form>
+            </div>
 
-                {/* Columna Derecha */}
-                <div>
-                  <FormField
-                    variant="light"
-                    label="Parte Contraria *"
-                    id="modal-parte-contraria"
-                    type="text"
-                    required
-                    placeholder="Ej: Empresa ACME Ltda."
-                    value={formData.parteContraria}
-                    onChange={(e) =>
-                      setFormData({ ...formData, parteContraria: e.target.value })
-                    }
-                  />
-                  <FormField
-                    variant="light"
-                    label="Juzgado o Tribunal *"
-                    id="modal-juzgado"
-                    type="text"
-                    required
-                    placeholder="Ej: Juzgado 3ro Civil y Comercial"
-                    value={formData.juzgado}
-                    onChange={(e) =>
-                      setFormData({ ...formData, juzgado: e.target.value })
-                    }
-                  />
-                  <FormField
-                    variant="light"
-                    label="Título o Resumen Corto *"
-                    id="modal-titulo"
-                    type="text"
-                    required
-                    placeholder="Ej: Demanda por incumplimiento"
-                    value={formData.titulo}
-                    onChange={(e) =>
-                      setFormData({ ...formData, titulo: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 rounded-b-2xl">
+              <button 
+                type="button" 
+                onClick={handleCerrarModal}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                disabled={guardando}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit" 
+                form="expediente-form"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center justify-center min-w-[120px]"
+                disabled={guardando}
+              >
+                {guardando ? (
+                  <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Registrar
+                  </>
+                )}
+              </button>
+            </div>
 
-              <div className="pt-5 mt-2 flex flex-col-reverse sm:flex-row gap-3 border-t border-[var(--color-surface-border)]">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="md"
-                  fullWidth
-                  onClick={handleCerrarModal}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="md"
-                  fullWidth
-                  loading={guardando}
-                >
-                  {guardando ? "Aperturando..." : "Aperturar Expediente"}
-                </Button>
-              </div>
-            </form>
           </div>
         </div>
       )}

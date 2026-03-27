@@ -2,20 +2,17 @@
 
 import { createClient } from '../supabase/client';
 import { Expediente, EstadoExpediente } from '../../domain/entities/Expediente';
-// infrastructure/repositories/expedienteRepository.ts
 
 export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'fechaCreacion' | 'fechaActualizacion' | 'estado'>): Promise<Expediente | null> {
   const supabase = createClient();
 
-  // 1. MAGIA: Obtenemos el ID real del abogado que tiene la sesión iniciada
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    console.error("❌ Error: No hay un usuario autenticado.");
+    console.error("Error: No hay un usuario autenticado.");
     return null;
   }
 
-  // 2. Insertamos usando el user.id en lugar del texto falso
   const { data, error } = await supabase
     .from('expedientes')
     .insert([
@@ -28,18 +25,17 @@ export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'f
         informe_despacho: expedienteData.informeDespacho,
         informe_cliente: expedienteData.informeCliente,
         cliente_id: expedienteData.clienteId,
-        abogado_asignado_id: user.id // <-- Usamos el ID real de Supabase Auth
+        abogado_asignado_id: expedienteData.abogado_id
       }
     ])
     .select()
     .single();
 
   if (error) {
-    console.error("❌ Error al crear expediente:", error.message);
+    console.error("Error al crear expediente:", error.message);
     return null;
   }
 
-  // Devolvemos los datos empaquetados limpios
   return {
     id: data.id,
     numeroCaso: data.numero_caso,
@@ -51,7 +47,7 @@ export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'f
     informeCliente: data.informe_cliente,
     estado: data.estado as EstadoExpediente,
     clienteId: data.cliente_id,
-    abogadoAsignadoId: data.abogado_asignado_id,
+    abogado_id: data.abogado_asignado_id,
     fechaCreacion: new Date(data.fecha_creacion),
     fechaActualizacion: new Date(data.fecha_actualizacion)
   };
@@ -60,23 +56,16 @@ export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'f
 export async function obtenerExpedientes(): Promise<any[]> {
   const supabase = createClient();
 
-  // Traemos los expedientes Y el nombre del cliente asociado (Magia de bases de datos relacionales)
   const { data, error } = await supabase
     .from('expedientes')
-    .select(`
-      *,
-      clientes (
-        nombre_completo
-      )
-    `)
+    .select('*, cliente:perfiles!cliente_id(nombre_completo), abogado:perfiles!abogado_asignado_id(nombre_completo)')
     .order('fecha_creacion', { ascending: false });
 
   if (error || !data) {
-    console.error("❌ Error al obtener expedientes:", error?.message);
+    console.error("Error al obtener expedientes:", error?.message);
     return [];
   }
 
-  // Traducimos de snake_case (BD) a camelCase (Nuestro Dominio)
   return data.map(fila => ({
     id: fila.id,
     numeroCaso: fila.numero_caso,
@@ -85,7 +74,9 @@ export async function obtenerExpedientes(): Promise<any[]> {
     juzgado: fila.juzgado,
     parteContraria: fila.parte_contraria,
     estado: fila.estado,
-    nombreCliente: fila.clientes?.nombre_completo || 'Cliente Desconocido',
+    nombreCliente: fila.cliente?.nombre_completo || 'Cliente Desconocido',
+    abogado_id: fila.abogado_asignado_id,
+    abogado_nombre: fila.abogado?.nombre_completo || 'Sin asignar',
     fechaCreacion: new Date(fila.fecha_creacion)
   }));
 }
@@ -95,15 +86,7 @@ export async function obtenerExpedientePorId(id: string): Promise<any | null> {
 
   const { data, error } = await supabase
     .from('expedientes')
-    .select(`
-      *,
-      clientes (
-        nombre_completo,
-        carnet_identidad,
-        telefono,
-        email
-      )
-    `)
+    .select('*, cliente:perfiles!cliente_id(nombre_completo), abogado:perfiles!abogado_asignado_id(nombre_completo)')
     .eq('id', id)
     .single();
 
@@ -122,21 +105,24 @@ export async function obtenerExpedientePorId(id: string): Promise<any | null> {
     informeDespacho: data.informe_despacho,
     informeCliente: data.informe_cliente,
     estado: data.estado,
-    cliente: data.clientes, 
+    cliente: data.cliente,
+    abogado_id: data.abogado_asignado_id,
+    abogado_nombre: data.abogado?.nombre_completo || 'Sin asignar',
     fechaCreacion: new Date(data.fecha_creacion)
   };
 }
 
-// Función para actualizar cualquier campo de un expediente existente
 export async function actualizarExpediente(
-  id: string, 
-  datosActualizados: { estado?: string; informeDespacho?: string; informeCliente?: string }
+  id: string,
+  datosActualizados: { estado?: string; informeDespacho?: string; informeCliente?: string; abogado_id?: string }
 ): Promise<boolean> {
   const supabase = createClient();
   const paqueteActualizacion: any = {};
+
   if (datosActualizados.estado) paqueteActualizacion.estado = datosActualizados.estado;
   if (datosActualizados.informeDespacho !== undefined) paqueteActualizacion.informe_despacho = datosActualizados.informeDespacho;
   if (datosActualizados.informeCliente !== undefined) paqueteActualizacion.informe_cliente = datosActualizados.informeCliente;
+  if (datosActualizados.abogado_id !== undefined) paqueteActualizacion.abogado_asignado_id = datosActualizados.abogado_id;
 
   const { error } = await supabase
     .from('expedientes')
@@ -148,5 +134,20 @@ export async function actualizarExpediente(
     return false;
   }
 
-  return true; 
+  return true;
+}
+
+export async function obtenerTotalExpedientes(): Promise<number> {
+  const supabase = createClient();
+
+  const { count, error } = await supabase
+    .from('expedientes')
+    .select('*', { count: 'exact', head: true });
+
+  if (error) {
+    console.error("Error al obtener el recuento de expedientes:", error.message);
+    return 0; // Se maneja el error silenciosamente
+  }
+
+  return count || 0;
 }

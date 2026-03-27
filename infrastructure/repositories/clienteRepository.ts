@@ -3,42 +3,45 @@ import { createClient } from '../supabase/client';
 import { Cliente } from '../../domain/entities/Cliente';
 import { Expediente } from '../../domain/entities/Expediente';
 
-export async function crearCliente(clienteData: Omit<Cliente, 'id' | 'fechaRegistro'>): Promise<Cliente | null> {
+// ── Crear ────────────────────────────────────────────────────
+// NOTA: Se tocará en Fase 2, se deja intacta.
+export async function crearCliente(clienteData: Omit<Cliente, 'id' | 'rol'>): Promise<Cliente | null> {
   const supabase = createClient();
 
   const { data, error } = await supabase
-    .from('clientes')
+    .from('perfiles')
     .insert([
       {
         nombre_completo: clienteData.nombreCompleto,
-        carnet_identidad: clienteData.carnetIdentidad,
-        telefono: clienteData.telefono,
-        email: clienteData.email
+        email: clienteData.email,
+        rol: 'cliente'
       }
     ])
     .select()
-    .single(); 
+    .single();
 
   if (error) {
     console.error("Error en la base de datos al crear cliente:", error.message);
     return null;
   }
+
   return {
     id: data.id,
     nombreCompleto: data.nombre_completo,
-    carnetIdentidad: data.carnet_identidad,
-    telefono: data.telefono,
-    email: data.email,
-    fechaRegistro: new Date(data.fecha_registro)
+    email: data.email ?? '',
+    rol: data.rol,
   };
 }
+
+// ── Listar ───────────────────────────────────────────────────
 export async function obtenerClientes(): Promise<Cliente[]> {
   const supabase = createClient();
 
   const { data, error } = await supabase
-    .from('clientes')
+    .from('perfiles')
     .select('*')
-    .order('fecha_registro', { ascending: false });
+    .eq('rol', 'cliente')
+    .order('nombre_completo', { ascending: true });
 
   if (error || !data) {
     console.error("Error al obtener clientes:", error?.message);
@@ -48,18 +51,17 @@ export async function obtenerClientes(): Promise<Cliente[]> {
   return data.map(fila => ({
     id: fila.id,
     nombreCompleto: fila.nombre_completo,
-    carnetIdentidad: fila.carnet_identidad,
-    telefono: fila.telefono,
-    email: fila.email,
-    fechaRegistro: new Date(fila.fecha_registro)
+    email: fila.email ?? '',
+    rol: fila.rol,
   }));
 }
 
+// ── Obtener por ID ───────────────────────────────────────────
 export async function obtenerClientePorId(id: string): Promise<Cliente | null> {
   const supabase = createClient();
 
   const { data, error } = await supabase
-    .from('clientes')
+    .from('perfiles')
     .select('*')
     .eq('id', id)
     .single();
@@ -72,13 +74,12 @@ export async function obtenerClientePorId(id: string): Promise<Cliente | null> {
   return {
     id: data.id,
     nombreCompleto: data.nombre_completo,
-    carnetIdentidad: data.carnet_identidad,
-    telefono: data.telefono,
-    email: data.email,
-    fechaRegistro: new Date(data.fecha_registro)
+    email: data.email ?? '',
+    rol: data.rol,
   };
 }
 
+// ── Expedientes del cliente ──────────────────────────────────
 export async function obtenerExpedientesPorCliente(clienteId: string): Promise<Expediente[]> {
   const supabase = createClient();
 
@@ -104,24 +105,22 @@ export async function obtenerExpedientesPorCliente(clienteId: string): Promise<E
     informeCliente: fila.informe_cliente,
     estado: fila.estado,
     clienteId: fila.cliente_id,
-    abogadoAsignadoId: fila.abogado_asignado_id,
+    abogado_id: fila.abogado_id,
     fechaCreacion: new Date(fila.fecha_creacion),
     fechaActualizacion: new Date(fila.fecha_actualizacion)
   }));
 }
 
+// ── Actualizar ───────────────────────────────────────────────
 export async function actualizarCliente(id: string, clienteData: Partial<Cliente>): Promise<boolean> {
   const supabase = createClient();
-  
-  // Mapeo de camelCase a snake_case para Supabase
+
   const updateData: any = {};
   if (clienteData.nombreCompleto) updateData.nombre_completo = clienteData.nombreCompleto;
-  if (clienteData.carnetIdentidad) updateData.carnet_identidad = clienteData.carnetIdentidad;
-  if (clienteData.telefono) updateData.telefono = clienteData.telefono;
   if (clienteData.email) updateData.email = clienteData.email;
 
   const { error } = await supabase
-    .from('clientes')
+    .from('perfiles')
     .update(updateData)
     .eq('id', id);
 
@@ -133,11 +132,12 @@ export async function actualizarCliente(id: string, clienteData: Partial<Cliente
   return true;
 }
 
+// ── Eliminar ─────────────────────────────────────────────────
 export async function eliminarCliente(id: string): Promise<{ success: boolean; error?: 'HAS_CASES' | string }> {
   const supabase = createClient();
 
   const { error } = await supabase
-    .from('clientes')
+    .from('perfiles')
     .delete()
     .eq('id', id);
 
@@ -151,4 +151,21 @@ export async function eliminarCliente(id: string): Promise<{ success: boolean; e
   }
 
   return { success: true };
+}
+
+// ── Contadores ───────────────────────────────────────────────
+export async function obtenerTotalClientes(): Promise<number> {
+  const supabase = createClient();
+
+  const { count, error } = await supabase
+    .from('perfiles')
+    .select('*', { count: 'exact', head: true })
+    .eq('rol', 'cliente');
+
+  if (error) {
+    console.error("Error al obtener el recuento de clientes:", error.message);
+    return 0; // Se maneja el error silenciosamente
+  }
+
+  return count || 0;
 }

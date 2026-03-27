@@ -51,3 +51,76 @@
 * **RNF-2 (Seguridad):** Al tratar con datos legales sensibles, el sistema requiere autenticación robusta y control de acceso basado en roles (RBAC). Los documentos privados no deben ser accesibles sin el token correspondiente.  
 * **RNF-3 (Rendimiento):** Las vistas principales (como el Dashboard de casos activos) deben renderizarse rápidamente, delegando la carga pesada al backend y aprovechando las capacidades de Next.js.
 
+flowchart LR
+  %% Actores
+  Admin(["Administrador"])
+  Abogado(["Abogado"])
+  Cliente(["Cliente"])
+
+  %% Limites del Sistema
+  subgraph CRM ["Módulo de Expedientes (Abogatech)"]
+    direction TB
+    
+    %% Casos de Uso - Admin
+    UC1("Crear Expediente (Asignación a cualquier abogado)")
+    UC2("Ver TODOS los expedientes de la firma")
+    UC3("Reasignar / Eliminar Expedientes")
+    
+    %% Casos de Uso - Abogado
+    UC4("Crear Expediente (Auto-asignación automática)")
+    UC5("Ver ÚNICAMENTE mis expedientes asignados")
+    UC6("Actualizar Bitácora y Subir Documentos")
+    
+    %% Casos de Uso - Cliente
+    UC7("Ver Informe Público (Portal de Solo Lectura)")
+    UC8("Descargar Documentos marcados como Públicos")
+  end
+
+  %% Relaciones Administrador
+  Admin -.->|Control Global| UC1
+  Admin -.-> UC2
+  Admin -.-> UC3
+  Admin -.-> UC6
+
+  %% Relaciones Abogado
+  Abogado ===>|Autonomía| UC4
+  Abogado ===> UC5
+  Abogado ===> UC6
+
+  %% Relaciones Cliente
+  Cliente --->|Acceso Restringido| UC7
+  Cliente ---> UC8
+
+  %% Estilos para que luzca Premium en GitHub
+  classDef actor fill:#f9f9f9,stroke:#0A192F,stroke-width:2px,color:#000,font-weight:bold;
+  classDef usecase fill:#F8F9FA,stroke:#D4AF37,stroke-width:2px,color:#0A192F,rx:20px,ry:20px;
+  classDef system fill:#ffffff,stroke:#CBD5E1,stroke-width:1px,stroke-dasharray: 5 5;
+
+  class Admin,Abogado,Cliente actor;
+  class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC8 usecase;
+  class CRM system;
+
+erDiagram
+    PERFILES ||--o{ EXPEDIENTES : "gestiona"
+    CLIENTES ||--o{ EXPEDIENTES : "posee"
+
+    PERFILES {
+        uuid id PK
+        string nombre_completo
+        string rol "admin, abogado, cliente"
+        string email
+    }
+
+    CLIENTES {
+        uuid id PK
+        string nombre_completo
+        string carnet_identidad
+    }
+
+    EXPEDIENTES {
+        uuid id PK
+        string numeroCaso
+        string estado
+        uuid cliente_id FK
+        uuid abogado_id FK "El responsable del caso"
+    } 

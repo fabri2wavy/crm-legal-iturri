@@ -19,8 +19,6 @@ export default function ClientesPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [formData, setFormData] = useState({
     nombreCompleto: "",
-    carnetIdentidad: "",
-    telefono: "",
     email: "",
   });
 
@@ -53,10 +51,10 @@ export default function ClientesPage() {
 
     if (nuevo) {
       setClientes([nuevo, ...clientes]);
-      setFormData({ nombreCompleto: "", carnetIdentidad: "", telefono: "", email: "" });
+      setFormData({ nombreCompleto: "", email: "" });
       cerrarModal();
     } else {
-      setErrorMsg("Error: Hubo un problema al registrar. Es posible que este Carnet de Identidad ya esté registrado.");
+      setErrorMsg("Error: Hubo un problema al registrar el cliente. Inténtalo de nuevo.");
     }
 
     setGuardando(false);
@@ -92,9 +90,7 @@ export default function ClientesPage() {
             <thead>
               <tr className={styles.tableHead}>
                 <th className={styles.tableHeadCell}>Nombre Completo</th>
-                <th className={styles.tableHeadCell}>CI / DNI</th>
-                <th className={styles.tableHeadCell}>Contacto</th>
-                <th className={styles.tableHeadCell}>Fecha Registro</th>
+                <th className={styles.tableHeadCell}>Email</th>
                 <th className={`${styles.tableHeadCell} ${styles.actionsCell}`}>Acciones</th>
               </tr>
             </thead>
@@ -102,7 +98,7 @@ export default function ClientesPage() {
               {/* Loading */}
               {cargando && (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center">
+                  <td colSpan={3} className="py-12 text-center">
                     <div className={styles.stateContainer}>
                       <div className={styles.spinner} />
                       <span className={styles.emptyHint}>Cargando directorio...</span>
@@ -114,7 +110,7 @@ export default function ClientesPage() {
               {/* Empty */}
               {!cargando && clientes.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-16 text-center">
+                  <td colSpan={3} className="py-16 text-center">
                     <div className={styles.emptyIcon}>
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -138,18 +134,9 @@ export default function ClientesPage() {
                     <span className={styles.clientName}>{cliente.nombreCompleto}</span>
                   </td>
                   <td className={styles.tableCell}>
-                    <span className={styles.ciBadge}>{cliente.carnetIdentidad}</span>
-                  </td>
-                  <td className={styles.tableCell}>
-                    <div className={styles.contactPrimary}>
-                      {cliente.telefono || "Sin teléfono"}
-                    </div>
-                    <div className={styles.contactSecondary}>
+                    <span className={styles.contactSecondary}>
                       {cliente.email || "Sin correo"}
-                    </div>
-                  </td>
-                  <td className={`${styles.tableCell} ${styles.dateCell}`}>
-                    {cliente.fechaRegistro.toLocaleDateString("es-ES")}
+                    </span>
                   </td>
                   <td className={`${styles.tableCell} ${styles.actionsCell}`}>
                     <Link href={`/dashboard/clientes/${cliente.id}`} className={styles.linkUnstyled}>
@@ -189,15 +176,11 @@ export default function ClientesPage() {
             <div key={cliente.id} className={styles.mobileCard}>
               <div className={styles.mobileCardHeader}>
                 <span className={styles.mobileName}>{cliente.nombreCompleto}</span>
-                <span className={styles.mobileCi}>{cliente.carnetIdentidad}</span>
               </div>
               <div className={styles.mobileCardFooter}>
                 <div>
                   <div className={styles.mobileContact}>
-                    {cliente.telefono || "Sin teléfono"} · {cliente.email || "Sin correo"}
-                  </div>
-                  <div className={styles.mobileDate}>
-                    {cliente.fechaRegistro.toLocaleDateString("es-ES")}
+                    {cliente.email || "Sin correo"}
                   </div>
                 </div>
                 <Link href={`/dashboard/clientes/${cliente.id}`} className={styles.linkUnstyled}>
@@ -225,7 +208,7 @@ export default function ClientesPage() {
             {/* Modal body */}
             <form onSubmit={handleGuardarCliente} className={styles.modalBody}>
 
-              {/* Inline error alert — replaces native alert() */}
+              {/* Inline error alert */}
               <Alert variant="error" visible={!!errorMsg}>
                 {errorMsg}
               </Alert>
@@ -241,33 +224,13 @@ export default function ClientesPage() {
               />
 
               <FormField
-                id="carnetIdentidad"
-                label="Carnet de Identidad *"
-                type="text"
-                required
+                id="email"
+                label="Email"
+                type="email"
                 variant="light"
-                value={formData.carnetIdentidad}
-                onChange={(e) => setFormData({ ...formData, carnetIdentidad: e.target.value })}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
-
-              <div className={styles.fieldGrid}>
-                <FormField
-                  id="telefono"
-                  label="Teléfono"
-                  type="text"
-                  variant="light"
-                  value={formData.telefono}
-                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                />
-                <FormField
-                  id="email"
-                  label="Email"
-                  type="email"
-                  variant="light"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
 
               <div className={styles.modalFooter}>
                 <Button variant="secondary" type="button" onClick={cerrarModal}>

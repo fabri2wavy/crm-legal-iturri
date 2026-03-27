@@ -31,8 +31,6 @@ export default function DetalleClientePage() {
 
   const [formData, setFormData] = useState({
     nombreCompleto: "",
-    carnetIdentidad: "",
-    telefono: "",
     email: ""
   });
 
@@ -50,8 +48,6 @@ export default function DetalleClientePage() {
         setCliente(resCliente);
         setFormData({
           nombreCompleto: resCliente.nombreCompleto,
-          carnetIdentidad: resCliente.carnetIdentidad,
-          telefono: resCliente.telefono || "",
           email: resCliente.email || ""
         });
       }
@@ -170,30 +166,13 @@ export default function DetalleClientePage() {
                 required
               />
               <FormField
-                id="carnetIdentidad"
-                label="Carnet de Identidad"
+                id="email"
+                label="Email"
+                type="email"
                 variant="light"
-                value={formData.carnetIdentidad}
-                onChange={(e) => setFormData({ ...formData, carnetIdentidad: e.target.value })}
-                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  id="telefono"
-                  label="Teléfono"
-                  variant="light"
-                  value={formData.telefono}
-                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                />
-                <FormField
-                  id="email"
-                  label="Email"
-                  type="email"
-                  variant="light"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
 
               <div className="pt-4 flex justify-end">
                 <Button type="submit" variant="primary" loading={guardando} fullWidth className="md:w-auto">

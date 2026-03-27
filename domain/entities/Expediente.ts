@@ -6,14 +6,15 @@ export interface Expediente {
   id: string;
   numeroCaso: string;
   titulo: string;
-  materia: string;         // Ej: Civil, Penal, Laboral
-  juzgado: string;         // Ej: Juzgado 3ro Civil
-  parteContraria: string;  // Ej: Empresa ACME Ltda.
-  informeDespacho: string; // Notas privadas
-  informeCliente: string;  // Notas públicas  
+  materia: string;
+  juzgado: string;
+  parteContraria: string;
+  informeDespacho: string;
+  informeCliente: string;
   estado: EstadoExpediente;
   clienteId: string;
-  abogadoAsignadoId: string;
+  abogado_id?: string;
+  abogado_nombre?: string;
   fechaCreacion: Date;
   fechaActualizacion: Date;
 }

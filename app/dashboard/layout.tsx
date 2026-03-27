@@ -1,47 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import BotonSalir from "../../components/BotonSalir";
 import PerfilUsuario from "../../components/PerfilUsuario";
+import { obtenerPerfilActual } from "../../infrastructure/repositories/usuarioRepository";
 
-const NAV_ITEMS = [
-  {
-    href: "/dashboard",
-    label: "Inicio",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    ),
-  },
-  {
-    href: "/dashboard/casos",
-    label: "Expedientes",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-        <line x1="16" y1="13" x2="8" y2="13" />
-        <line x1="16" y1="17" x2="8" y2="17" />
-        <polyline points="10 9 9 9 8 9" />
-      </svg>
-    ),
-  },
-  {
-    href: "/dashboard/clientes",
-    label: "Clientes",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-  },
-];
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+};
 
 export default function DashboardLayout({
   children,
@@ -49,12 +18,90 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [rol, setRol] = useState<string>("cliente"); // default seguro
+  const [cargandoObj, setCargandoObj] = useState(true);
   const pathname = usePathname();
+
+  useEffect(() => {
+    async function cargarRol() {
+      const perfil = await obtenerPerfilActual();
+      if (perfil) {
+        setRol(perfil.rol);
+      }
+      setCargandoObj(false);
+    }
+    cargarRol();
+  }, []);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
+
+  const getNavItems = (userRol: string): NavItem[] => {
+    const inicioItem = {
+      href: "/dashboard",
+      label: "Inicio",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+      ),
+    };
+
+    const casosIcon = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <polyline points="10 9 9 9 8 9" />
+      </svg>
+    );
+
+    const clientesIcon = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    );
+
+    const equipoIcon = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 4.5a2.5 2.5 0 0 0-5 0v1a2.5 2.5 0 0 0 5 0v-1z" />
+        <path d="M15 14.5a2.5 2.5 0 0 0-5 0v1a2.5 2.5 0 0 0 5 0v-1z" />
+        <path d="M9 14.5a2.5 2.5 0 0 0-5 0v1a2.5 2.5 0 0 0 5 0v-1z" />
+        <path d="M6 10c0-1.5 1.5-2.5 3-2.5s3 1 3 2.5v1h-6v-1z" />
+        <path d="M6 20c0-1.5 1.5-2.5 3-2.5s3 1 3 2.5v1h-6v-1z" />
+        <path d="M12 20c0-1.5 1.5-2.5 3-2.5s3 1 3 2.5v1h-6v-1z" />
+      </svg>
+    );
+
+    if (userRol === 'admin') {
+      return [
+        inicioItem,
+        { href: "/dashboard/casos", label: "Expedientes", icon: casosIcon },
+        { href: "/dashboard/clientes", label: "Clientes", icon: clientesIcon },
+        { href: "/dashboard/equipo", label: "Equipo", icon: equipoIcon },
+      ];
+    } else if (userRol === 'abogado') {
+      return [
+        inicioItem,
+        { href: "/dashboard/casos", label: "Mis Casos", icon: casosIcon },
+        { href: "/dashboard/clientes", label: "Mis Clientes", icon: clientesIcon },
+      ];
+    } else {
+      return [
+        inicioItem,
+        { href: "/dashboard/casos", label: "Mi Expediente", icon: casosIcon }, // El cliente usa la vista casos para ver el suyo
+      ];
+    }
+  };
+
+  const navItems = getNavItems(rol);
 
   return (
     <div className="flex h-screen" style={{ background: "var(--color-surface)" }}>
@@ -117,43 +164,49 @@ export default function DashboardLayout({
         </div>
 
         {/* Navegación */}
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          {NAV_ITEMS.map((item) => {
-            const active = isActive(item.href);
-            return (
-              <a
-                key={item.label}
-                href={item.href}
-                className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
-                style={{
-                  background: active
-                    ? "rgba(201, 168, 76, 0.12)"
-                    : "transparent",
-                  color: active
-                    ? "var(--color-gold-light)"
-                    : "rgba(200, 210, 225, 0.7)",
-                  borderLeft: active
-                    ? "3px solid var(--color-gold)"
-                    : "3px solid transparent",
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                    e.currentTarget.style.color = "rgba(240, 234, 216, 0.95)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = "rgba(200, 210, 225, 0.7)";
-                  }
-                }}
-              >
-                {item.icon}
-                {item.label}
-              </a>
-            );
-          })}
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto min-h-[50%]">
+          {cargandoObj ? (
+             <div className="flex justify-center py-8">
+               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-t-transparent border-[var(--color-gold)]"></div>
+             </div>
+          ) : (
+            navItems.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+                  style={{
+                    background: active
+                      ? "rgba(201, 168, 76, 0.12)"
+                      : "transparent",
+                    color: active
+                      ? "var(--color-gold-light)"
+                      : "rgba(200, 210, 225, 0.7)",
+                    borderLeft: active
+                      ? "3px solid var(--color-gold)"
+                      : "3px solid transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                      e.currentTarget.style.color = "rgba(240, 234, 216, 0.95)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = "rgba(200, 210, 225, 0.7)";
+                    }
+                  }}
+                >
+                  {item.icon}
+                  {item.label}
+                </a>
+              );
+            })
+          )}
         </nav>
 
         {/* Footer con perfil y salir */}
@@ -192,7 +245,7 @@ export default function DashboardLayout({
             className="text-sm font-semibold"
             style={{ color: "var(--color-text-on-dark)", fontFamily: "var(--font-brand)" }}
           >
-            Abogatech
+            I&A
           </span>
           <div className="w-10" /> {/* Spacer para centrar el título */}
         </header>
