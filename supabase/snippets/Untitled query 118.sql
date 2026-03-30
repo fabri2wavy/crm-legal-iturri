@@ -1,25 +1,37 @@
--- 1. CREAMOS EL DISCO DURO (BUCKET) LLAMADO 'documentos'
--- Lo hacemos 'public' para que el sistema pueda generar URLs de descarga fácilmente
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('documentos', 'documentos', true)
-ON CONFLICT (id) DO NOTHING;
+-- 1. Creamos la tabla de la bitácora/informes
+CREATE TABLE public.bitacora (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    expediente_id UUID NOT NULL REFERENCES public.expedientes(id) ON DELETE CASCADE,
+    contenido TEXT NOT NULL,
+    visible_cliente BOOLEAN DEFAULT false, -- ¡El mismo switch mágico de privacidad!
+    creado_por UUID NOT NULL REFERENCES public.perfiles(id),
+    creado_en TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
 
--- 2. REGLAS DE SEGURIDAD PARA LOS ARCHIVOS FÍSICOS (storage.objects)
+-- 2. Encendemos el escudo de seguridad
+ALTER TABLE public.bitacora ENABLE ROW LEVEL SECURITY;
 
--- A) Permitir que cualquier usuario logueado pueda ver y descargar los archivos
-CREATE POLICY "Lectura de archivos" 
-ON storage.objects FOR SELECT 
+-- 3. Reglas quirúrgicas de seguridad
+-- Todos los autenticados pueden leer el historial
+CREATE POLICY "Lectura de bitacora" 
+ON public.bitacora FOR SELECT 
 TO authenticated 
-USING (bucket_id = 'documentos');
+USING (true);
 
--- B) Permitir que un usuario logueado pueda SUBIR archivos
-CREATE POLICY "Subida de archivos" 
-ON storage.objects FOR INSERT 
+-- Solo puedes publicar una nota si registras que tú la escribiste
+CREATE POLICY "Escritura en bitacora" 
+ON public.bitacora FOR INSERT 
 TO authenticated 
-WITH CHECK (bucket_id = 'documentos');
+WITH CHECK (auth.uid() = creado_por);
 
--- C) Permitir que un usuario pueda ELIMINAR el archivo físico si se equivoca
-CREATE POLICY "Eliminacion de archivos" 
-ON storage.objects FOR DELETE 
+-- Solo el autor original puede editar su propia nota
+CREATE POLICY "Edicion de bitacora" 
+ON public.bitacora FOR UPDATE 
 TO authenticated 
-USING (bucket_id = 'documentos');
+USING (auth.uid() = creado_por);
+
+-- Solo el autor original puede borrar su propia nota
+CREATE POLICY "Eliminacion de bitacora" 
+ON public.bitacora FOR DELETE 
+TO authenticated 
+USING (auth.uid() = creado_por);

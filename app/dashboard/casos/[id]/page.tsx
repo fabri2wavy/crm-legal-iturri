@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { User, Mail, Phone, ExternalLink, Gavel, Hash, FileText, Pencil, Users, UploadCloud, Download, Trash2, FileImage, File, FileSpreadsheet, AlertTriangle } from "lucide-react";
+import InformesTab from "./InformesTab";
 import { obtenerExpedientePorId, actualizarExpediente } from "../../../../infrastructure/repositories/expedienteRepository";
 import { 
   obtenerDocumentos, 
@@ -14,8 +15,6 @@ import {
 } from "../../../../infrastructure/repositories/documentoRepository";
 import { Documento } from "../../../../domain/entities/Documento";
 import { obtenerAbogados } from "../../../../infrastructure/repositories/usuarioRepository";
-import { Button } from "../../../../components/ui/Button";
-import { FormField } from "../../../../components/ui/FormField";
 import { Alert } from "../../../../components/ui/Alert";
 
 /* ── Mapa de colores semánticos por estado ─────────────────── */
@@ -60,14 +59,10 @@ export default function DetalleExpedientePage() {
 
   const [caso, setCaso] = useState<any>(null);
   const [cargando, setCargando] = useState(true);
-  const [pestañaActiva, setPestañaActiva] = useState("informe");
+  const [pestañaActiva, setPestañaActiva] = useState("info");
   const [abogados, setAbogados] = useState<any[]>([]);
   const [cambiandoAbogado, setCambiandoAbogado] = useState(false);
 
-  /* ── Estados para la Edición ────────────────────────────────── */
-  const [modoEdicion, setModoEdicion] = useState(false);
-  const [guardando, setGuardando] = useState(false);
-  const [textosEdicion, setTextosEdicion] = useState({ despacho: "", cliente: "" });
   const [errorMsg, setErrorMsg] = useState("");
 
   /* ── Estados para Documentos ────────────────────────────────── */
@@ -136,9 +131,6 @@ export default function DetalleExpedientePage() {
       ]);
       setCaso(data);
       setAbogados(listaAbogados);
-      if (data) {
-        setTextosEdicion({ despacho: data.informeDespacho, cliente: data.informeCliente });
-      }
       setCargando(false);
     }
     cargarDetalle();
@@ -253,23 +245,7 @@ export default function DetalleExpedientePage() {
     }
   };
 
-  /* ── Guardar informes editados ──────────────────────────────── */
-  const handleGuardarInformes = async () => {
-    setErrorMsg("");
-    setGuardando(true);
-    const exito = await actualizarExpediente(idCaso, {
-      informeDespacho: textosEdicion.despacho,
-      informeCliente: textosEdicion.cliente,
-    });
 
-    if (exito) {
-      setCaso({ ...caso, informeDespacho: textosEdicion.despacho, informeCliente: textosEdicion.cliente });
-      setModoEdicion(false);
-    } else {
-      setErrorMsg("Error al guardar los informes. Verifica tu conexión e intenta de nuevo.");
-    }
-    setGuardando(false);
-  };
 
   /* ── Loading state ──────────────────────────────────────────── */
   if (cargando) {
@@ -716,92 +692,7 @@ export default function DetalleExpedientePage() {
         )}
 
         {pestañaActiva === "informe" && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pb-3
-                            border-b border-[var(--color-surface-border)]">
-              <h3 className="text-base font-bold text-[var(--color-text-primary)]">
-                Bitácora de Actualizaciones
-              </h3>
-
-              {/* Botonera de Edición */}
-              {!modoEdicion ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setModoEdicion(true)}
-                >
-                  Redactar Informes
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setModoEdicion(false);
-                      setErrorMsg("");
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    loading={guardando}
-                    onClick={handleGuardarInformes}
-                  >
-                    {guardando ? "Guardando..." : "Guardar"}
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* Informe para el Cliente (Público) */}
-            <div className="p-4 sm:p-5 rounded-xl bg-[var(--color-info-bg)] border border-[var(--color-info-border)]">
-              <h4 className="font-bold text-sm mb-3 flex items-center gap-2 text-[var(--color-info)]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg> Informe para el Cliente (Público)
-              </h4>
-              {!modoEdicion ? (
-                <p className="text-sm whitespace-pre-wrap leading-relaxed text-[var(--color-text-primary)]">
-                  {caso.informeCliente}
-                </p>
-              ) : (
-                <FormField
-                  as="textarea"
-                  variant="light"
-                  label=""
-                  id="informe-cliente"
-                  value={textosEdicion.cliente}
-                  onChange={(e) => setTextosEdicion({ ...textosEdicion, cliente: e.target.value })}
-                  placeholder="Escribe lo que el cliente verá desde su portal..."
-                  className="min-h-[120px] !mb-0"
-                />
-              )}
-            </div>
-
-            {/* Informe de Despacho (Privado) */}
-            <div className="p-4 sm:p-5 rounded-xl bg-[var(--color-surface-hover)] border border-[var(--color-surface-border)]">
-              <h4 className="font-bold text-sm mb-3 flex items-center gap-2 text-[var(--color-text-secondary)]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> Informe de Despacho (Privado)
-              </h4>
-              {!modoEdicion ? (
-                <p className="text-sm whitespace-pre-wrap leading-relaxed text-[var(--color-text-primary)]">
-                  {caso.informeDespacho}
-                </p>
-              ) : (
-                <FormField
-                  as="textarea"
-                  variant="light"
-                  label=""
-                  id="informe-despacho"
-                  value={textosEdicion.despacho}
-                  onChange={(e) => setTextosEdicion({ ...textosEdicion, despacho: e.target.value })}
-                  placeholder="Escribe las notas internas para los abogados..."
-                  className="min-h-[120px] !mb-0"
-                />
-              )}
-            </div>
-          </div>
+          <InformesTab expedienteId={idCaso} />
         )}
       </div>
 
