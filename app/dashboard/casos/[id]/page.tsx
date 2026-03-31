@@ -406,7 +406,7 @@ export default function DetalleExpedientePage() {
                   <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] block mb-1">Email</span>
                   <div className="flex items-center gap-2.5">
                     <Mail className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" strokeWidth={1.5} />
-                    {caso.cliente?.email && caso.cliente.email !== "No registrado" ? (
+                    {caso.cliente?.email ? (
                       <a
                         href={`mailto:${caso.cliente.email}`}
                         className="text-base font-medium text-[var(--color-info)] hover:underline transition-colors"
@@ -422,7 +422,7 @@ export default function DetalleExpedientePage() {
                   <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] block mb-1">Teléfono</span>
                   <div className="flex items-center gap-2.5">
                     <Phone className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" strokeWidth={1.5} />
-                    {caso.cliente?.telefono && caso.cliente.telefono !== "No registrado" ? (
+                    {caso.cliente?.telefono ? (
                       <a
                         href={`https://wa.me/${caso.cliente.telefono.replace(/\s+/g, '')}`}
                         target="_blank"

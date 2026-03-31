@@ -2,10 +2,26 @@
 
 import { createClient } from '../supabase/client';
 import { Expediente, EstadoExpediente } from '../../domain/entities/Expediente';
+import { obtenerClientePorId } from './clienteRepository';
+
+/* ══════════════════════════════════════════════════════════════
+   Helper: Construir nombre completo desde columnas individuales
+   Reutilizable para perfiles de clientes y abogados
+   ══════════════════════════════════════════════════════════════ */
+function construirNombre(
+  nombres?: string | null,
+  apellidoPaterno?: string | null,
+  apellidoMaterno?: string | null,
+  fallback = 'Sin registrar'
+): string {
+  return [nombres, apellidoPaterno, apellidoMaterno]
+    .filter(Boolean)
+    .join(' ')
+    .trim() || fallback;
+}
 
 export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'fechaCreacion' | 'fechaActualizacion' | 'estado'>): Promise<Expediente | null> {
   const supabase = createClient();
-
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -15,19 +31,17 @@ export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'f
 
   const { data, error } = await supabase
     .from('expedientes')
-    .insert([
-      {
-        numero_caso: expedienteData.numeroCaso,
-        titulo: expedienteData.titulo,
-        materia: expedienteData.materia,
-        juzgado: expedienteData.juzgado,
-        parte_contraria: expedienteData.parteContraria,
-        informe_despacho: expedienteData.informeDespacho,
-        informe_cliente: expedienteData.informeCliente,
-        cliente_id: expedienteData.clienteId,
-        abogado_asignado_id: expedienteData.abogado_id
-      }
-    ])
+    .insert([{
+      numero_caso: expedienteData.numeroCaso,
+      titulo: expedienteData.titulo,
+      materia: expedienteData.materia,
+      juzgado: expedienteData.juzgado,
+      parte_contraria: expedienteData.parteContraria,
+      informe_despacho: expedienteData.informeDespacho,
+      informe_cliente: expedienteData.informeCliente,
+      cliente_id: expedienteData.clienteId,
+      abogado_asignado_id: expedienteData.abogado_id
+    }])
     .select()
     .single();
 
@@ -56,9 +70,15 @@ export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'f
 export async function obtenerExpedientes(): Promise<any[]> {
   const supabase = createClient();
 
+  /* POST-MIGRACIÓN: pedimos nombres, apellido_paterno, apellido_materno
+     en lugar de nombre_completo (que ya no existe en perfiles) */
   const { data, error } = await supabase
     .from('expedientes')
-    .select('*, cliente:perfiles!cliente_id(nombre_completo), abogado:perfiles!abogado_asignado_id(nombre_completo)')
+    .select(`
+      *, 
+      cliente:perfiles!cliente_id(nombres, apellido_paterno, apellido_materno), 
+      abogado:perfiles!abogado_asignado_id(nombres, apellido_paterno, apellido_materno)
+    `)
     .order('fecha_creacion', { ascending: false });
 
   if (error || !data) {
@@ -74,9 +94,19 @@ export async function obtenerExpedientes(): Promise<any[]> {
     juzgado: fila.juzgado,
     parteContraria: fila.parte_contraria,
     estado: fila.estado,
-    nombreCliente: fila.cliente?.nombre_completo || 'Cliente Desconocido',
+    nombreCliente: construirNombre(
+      fila.cliente?.nombres,
+      fila.cliente?.apellido_paterno,
+      fila.cliente?.apellido_materno,
+      'Cliente Desconocido'
+    ),
     abogado_id: fila.abogado_asignado_id,
-    abogado_nombre: fila.abogado?.nombre_completo || 'Sin asignar',
+    abogado_nombre: construirNombre(
+      fila.abogado?.nombres,
+      fila.abogado?.apellido_paterno,
+      fila.abogado?.apellido_materno,
+      'Sin asignar'
+    ),
     fechaCreacion: new Date(fila.fecha_creacion)
   }));
 }
@@ -84,15 +114,36 @@ export async function obtenerExpedientes(): Promise<any[]> {
 export async function obtenerExpedientePorId(id: string): Promise<any | null> {
   const supabase = createClient();
 
+  /* POST-MIGRACIÓN: pedimos columnas individuales de nombre en vez de nombre_completo */
   const { data, error } = await supabase
     .from('expedientes')
-    .select('*, cliente:perfiles!cliente_id(id, nombre_completo, telefono), abogado:perfiles!abogado_asignado_id(id, nombre_completo, telefono)')
+    .select(`
+      *, 
+      cliente:perfiles!cliente_id(id, nombres, apellido_paterno, apellido_materno, telefono), 
+      abogado:perfiles!abogado_asignado_id(id, nombres, apellido_paterno, apellido_materno, telefono)
+    `)
     .eq('id', id)
     .single();
 
   if (error || !data) {
     console.error("Error al obtener el expediente:", error?.message);
     return null;
+  }
+
+  // Armamos el nombre del cliente concatenando las columnas de perfiles
+  const nombreCliente = construirNombre(
+    data.cliente?.nombres,
+    data.cliente?.apellido_paterno,
+    data.cliente?.apellido_materno,
+    'Cliente no asignado'
+  );
+
+  // El email del cliente vive en auth.users, no en perfiles.
+  // Delegamos a obtenerClientePorId que ya tiene este mapeo implementado.
+  let emailCliente = '';
+  if (data.cliente_id) {
+    const clienteCompleto = await obtenerClientePorId(data.cliente_id);
+    emailCliente = clienteCompleto?.email ?? '';
   }
 
   return {
@@ -107,14 +158,19 @@ export async function obtenerExpedientePorId(id: string): Promise<any | null> {
     estado: data.estado,
     clienteId: data.cliente_id,
     cliente: {
-      id: data.cliente?.id || '',
-      nombre_completo: data.cliente?.nombre_completo || 'Cliente no asignado',
-      telefono: data.cliente?.telefono || 'No registrado',
-      email: 'No registrado' // No existe en la tabla perfiles
+      id: data.cliente?.id ?? '',
+      nombre_completo: nombreCliente,
+      telefono: data.cliente?.telefono ?? '',
+      email: emailCliente,
     },
     abogado_id: data.abogado_asignado_id,
-    abogado_nombre: data.abogado?.nombre_completo || 'Sin asignar',
-    fechaCreacion: new Date(data.fecha_creacion)
+    abogado_nombre: construirNombre(
+      data.abogado?.nombres,
+      data.abogado?.apellido_paterno,
+      data.abogado?.apellido_materno,
+      'Sin asignar'
+    ),
+    fechaCreacion: new Date(data.fecha_creacion),
   };
 }
 
@@ -152,7 +208,7 @@ export async function obtenerTotalExpedientes(): Promise<number> {
 
   if (error) {
     console.error("Error al obtener el recuento de expedientes:", error.message);
-    return 0; // Se maneja el error silenciosamente
+    return 0;
   }
 
   return count || 0;

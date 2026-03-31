@@ -45,6 +45,7 @@ export default function CasosPage() {
   const [listaClientes, setListaClientes] = useState<any[]>([]);
   const [listaAbogados, setListaAbogados] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [errorClientes, setErrorClientes] = useState(false);
 
   /* ── Estados de filtro ─────────────────────────────────────── */
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,8 +83,14 @@ export default function CasosPage() {
         obtenerAbogados(),
       ]);
       setExpedientes(dataCasos);
-      setListaClientes(dataClientes);
       setListaAbogados(dataAbogados);
+
+      // Guardamos los clientes y marcamos error si la lista llegó vacía
+      // para informar al usuario en el selector en lugar de mostrar un desplegable silencioso
+      if (dataClientes.length === 0) {
+        setErrorClientes(true);
+      }
+      setListaClientes(dataClientes);
       setCargando(false);
     }
     cargarDatosIniciales();
@@ -359,19 +366,26 @@ export default function CasosPage() {
                     </h4>
                     <div className="space-y-2">
                       <label className="text-base font-semibold text-gray-900 block">Cliente Patrocinado *</label>
-                      <select 
-                        required
-                        className="w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50"
-                        value={formData.clienteId}
-                        onChange={(e) => setFormData({ ...formData, clienteId: e.target.value })}
-                      >
-                        <option value="" disabled>Ej. Marta Rodríguez G.</option>
-                        {listaClientes.map(cliente => (
-                          <option key={cliente.id} value={cliente.id}>
-                            {cliente.nombreCompleto}
-                          </option>
-                        ))}
-                      </select>
+                      {errorClientes ? (
+                        <div className="w-full text-base px-4 py-3 rounded-xl border border-amber-300 bg-amber-50 text-amber-800 font-medium flex items-center gap-2">
+                          <ShieldAlert className="w-5 h-5 flex-shrink-0" />
+                          No hay clientes registrados. Crea uno primero.
+                        </div>
+                      ) : (
+                        <select 
+                          required
+                          className="w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50"
+                          value={formData.clienteId}
+                          onChange={(e) => setFormData({ ...formData, clienteId: e.target.value })}
+                        >
+                          <option value="" disabled>Seleccione un cliente...</option>
+                          {listaClientes.map(cliente => (
+                            <option key={cliente.id} value={cliente.id}>
+                              {cliente.nombreCompleto}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
                     <div className="space-y-2">

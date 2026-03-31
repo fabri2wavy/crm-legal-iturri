@@ -207,13 +207,33 @@
 
 .modalContainer {
   width: 100%;
-  max-width: 28rem;
-  overflow: hidden;
+  max-width: 42rem;
+  max-height: 90vh;
+  overflow-y: auto;
   background: var(--color-surface-card);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--color-surface-border);
   animation: cardIn 0.35s var(--transition-smooth) both;
+}
+
+/* ── Section titles inside modal ──────────────────────────── */
+.sectionTitle {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sectionDivider {
+  height: 1px;
+  background: var(--color-surface-border);
+  margin: var(--spacing-md) 0;
 }
 
 /* ── Modal header ──────────────────────────────────────────── */
@@ -276,6 +296,53 @@
 
 .modalFooter > * {
   flex: 1;
+}
+
+/* ── Accordion toggle ─────────────────────────────────────── */
+.accordionToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-surface-border);
+  background: transparent;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.accordionToggle:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-text-muted);
+}
+
+.accordionLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.accordionHint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  flex: 1;
+  text-align: left;
+}
+
+.accordionChevron {
+  color: var(--color-text-muted);
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+/* ── Accordion content (collapsible) ──────────────────────── */
+.accordionContent {
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.25s ease, margin-top 0.25s ease;
 }
 
 /* ── Utility: unstyled link ────────────────────────────────── */
