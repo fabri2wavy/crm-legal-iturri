@@ -351,6 +351,154 @@
   color: inherit;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   STEPPER (Multi-Step Wizard)
+   ══════════════════════════════════════════════════════════════ */
+
+.stepper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-xl);
+}
+
+/* ── Single step container ─────────────────────────────────── */
+.stepItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 1;
+  min-width: 120px;
+}
+
+/* ── Circle indicator ──────────────────────────────────────── */
+.stepCircle {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  font-family: var(--font-body);
+  border: 2px solid var(--color-surface-border);
+  background: var(--color-surface-card);
+  color: var(--color-text-muted);
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base),
+    color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.stepCircle.active {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-text-on-gold);
+  box-shadow: 0 0 0 4px var(--color-gold-dim);
+}
+
+.stepCircle.completed {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #ffffff;
+}
+
+/* ── Step label ────────────────────────────────────────────── */
+.stepLabel {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-align: center;
+  transition: color var(--transition-base);
+  letter-spacing: 0.02em;
+}
+
+.stepLabel.active {
+  color: var(--color-text-primary);
+}
+
+.stepLabel.completed {
+  color: var(--color-success);
+}
+
+/* ── Connector line between steps ──────────────────────────── */
+.stepConnector {
+  flex: 1;
+  height: 2px;
+  background: var(--color-surface-border);
+  align-self: flex-start;
+  margin-top: 1.125rem; /* vertically center with circle */
+  min-width: 60px;
+  position: relative;
+  overflow: hidden;
+  transition: background var(--transition-base);
+}
+
+.stepConnector.completed {
+  background: var(--color-success);
+}
+
+/* ── Step content section ──────────────────────────────────── */
+.stepContent {
+  animation: stepFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Step section header ───────────────────────────────────── */
+.stepHeader {
+  margin-bottom: var(--spacing-lg);
+}
+
+.stepTitle {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.stepDescription {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* ── Step field grid ───────────────────────────────────────── */
+.stepGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+}
+
+@media (min-width: 640px) {
+  .stepGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.fieldFullWidth {
+  grid-column: 1 / -1;
+}
+
+/* ── Validation error on field ─────────────────────────────── */
+.fieldError {
+  margin-top: 0.25rem;
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  animation: shakeX 0.4s ease both;
+}
+
+.inputError {
+  border-color: var(--color-danger) !important;
+}
+
+.inputError:focus {
+  box-shadow: 0 0 0 3px var(--color-danger-bg) !important;
+}
+
 /* ── Animations ────────────────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }
@@ -364,4 +512,17 @@
 @keyframes cardIn {
   from { opacity: 0; transform: scale(0.96) translateY(8px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes stepFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shakeX {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-4px); }
+  40%      { transform: translateX(4px); }
+  60%      { transform: translateX(-3px); }
+  80%      { transform: translateX(2px); }
 }

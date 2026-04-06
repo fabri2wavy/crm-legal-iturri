@@ -1,7 +1,10 @@
 import { createClient } from '../supabase/client';
 import { EntradaBitacora } from '../../domain/entities/EntradaBitacora';
 
-/* ── Listar entradas de bitácora de un expediente ──────────── */
+function construirNombre(n?: string | null, p?: string | null, m?: string | null): string {
+  return [n, p, m].filter(Boolean).join(' ').trim() || 'Desconocido';
+}
+
 export async function obtenerBitacoraPorExpediente(
   expedienteId: string
 ): Promise<EntradaBitacora[]> {
@@ -9,7 +12,7 @@ export async function obtenerBitacoraPorExpediente(
 
   const { data, error } = await supabase
     .from('bitacora')
-    .select('*, autor:perfiles!creado_por(nombre_completo)')
+    .select('*, autor:perfiles!creado_por(nombres, apellido_paterno, apellido_materno)')
     .eq('expediente_id', expedienteId)
     .order('creado_en', { ascending: false });
 
@@ -24,12 +27,11 @@ export async function obtenerBitacoraPorExpediente(
     contenido: fila.contenido,
     visibleCliente: fila.visible_cliente ?? false,
     creadoPor: fila.creado_por,
-    autorNombre: fila.autor?.nombre_completo || 'Desconocido',
+    autorNombre: construirNombre(fila.autor?.nombres, fila.autor?.apellido_paterno, fila.autor?.apellido_materno),
     creadoEn: new Date(fila.creado_en),
   }));
 }
 
-/* ── Crear nueva entrada en la bitácora ────────────────────── */
 export async function crearEntradaBitacora(
   expedienteId: string,
   contenido: string,
@@ -46,7 +48,7 @@ export async function crearEntradaBitacora(
       visible_cliente: visibleCliente,
       creado_por: usuarioId,
     }])
-    .select('*, autor:perfiles!creado_por(nombre_completo)')
+    .select('*, autor:perfiles!creado_por(nombres, apellido_paterno, apellido_materno)')
     .single();
 
   if (error || !data) {
@@ -60,7 +62,9 @@ export async function crearEntradaBitacora(
     contenido: data.contenido,
     visibleCliente: data.visible_cliente ?? false,
     creadoPor: data.creado_por,
-    autorNombre: data.autor?.nombre_completo || 'Tú',
+    autorNombre: data.autor 
+      ? (construirNombre(data.autor.nombres, data.autor.apellido_paterno, data.autor.apellido_materno) === 'Desconocido' ? 'Tú' : construirNombre(data.autor.nombres, data.autor.apellido_paterno, data.autor.apellido_materno))
+      : 'Tú',
     creadoEn: new Date(data.creado_en),
   };
 }

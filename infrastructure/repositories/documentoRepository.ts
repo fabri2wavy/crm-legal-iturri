@@ -1,9 +1,12 @@
 import { createClient } from '../supabase/client';
 import { Documento } from '../../domain/entities/Documento';
 
+function construirNombre(n?: string | null, p?: string | null, m?: string | null): string {
+  return [n, p, m].filter(Boolean).join(' ').trim() || 'Desconocido';
+}
+
 const BUCKET = 'documentos';
 
-/* ── Listar documentos de un expediente (desde tabla BD) ───── */
 export async function obtenerDocumentos(
   expedienteId: string
 ): Promise<Documento[]> {
@@ -11,7 +14,7 @@ export async function obtenerDocumentos(
 
   const { data, error } = await supabase
     .from('documentos')
-    .select('*, subido_por_perfil:perfiles!subido_por(nombre_completo)')
+    .select('*, subido_por_perfil:perfiles!subido_por(nombres, apellido_paterno, apellido_materno)')
     .eq('expediente_id', expedienteId)
     .order('creado_en', { ascending: false });
 
@@ -26,27 +29,22 @@ export async function obtenerDocumentos(
     ruta: fila.ruta_storage,
     tamaño: fila.tamano_bytes ?? 0,
     visibleCliente: fila.visible_cliente ?? false,
-    subidoPor: fila.subido_por_perfil?.nombre_completo || 'Desconocido',
+    subidoPor: construirNombre(fila.subido_por_perfil?.nombres, fila.subido_por_perfil?.apellido_paterno, fila.subido_por_perfil?.apellido_materno),
     fechaSubida: new Date(fila.creado_en),
   }));
 }
 
-/* ── Subir documento (Storage + INSERT en tabla BD) ────────── */
 export async function subirDocumento(
   expedienteId: string,
   file: File,
   visibleCliente: boolean
 ): Promise<Documento | null> {
   const supabase = createClient();
-
-  // 1. Obtener el usuario autenticado
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     console.error('Error: No hay usuario autenticado para subir documento.');
     return null;
   }
-
-  // 2. Subir archivo físico al bucket de Storage
   const timestamp = Date.now();
   const rutaStorage = `${expedienteId}/${timestamp}_${file.name}`;
 
@@ -58,8 +56,6 @@ export async function subirDocumento(
     console.error('Error al subir archivo a Storage:', uploadError.message);
     return null;
   }
-
-  // 3. Registrar metadatos en la tabla `documentos`
   const { data: insertData, error: insertError } = await supabase
     .from('documentos')
     .insert([{
@@ -71,12 +67,11 @@ export async function subirDocumento(
       visible_cliente: visibleCliente,
       subido_por: user.id,
     }])
-    .select('*, subido_por_perfil:perfiles!subido_por(nombre_completo)')
+    .select('*, subido_por_perfil:perfiles!subido_por(nombres, apellido_paterno, apellido_materno)')
     .single();
 
   if (insertError || !insertData) {
     console.error('Error al registrar documento en BD:', insertError?.message);
-    // Limpieza: si el INSERT falla, eliminamos el archivo huérfano del Storage
     await supabase.storage.from(BUCKET).remove([rutaStorage]);
     return null;
   }
@@ -87,12 +82,13 @@ export async function subirDocumento(
     ruta: insertData.ruta_storage,
     tamaño: insertData.tamano_bytes ?? file.size,
     visibleCliente: insertData.visible_cliente ?? false,
-    subidoPor: insertData.subido_por_perfil?.nombre_completo || 'Tú',
+    subidoPor: insertData.subido_por_perfil 
+      ? (construirNombre(insertData.subido_por_perfil.nombres, insertData.subido_por_perfil.apellido_paterno, insertData.subido_por_perfil.apellido_materno) === 'Desconocido' ? 'Tú' : construirNombre(insertData.subido_por_perfil.nombres, insertData.subido_por_perfil.apellido_paterno, insertData.subido_por_perfil.apellido_materno))
+      : 'Tú',
     fechaSubida: new Date(insertData.creado_en),
   };
 }
 
-/* ── Obtener URL firmada de descarga (válida 60 min) ───────── */
 export async function obtenerUrlDescarga(
   ruta: string
 ): Promise<string | null> {
@@ -109,15 +105,11 @@ export async function obtenerUrlDescarga(
 
   return data.signedUrl;
 }
-
-/* ── Eliminar documento (Storage + DELETE en tabla BD) ──────── */
 export async function eliminarDocumento(
   id: string,
   ruta: string
 ): Promise<boolean> {
   const supabase = createClient();
-
-  // 1. Eliminar registro de la BD
   const { error: dbError } = await supabase
     .from('documentos')
     .delete()
@@ -127,8 +119,6 @@ export async function eliminarDocumento(
     console.error('Error al eliminar registro de BD:', dbError.message);
     return false;
   }
-
-  // 2. Eliminar archivo físico del bucket
   const { error: storageError } = await supabase.storage
     .from(BUCKET)
     .remove([ruta]);
@@ -139,8 +129,6 @@ export async function eliminarDocumento(
 
   return true;
 }
-
-/* ── Cambiar visibilidad de un documento ───────────────────── */
 export async function actualizarVisibilidad(
   id: string,
   visibleCliente: boolean

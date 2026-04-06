@@ -1,20 +1,11 @@
-// infrastructure/repositories/usuarioRepository.ts
-
 import { createClient } from '../supabase/client';
 
-/* ══════════════════════════════════════════════════════════════
-   Interface para perfiles de usuario
-   POST-MIGRACIÓN: nombre_completo es calculado, no columna real
-   ══════════════════════════════════════════════════════════════ */
 export interface UsuarioPerfil {
   id: string;
-  nombre_completo: string;   // Calculado en capa de repositorio
+  nombre_completo: string;
   rol: string;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   Helper: mapear fila de perfiles a UsuarioPerfil
-   ══════════════════════════════════════════════════════════════ */
 function mapearUsuario(fila: any): UsuarioPerfil {
   const nombreCompleto = [fila.nombres, fila.apellido_paterno, fila.apellido_materno]
     .filter(Boolean)

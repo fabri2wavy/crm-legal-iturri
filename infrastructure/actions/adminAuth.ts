@@ -2,11 +2,6 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-/* ══════════════════════════════════════════════════════════════
-   Cliente Admin con Service Role Key
-   — usa auth.admin.createUser() que NO toca la sesión del admin
-   — Solo se instancia en Server Actions (jamás en el browser)
-   ══════════════════════════════════════════════════════════════ */
 function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -23,10 +18,6 @@ function createAdminClient() {
   });
 }
 
-/* ══════════════════════════════════════════════════════════════
-   Server Action: Crear usuario en Auth sin afectar sesión admin
-   Retorna: { userId: string } | { error: string }
-   ══════════════════════════════════════════════════════════════ */
 export async function crearUsuarioDesdeAdmin(
   email: string,
   password: string
@@ -37,7 +28,7 @@ export async function crearUsuarioDesdeAdmin(
     const { data, error } = await adminClient.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,   // Confirma el email automáticamente (no requiere verificación)
+      email_confirm: true,
     });
 
     if (error) {
@@ -56,11 +47,6 @@ export async function crearUsuarioDesdeAdmin(
   }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   Server Action: Obtener email de un usuario por su ID
-   — El email vive en auth.users, solo accesible con service role
-   — Retorna el email como string o cadena vacía si falla
-   ══════════════════════════════════════════════════════════════ */
 export async function obtenerEmailUsuarioPorId(
   userId: string
 ): Promise<string> {

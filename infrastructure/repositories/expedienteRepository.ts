@@ -1,13 +1,7 @@
-// infrastructure/repositories/expedienteRepository.ts
-
 import { createClient } from '../supabase/client';
 import { Expediente, EstadoExpediente } from '../../domain/entities/Expediente';
 import { obtenerClientePorId } from './clienteRepository';
 
-/* ══════════════════════════════════════════════════════════════
-   Helper: Construir nombre completo desde columnas individuales
-   Reutilizable para perfiles de clientes y abogados
-   ══════════════════════════════════════════════════════════════ */
 function construirNombre(
   nombres?: string | null,
   apellidoPaterno?: string | null,
@@ -69,9 +63,6 @@ export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'f
 
 export async function obtenerExpedientes(): Promise<any[]> {
   const supabase = createClient();
-
-  /* POST-MIGRACIÓN: pedimos nombres, apellido_paterno, apellido_materno
-     en lugar de nombre_completo (que ya no existe en perfiles) */
   const { data, error } = await supabase
     .from('expedientes')
     .select(`
@@ -113,8 +104,6 @@ export async function obtenerExpedientes(): Promise<any[]> {
 
 export async function obtenerExpedientePorId(id: string): Promise<any | null> {
   const supabase = createClient();
-
-  /* POST-MIGRACIÓN: pedimos columnas individuales de nombre en vez de nombre_completo */
   const { data, error } = await supabase
     .from('expedientes')
     .select(`
@@ -129,17 +118,12 @@ export async function obtenerExpedientePorId(id: string): Promise<any | null> {
     console.error("Error al obtener el expediente:", error?.message);
     return null;
   }
-
-  // Armamos el nombre del cliente concatenando las columnas de perfiles
   const nombreCliente = construirNombre(
     data.cliente?.nombres,
     data.cliente?.apellido_paterno,
     data.cliente?.apellido_materno,
     'Cliente no asignado'
   );
-
-  // El email del cliente vive en auth.users, no en perfiles.
-  // Delegamos a obtenerClientePorId que ya tiene este mapeo implementado.
   let emailCliente = '';
   if (data.cliente_id) {
     const clienteCompleto = await obtenerClientePorId(data.cliente_id);
