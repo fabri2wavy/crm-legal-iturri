@@ -28,9 +28,9 @@ const ESTADOS_CIVILES = [
   { value: "Viudo/a", label: "Viudo/a" },
 ];
 
-/* ── Clases Tailwind (sistema existente) ─────────────────────── */
-const INPUT = "w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 placeholder:text-gray-400";
-const LABEL = "text-base font-semibold text-gray-900 block";
+/* ── Clases Tailwind compactas (alta densidad) ───────────────── */
+const INPUT = "w-full text-sm px-3 py-2 rounded-lg border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 placeholder:text-gray-400";
+const LABEL = "text-sm font-semibold text-gray-900 block";
 
 /* ── Estado inicial del formulario ───────────────────────────── */
 const FORM_INIT = {
@@ -76,19 +76,17 @@ function Stepper({ pasoActual }: { pasoActual: number }) {
 
         return (
           <div key={paso.numero} style={{ display: "contents" }}>
-            {/* Connector line BEFORE step (except first) */}
             {index > 0 && (
               <div
                 className={`${css.stepConnector} ${estaCompleto ? css.completed : ""}`}
               />
             )}
-            {/* Step item */}
             <div className={css.stepItem}>
               <div
                 className={`${css.stepCircle} ${estaActivo ? css.active : ""} ${estaCompleto ? css.completed : ""}`}
               >
                 {estaCompleto ? (
-                  <Check className="w-4 h-4" strokeWidth={3} />
+                  <Check className="w-3.5 h-3.5" strokeWidth={3} />
                 ) : (
                   paso.numero
                 )}
@@ -136,7 +134,6 @@ export default function ClientesPage() {
   /* ── Helpers ────────────────────────────────────────────────── */
   const actualizarCampo = (campo: string, valor: string) => {
     setFormData(prev => ({ ...prev, [campo]: valor }));
-    /* Limpiar error del campo al empezar a escribir */
     if (campo in erroresPaso1) {
       setErroresPaso1(prev => ({ ...prev, [campo]: undefined }));
     }
@@ -189,9 +186,22 @@ export default function ClientesPage() {
     setPaso(1);
   };
 
-  /* ── Submit final ───────────────────────────────────────────── */
-  const handleGuardar = async (e: React.FormEvent) => {
+  /* ═══════════════════════════════════════════════════════════════
+     FIX CRÍTICO: onSubmit unificado.
+     El <form> envuelve AMBOS pasos. En Paso 1 el submit se
+     intercepta para solo avanzar de paso (nunca llamar al backend).
+     En Paso 2 ejecuta handleGuardar.
+     Esto evita que presionar Enter en Paso 1 cree un usuario.
+     ═══════════════════════════════════════════════════════════════ */
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (paso === 1) {
+      siguientePaso();
+      return;
+    }
+
+    /* Paso 2 → enviar al backend */
     setGuardando(true);
     setFormError("");
 
@@ -290,164 +300,172 @@ export default function ClientesPage() {
          ═══════════════════════════════════════════════════════════ */}
       {mostrarModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-200 flex flex-col max-h-[90vh]">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-200 flex flex-col">
 
-            {/* ── Header ──────────────────────────────────────── */}
-            <div className="px-8 py-5 flex items-center justify-between border-b border-gray-100">
-              <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <UserPlus className="w-6 h-6 text-blue-600" />
+            {/* ── Header (compacto) ───────────────────────────── */}
+            <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2.5">
+                <UserPlus className="w-5 h-5 text-blue-600" />
                 Registrar Nuevo Cliente
               </h3>
               <button
+                type="button"
                 onClick={cerrarModal}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors"
               >
-                <span className="text-2xl leading-none">&times;</span>
+                <span className="text-xl leading-none">&times;</span>
               </button>
             </div>
 
-            {/* ── Body ────────────────────────────────────────── */}
-            <div className="px-8 py-6 overflow-y-auto">
+            {/* ═══════════════════════════════════════════════════
+                FORM UNIFICADO — envuelve ambos pasos.
+                onSubmit se intercepta:
+                  • Paso 1 → validar y avanzar (NUNCA crea usuario)
+                  • Paso 2 → crearCliente()
+               ═══════════════════════════════════════════════════ */}
+            <form onSubmit={handleFormSubmit}>
 
-              {/* Stepper Visual */}
-              <Stepper pasoActual={paso} />
+              {/* ── Body ──────────────────────────────────────── */}
+              <div className="px-6 py-4">
 
-              {/* Error global del backend */}
-              {formError && (
-                <div className="p-4 mb-6 rounded-xl bg-red-50 border border-red-200 flex gap-3 text-red-800 text-base font-medium">
-                  <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                    <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-                  </svg>
-                  {formError}
-                </div>
-              )}
+                {/* Stepper Visual */}
+                <Stepper pasoActual={paso} />
 
-              {/* ════════════════════════════════════════════════
-                  PASO 1: Datos Esenciales
-                 ════════════════════════════════════════════════ */}
-              {paso === 1 && (
-                <div className={css.stepContent} key="paso-1">
-                  <div className={css.stepHeader}>
-                    <h4 className={css.stepTitle}>Identidad y Acceso</h4>
-                    <p className={css.stepDescription}>
-                      Datos obligatorios para crear la cuenta del cliente en el sistema.
-                    </p>
+                {/* Error global del backend */}
+                {formError && (
+                  <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 flex gap-2.5 text-red-800 text-sm font-medium">
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                      <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                    {formError}
                   </div>
+                )}
 
-                  <div className={css.stepGrid}>
-                    {/* Nombres */}
-                    <div className="space-y-2">
-                      <label htmlFor="nombres" className={LABEL}>Nombres *</label>
-                      <input
-                        id="nombres"
-                        type="text"
-                        placeholder="Ej. María Elena"
-                        className={inputClass("nombres")}
-                        value={formData.nombres}
-                        onChange={(e) => actualizarCampo("nombres", e.target.value)}
-                      />
-                      {erroresPaso1.nombres && (
-                        <p className={css.fieldError}>{erroresPaso1.nombres}</p>
-                      )}
+                {/* ════════════════════════════════════════════════
+                    PASO 1: Datos Esenciales
+                   ════════════════════════════════════════════════ */}
+                {paso === 1 && (
+                  <div className={css.stepContent} key="paso-1">
+                    <div className={css.stepHeader}>
+                      <h4 className={css.stepTitle}>Identidad y Acceso</h4>
+                      <p className={css.stepDescription}>
+                        Datos obligatorios para crear la cuenta del cliente.
+                      </p>
                     </div>
 
-                    {/* Apellido Paterno */}
-                    <div className="space-y-2">
-                      <label htmlFor="apellidoPaterno" className={LABEL}>Apellido Paterno *</label>
-                      <input
-                        id="apellidoPaterno"
-                        type="text"
-                        placeholder="Ej. García"
-                        className={inputClass("apellidoPaterno")}
-                        value={formData.apellidoPaterno}
-                        onChange={(e) => actualizarCampo("apellidoPaterno", e.target.value)}
-                      />
-                      {erroresPaso1.apellidoPaterno && (
-                        <p className={css.fieldError}>{erroresPaso1.apellidoPaterno}</p>
-                      )}
-                    </div>
+                    <div className={css.stepGrid}>
+                      {/* Nombres */}
+                      <div className="space-y-1">
+                        <label htmlFor="nombres" className={LABEL}>Nombres *</label>
+                        <input
+                          id="nombres"
+                          type="text"
+                          placeholder="Ej. María Elena"
+                          className={inputClass("nombres")}
+                          value={formData.nombres}
+                          onChange={(e) => actualizarCampo("nombres", e.target.value)}
+                        />
+                        {erroresPaso1.nombres && (
+                          <p className={css.fieldError}>{erroresPaso1.nombres}</p>
+                        )}
+                      </div>
 
-                    {/* Apellido Materno */}
-                    <div className="space-y-2">
-                      <label htmlFor="apellidoMaterno" className={LABEL}>Apellido Materno</label>
-                      <input
-                        id="apellidoMaterno"
-                        type="text"
-                        placeholder="Ej. Soliz"
-                        className={INPUT}
-                        value={formData.apellidoMaterno}
-                        onChange={(e) => actualizarCampo("apellidoMaterno", e.target.value)}
-                      />
-                    </div>
+                      {/* Apellido Paterno */}
+                      <div className="space-y-1">
+                        <label htmlFor="apellidoPaterno" className={LABEL}>Apellido Paterno *</label>
+                        <input
+                          id="apellidoPaterno"
+                          type="text"
+                          placeholder="Ej. García"
+                          className={inputClass("apellidoPaterno")}
+                          value={formData.apellidoPaterno}
+                          onChange={(e) => actualizarCampo("apellidoPaterno", e.target.value)}
+                        />
+                        {erroresPaso1.apellidoPaterno && (
+                          <p className={css.fieldError}>{erroresPaso1.apellidoPaterno}</p>
+                        )}
+                      </div>
 
-                    {/* Email */}
-                    <div className="space-y-2">
-                      <label htmlFor="email" className={LABEL}>Correo Electrónico *</label>
-                      <input
-                        id="email"
-                        type="email"
-                        placeholder="Ej. maria@correo.com"
-                        className={inputClass("email")}
-                        value={formData.email}
-                        onChange={(e) => actualizarCampo("email", e.target.value)}
-                      />
-                      {erroresPaso1.email && (
-                        <p className={css.fieldError}>{erroresPaso1.email}</p>
-                      )}
-                    </div>
+                      {/* Apellido Materno */}
+                      <div className="space-y-1">
+                        <label htmlFor="apellidoMaterno" className={LABEL}>Apellido Materno</label>
+                        <input
+                          id="apellidoMaterno"
+                          type="text"
+                          placeholder="Ej. Soliz"
+                          className={INPUT}
+                          value={formData.apellidoMaterno}
+                          onChange={(e) => actualizarCampo("apellidoMaterno", e.target.value)}
+                        />
+                      </div>
 
-                    {/* Password */}
-                    <div className="space-y-2">
-                      <label htmlFor="password" className={LABEL}>Contraseña de Acceso *</label>
-                      <input
-                        id="password"
-                        type="password"
-                        placeholder="Mín. 6 caracteres"
-                        className={inputClass("password")}
-                        value={formData.password}
-                        onChange={(e) => actualizarCampo("password", e.target.value)}
-                      />
-                      {erroresPaso1.password && (
-                        <p className={css.fieldError}>{erroresPaso1.password}</p>
-                      )}
-                    </div>
+                      {/* Email */}
+                      <div className="space-y-1">
+                        <label htmlFor="email" className={LABEL}>Correo Electrónico *</label>
+                        <input
+                          id="email"
+                          type="email"
+                          placeholder="Ej. maria@correo.com"
+                          className={inputClass("email")}
+                          value={formData.email}
+                          onChange={(e) => actualizarCampo("email", e.target.value)}
+                        />
+                        {erroresPaso1.email && (
+                          <p className={css.fieldError}>{erroresPaso1.email}</p>
+                        )}
+                      </div>
 
-                    {/* Teléfono */}
-                    <div className="space-y-2">
-                      <label htmlFor="telefono" className={LABEL}>Teléfono / Celular *</label>
-                      <input
-                        id="telefono"
-                        type="tel"
-                        placeholder="Ej. 70012345"
-                        className={inputClass("telefono")}
-                        value={formData.telefono}
-                        onChange={(e) => actualizarCampo("telefono", e.target.value)}
-                      />
-                      {erroresPaso1.telefono && (
-                        <p className={css.fieldError}>{erroresPaso1.telefono}</p>
-                      )}
+                      {/* Password */}
+                      <div className="space-y-1">
+                        <label htmlFor="password" className={LABEL}>Contraseña de Acceso *</label>
+                        <input
+                          id="password"
+                          type="password"
+                          placeholder="Mín. 6 caracteres"
+                          className={inputClass("password")}
+                          value={formData.password}
+                          onChange={(e) => actualizarCampo("password", e.target.value)}
+                        />
+                        {erroresPaso1.password && (
+                          <p className={css.fieldError}>{erroresPaso1.password}</p>
+                        )}
+                      </div>
+
+                      {/* Teléfono */}
+                      <div className="space-y-1">
+                        <label htmlFor="telefono" className={LABEL}>Teléfono / Celular *</label>
+                        <input
+                          id="telefono"
+                          type="tel"
+                          placeholder="Ej. 70012345"
+                          className={inputClass("telefono")}
+                          value={formData.telefono}
+                          onChange={(e) => actualizarCampo("telefono", e.target.value)}
+                        />
+                        {erroresPaso1.telefono && (
+                          <p className={css.fieldError}>{erroresPaso1.telefono}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* ════════════════════════════════════════════════
-                  PASO 2: Generales de Ley
-                 ════════════════════════════════════════════════ */}
-              {paso === 2 && (
-                <div className={css.stepContent} key="paso-2">
-                  <div className={css.stepHeader}>
-                    <h4 className={css.stepTitle}>Generales de Ley</h4>
-                    <p className={css.stepDescription}>
-                      Información complementaria para expedientes legales. Todos los campos son opcionales.
-                    </p>
-                  </div>
+                {/* ════════════════════════════════════════════════
+                    PASO 2: Generales de Ley
+                   ════════════════════════════════════════════════ */}
+                {paso === 2 && (
+                  <div className={css.stepContent} key="paso-2">
+                    <div className={css.stepHeader}>
+                      <h4 className={css.stepTitle}>Generales de Ley</h4>
+                      <p className={css.stepDescription}>
+                        Información complementaria para expedientes. Todos los campos son opcionales.
+                      </p>
+                    </div>
 
-                  <form id="cliente-form" onSubmit={handleGuardar}>
                     <div className={css.stepGrid}>
                       {/* CI */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <label htmlFor="ci" className={LABEL}>Cédula de Identidad</label>
                         <input
                           id="ci"
@@ -460,7 +478,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Expedido */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <label htmlFor="expedido" className={LABEL}>Expedido</label>
                         <select
                           id="expedido"
@@ -474,7 +492,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Fecha Nacimiento */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <label htmlFor="fechaNacimiento" className={LABEL}>Fecha de Nacimiento</label>
                         <input
                           id="fechaNacimiento"
@@ -486,7 +504,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Nacionalidad */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <label htmlFor="nacionalidad" className={LABEL}>Nacionalidad</label>
                         <input
                           id="nacionalidad"
@@ -498,7 +516,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Estado Civil */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <label htmlFor="estadoCivil" className={LABEL}>Estado Civil</label>
                         <select
                           id="estadoCivil"
@@ -512,7 +530,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Profesión */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <label htmlFor="profesion" className={LABEL}>Profesión / Ocupación</label>
                         <input
                           id="profesion"
@@ -525,11 +543,11 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Dirección (ancho completo) */}
-                      <div className={`space-y-2 ${css.fieldFullWidth}`}>
+                      <div className={`space-y-1 ${css.fieldFullWidth}`}>
                         <label htmlFor="direccion" className={LABEL}>Dirección de Domicilio</label>
                         <textarea
                           id="direccion"
-                          rows={3}
+                          rows={2}
                           placeholder="Ej. Av. Arce #2560, Zona Sopocachi, La Paz"
                           className={INPUT + " resize-none"}
                           value={formData.direccion}
@@ -537,65 +555,59 @@ export default function ClientesPage() {
                         />
                       </div>
                     </div>
-                  </form>
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
 
-            {/* ── Footer (dinámico según paso) ────────────────── */}
-            <div className="px-8 py-5 border-t border-gray-200 bg-gray-50/80 flex justify-between gap-4 rounded-b-2xl">
+              {/* ── Footer (dinámico según paso) ──────────────── */}
+              <div className="px-6 py-3.5 border-t border-gray-200 bg-gray-50/80 flex justify-between gap-3 rounded-b-2xl">
 
-              {/* Botón izquierdo */}
-              {paso === 1 ? (
-                <button
-                  type="button"
-                  onClick={cerrarModal}
-                  disabled={guardando}
-                  className="px-6 py-3 text-base font-bold text-gray-700 bg-white border border-gray-300 rounded-xl shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors"
-                >
-                  Cancelar
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={pasoAnterior}
-                  disabled={guardando}
-                  className="px-6 py-3 text-base font-bold text-gray-700 bg-white border border-gray-300 rounded-xl shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors flex items-center gap-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Atrás
-                </button>
-              )}
+                {/* Botón izquierdo */}
+                {paso === 1 ? (
+                  <button
+                    type="button"
+                    onClick={cerrarModal}
+                    disabled={guardando}
+                    className="px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={pasoAnterior}
+                    disabled={guardando}
+                    className="px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors flex items-center gap-1.5"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    Atrás
+                  </button>
+                )}
 
-              {/* Botón derecho */}
-              {paso === 1 ? (
-                <button
-                  type="button"
-                  onClick={siguientePaso}
-                  className="px-8 py-3 text-base font-bold text-white bg-blue-600 border border-transparent rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all flex items-center gap-2"
-                >
-                  Siguiente
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  form="cliente-form"
-                  disabled={guardando}
-                  className="px-8 py-3 text-base font-bold text-white bg-blue-600 border border-transparent rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all flex items-center justify-center min-w-[180px]"
-                >
-                  {guardando ? (
-                    <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-5 h-5 mr-2" strokeWidth={2.5} />
-                      Guardar Cliente
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
+                {/* Botón derecho */}
+                {paso === 1 ? (
+                  <button type="button" onClick={siguientePaso} className="tu-clase-de-tailwind...">
+  Siguiente →
+</button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={guardando}
+                    className="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 border border-transparent rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all flex items-center justify-center min-w-[160px]"
+                  >
+                    {guardando ? (
+                      <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-1.5" strokeWidth={2.5} />
+                        Guardar Cliente
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
 
+            </form>
           </div>
         </div>
       )}
