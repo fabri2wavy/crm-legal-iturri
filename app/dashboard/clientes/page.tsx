@@ -28,9 +28,9 @@ const ESTADOS_CIVILES = [
   { value: "Viudo/a", label: "Viudo/a" },
 ];
 
-/* ── Clases Tailwind compactas (alta densidad) ───────────────── */
-const INPUT = "w-full text-sm px-3 py-2 rounded-lg border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 placeholder:text-gray-400";
-const LABEL = "text-sm font-semibold text-gray-900 block";
+/* ── Clases Tailwind (sistema existente) ─────────────────────── */
+const INPUT = "w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 placeholder:text-gray-400";
+const LABEL = "text-base font-semibold text-gray-900 block";
 
 /* ── Estado inicial del formulario ───────────────────────────── */
 const FORM_INIT = {
@@ -86,7 +86,7 @@ function Stepper({ pasoActual }: { pasoActual: number }) {
                 className={`${css.stepCircle} ${estaActivo ? css.active : ""} ${estaCompleto ? css.completed : ""}`}
               >
                 {estaCompleto ? (
-                  <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                  <Check className="w-4 h-4" strokeWidth={3} />
                 ) : (
                   paso.numero
                 )}
@@ -300,20 +300,20 @@ export default function ClientesPage() {
          ═══════════════════════════════════════════════════════════ */}
       {mostrarModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-200 flex flex-col">
+          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-gray-200 flex flex-col max-h-[90vh]">
 
-            {/* ── Header (compacto) ───────────────────────────── */}
-            <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2.5">
-                <UserPlus className="w-5 h-5 text-blue-600" />
+            {/* ── Header ──────────────────────────────────────── */}
+            <div className="px-8 py-5 flex items-center justify-between border-b border-gray-100">
+              <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <UserPlus className="w-6 h-6 text-blue-600" />
                 Registrar Nuevo Cliente
               </h3>
               <button
                 type="button"
                 onClick={cerrarModal}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors"
               >
-                <span className="text-xl leading-none">&times;</span>
+                <span className="text-2xl leading-none">&times;</span>
               </button>
             </div>
 
@@ -323,18 +323,18 @@ export default function ClientesPage() {
                   • Paso 1 → validar y avanzar (NUNCA crea usuario)
                   • Paso 2 → crearCliente()
                ═══════════════════════════════════════════════════ */}
-            <form onSubmit={handleFormSubmit}>
+            <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col overflow-hidden min-h-0">
 
               {/* ── Body ──────────────────────────────────────── */}
-              <div className="px-6 py-4">
+              <div className="px-8 py-6 overflow-y-auto flex-1 min-h-0">
 
                 {/* Stepper Visual */}
                 <Stepper pasoActual={paso} />
 
                 {/* Error global del backend */}
                 {formError && (
-                  <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 flex gap-2.5 text-red-800 text-sm font-medium">
-                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <div className="p-4 mb-6 rounded-xl bg-red-50 border border-red-200 flex gap-3 text-red-800 text-base font-medium">
+                    <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                       <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
                     </svg>
@@ -356,7 +356,7 @@ export default function ClientesPage() {
 
                     <div className={css.stepGrid}>
                       {/* Nombres */}
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <label htmlFor="nombres" className={LABEL}>Nombres *</label>
                         <input
                           id="nombres"
@@ -372,7 +372,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Apellido Paterno */}
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <label htmlFor="apellidoPaterno" className={LABEL}>Apellido Paterno *</label>
                         <input
                           id="apellidoPaterno"
@@ -388,7 +388,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Apellido Materno */}
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <label htmlFor="apellidoMaterno" className={LABEL}>Apellido Materno</label>
                         <input
                           id="apellidoMaterno"
@@ -401,7 +401,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Email */}
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <label htmlFor="email" className={LABEL}>Correo Electrónico *</label>
                         <input
                           id="email"
@@ -417,7 +417,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Password */}
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <label htmlFor="password" className={LABEL}>Contraseña de Acceso *</label>
                         <input
                           id="password"
@@ -433,7 +433,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Teléfono */}
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <label htmlFor="telefono" className={LABEL}>Teléfono / Celular *</label>
                         <input
                           id="telefono"
@@ -465,7 +465,7 @@ export default function ClientesPage() {
 
                     <div className={css.stepGrid}>
                       {/* CI */}
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <label htmlFor="ci" className={LABEL}>Cédula de Identidad</label>
                         <input
                           id="ci"
@@ -478,7 +478,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Expedido */}
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <label htmlFor="expedido" className={LABEL}>Expedido</label>
                         <select
                           id="expedido"
@@ -492,7 +492,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Fecha Nacimiento */}
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <label htmlFor="fechaNacimiento" className={LABEL}>Fecha de Nacimiento</label>
                         <input
                           id="fechaNacimiento"
@@ -504,7 +504,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Nacionalidad */}
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <label htmlFor="nacionalidad" className={LABEL}>Nacionalidad</label>
                         <input
                           id="nacionalidad"
@@ -516,7 +516,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Estado Civil */}
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <label htmlFor="estadoCivil" className={LABEL}>Estado Civil</label>
                         <select
                           id="estadoCivil"
@@ -530,7 +530,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Profesión */}
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <label htmlFor="profesion" className={LABEL}>Profesión / Ocupación</label>
                         <input
                           id="profesion"
@@ -543,11 +543,11 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Dirección (ancho completo) */}
-                      <div className={`space-y-1 ${css.fieldFullWidth}`}>
+                      <div className={`space-y-2 ${css.fieldFullWidth}`}>
                         <label htmlFor="direccion" className={LABEL}>Dirección de Domicilio</label>
                         <textarea
                           id="direccion"
-                          rows={2}
+                          rows={3}
                           placeholder="Ej. Av. Arce #2560, Zona Sopocachi, La Paz"
                           className={INPUT + " resize-none"}
                           value={formData.direccion}
@@ -559,8 +559,8 @@ export default function ClientesPage() {
                 )}
               </div>
 
-              {/* ── Footer (dinámico según paso) ──────────────── */}
-              <div className="px-6 py-3.5 border-t border-gray-200 bg-gray-50/80 flex justify-between gap-3 rounded-b-2xl">
+              {/* ── Footer ────────────────────────────────────────── */}
+              <div className="px-8 py-5 border-t border-gray-200 bg-gray-50/80 flex justify-between gap-4 rounded-b-2xl">
 
                 {/* Botón izquierdo */}
                 {paso === 1 ? (
@@ -585,12 +585,20 @@ export default function ClientesPage() {
                 )}
 
                 {/* Botón derecho */}
+               {/* Botón derecho */}
                 {paso === 1 ? (
-                  <button type="button" onClick={siguientePaso} className="tu-clase-de-tailwind...">
-  Siguiente →
-</button>
+                  <button
+                    key="btn-siguiente" /* <--- ¡ESTA ES LA MAGIA QUE ROMPE EL BUG! */
+                    type="button"
+                    onClick={siguientePaso}
+                    className="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 border border-transparent rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all flex items-center gap-1.5"
+                  >
+                    Siguiente
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 ) : (
                   <button
+                    key="btn-guardar" /* <--- ¡ESTA ES LA MAGIA QUE ROMPE EL BUG! */
                     type="submit"
                     disabled={guardando}
                     className="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 border border-transparent rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all flex items-center justify-center min-w-[160px]"

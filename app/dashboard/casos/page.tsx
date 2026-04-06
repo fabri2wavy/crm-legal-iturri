@@ -142,7 +142,7 @@ export default function CasosPage() {
     }
 
     // Resolviendo Valores Dependientes
-    const esOtro = formData.materiaSelect === "Otro";
+    const esOtro = formData.materiaSelect === "N";
     const materiaFinal = esOtro ? formData.materiaManual : formData.materiaSelect;
     const estadoFinal = esOtro ? formData.estadoManual : formData.estadoSelect;
 
