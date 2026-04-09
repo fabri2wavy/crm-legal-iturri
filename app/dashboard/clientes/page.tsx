@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { UserPlus, CheckCircle2, Users, Plus, Check, ArrowRight, ArrowLeft } from "lucide-react";
+import { UserPlus, CheckCircle2, Users, Plus, Check, ArrowRight, ArrowLeft, Search } from "lucide-react";
 import { Cliente } from "../../../domain/entities/Cliente";
 import { obtenerClientes, crearCliente } from "../../../infrastructure/repositories/clienteRepository";
 import { Button } from "../../../components/ui/Button";
@@ -131,6 +131,19 @@ export default function ClientesPage() {
     cargar();
   }, []);
 
+  /* ── Búsqueda (client-side) ──────────────────────────────────── */
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const clientesFiltrados = useMemo(() => {
+    if (!searchTerm.trim()) return clientes;
+    const termino = searchTerm.toLowerCase();
+    return clientes.filter((c) =>
+      c.nombreCompleto.toLowerCase().includes(termino) ||
+      (c.email && c.email.toLowerCase().includes(termino)) ||
+      (c.telefono && c.telefono.toLowerCase().includes(termino))
+    );
+  }, [clientes, searchTerm]);
+
   /* ── Helpers ────────────────────────────────────────────────── */
   const actualizarCampo = (campo: string, valor: string) => {
     setFormData(prev => ({ ...prev, [campo]: valor }));
@@ -235,6 +248,21 @@ export default function ClientesPage() {
         </Button>
       </div>
 
+      {/* ── Barra de Búsqueda ─────────────────────────────────── */}
+      <div className="bg-white p-4 border border-gray-200 rounded-xl shadow-sm">
+        <div className="relative">
+          <Search className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            id="searchClientes"
+            type="text"
+            placeholder="Buscar por nombre, correo o teléfono..."
+            className="w-full pl-11 pr-4 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-50/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
       {/* ── Tabla ───────────────────────────────────────────────── */}
       <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
@@ -242,6 +270,7 @@ export default function ClientesPage() {
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-200">
                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Nombre Completo</th>
+                <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Correo Electrónico</th>
                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Teléfono</th>
                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest text-right">Acciones</th>
               </tr>
@@ -249,7 +278,7 @@ export default function ClientesPage() {
             <tbody className="divide-y divide-gray-100">
               {cargando && (
                 <tr>
-                  <td colSpan={3} className="py-20 text-center">
+                  <td colSpan={4} className="py-20 text-center">
                     <div className="flex flex-col items-center justify-center space-y-3">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" />
                       <p className="text-gray-500 text-sm">Cargando directorio...</p>
@@ -257,18 +286,24 @@ export default function ClientesPage() {
                   </td>
                 </tr>
               )}
-              {!cargando && clientes.length === 0 && (
+              {!cargando && clientesFiltrados.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="py-24 text-center">
+                  <td colSpan={4} className="py-24 text-center">
                     <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                       <Users className="w-8 h-8 text-gray-300" strokeWidth={1.5} />
                     </div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1">No hay clientes registrados</h3>
-                    <p className="text-sm text-gray-500">Registra tu primer cliente usando el botón de arriba.</p>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                      {searchTerm.trim() ? "Sin resultados" : "No hay clientes registrados"}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {searchTerm.trim()
+                        ? `No se encontraron clientes para "${searchTerm}".`
+                        : "Registra tu primer cliente usando el botón de arriba."}
+                    </p>
                   </td>
                 </tr>
               )}
-              {!cargando && clientes.map((c) => (
+              {!cargando && clientesFiltrados.map((c) => (
                 <tr key={c.id} className="hover:bg-gray-50 transition-colors group">
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
@@ -277,6 +312,9 @@ export default function ClientesPage() {
                       </div>
                       <span className="text-sm font-bold text-gray-900 tracking-tight">{c.nombreCompleto}</span>
                     </div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <span className="text-sm text-gray-500">{c.email || "—"}</span>
                   </td>
                   <td className="py-4 px-6">
                     <span className="text-sm text-gray-500">{c.telefono || "—"}</span>

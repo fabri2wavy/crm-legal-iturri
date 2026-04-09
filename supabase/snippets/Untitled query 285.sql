@@ -1,12 +1,3 @@
-SELECT 
-    p.id,
-    p.nombres,
-    p.apellido_paterno,
-    p.telefono,
-    d.ci,
-    d.profesion
-FROM public.perfiles p
-LEFT JOIN public.detalles_cliente d ON p.id = d.perfil_id
-WHERE p.rol = 'cliente'
-ORDER BY p.creado_en DESC
-LIMIT 5;
+-- Eliminar el disparador y la función que causan el choque con el frontend
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();

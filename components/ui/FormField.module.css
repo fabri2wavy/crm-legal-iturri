@@ -1,5 +1,5 @@
 .group {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
 .label {
@@ -14,7 +14,7 @@
 
 .input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.875rem;
   border-radius: var(--radius-sm);
   font-family: var(--font-body);
   font-size: var(--text-sm);

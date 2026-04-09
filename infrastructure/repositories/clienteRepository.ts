@@ -1,9 +1,9 @@
 
 import { createClient } from '../supabase/client';
-import { crearUsuarioDesdeAdmin, obtenerEmailUsuarioPorId } from '../actions/adminAuth';
+import { crearUsuarioDesdeAdmin, obtenerEmailUsuarioPorId, obtenerEmailsUsuariosPorIds } from '../actions/adminAuth';
 import { Cliente } from '../../domain/entities/Cliente';
 import { Expediente } from '../../domain/entities/Expediente';
-import { completarRegistroClienteAdmin } from '../actions/adminDatabase';
+import { completarRegistroClienteAdmin, actualizarPerfilAdmin, eliminarPerfilAdmin, actualizarDetallesAdmin } from '../actions/adminDatabase';
 
 function construirNombreCompleto(
   nombres?: string | null,
@@ -116,7 +116,16 @@ export async function obtenerClientes(): Promise<Cliente[]> {
     return [];
   }
 
-  return data.map(mapearCliente);
+  const clientesSinEmail = data.map(mapearCliente);
+
+  /* Hidratar emails en un solo batch (Server Action con service_role) */
+  const ids = clientesSinEmail.map((c) => c.id);
+  const emailMap = await obtenerEmailsUsuariosPorIds(ids);
+
+  return clientesSinEmail.map((c) => ({
+    ...c,
+    email: emailMap[c.id] || '',
+  }));
 }
 
 export async function obtenerClientePorId(id: string): Promise<Cliente | null> {
@@ -173,32 +182,32 @@ export async function actualizarCliente(
   id: string,
   clienteData: Partial<Cliente>
 ): Promise<boolean> {
-  const supabase = createClient();
-  const updatePerfil: any = {};
-  if (clienteData.nombresLegales !== undefined) updatePerfil.nombres = clienteData.nombresLegales || null;
-  if (clienteData.apellidoPaterno !== undefined) updatePerfil.apellido_paterno = clienteData.apellidoPaterno || null;
-  if (clienteData.apellidoMaterno !== undefined) updatePerfil.apellido_materno = clienteData.apellidoMaterno || null;
-  if (clienteData.telefono !== undefined) updatePerfil.telefono = clienteData.telefono;
+  /* Mapeamos camelCase (dominio) → snake_case (DB) */
+  const perfilData: Record<string, any> = {};
+  if (clienteData.nombresLegales !== undefined) perfilData.nombres = clienteData.nombresLegales || null;
+  if (clienteData.apellidoPaterno !== undefined) perfilData.apellido_paterno = clienteData.apellidoPaterno || null;
+  if (clienteData.apellidoMaterno !== undefined) perfilData.apellido_materno = clienteData.apellidoMaterno || null;
+  if (clienteData.telefono !== undefined) perfilData.telefono = clienteData.telefono || null;
 
-  if (Object.keys(updatePerfil).length > 0) {
-    const { error } = await supabase.from('perfiles').update(updatePerfil).eq('id', id);
-    if (error) { console.error('Error al actualizar perfil:', error.message); return false; }
+  /* Delegamos al Server Action con service_role (bypass RLS) */
+  const result = await actualizarPerfilAdmin(id, perfilData);
+
+  if (!result.success) {
+    console.error('Error al actualizar cliente:', result.error);
+    return false;
   }
 
-  const camposDetalle: Record<string, any> = {};
-  if (clienteData.ci !== undefined) camposDetalle.ci = clienteData.ci || null;
-  if (clienteData.expedido !== undefined) camposDetalle.expedido = clienteData.expedido || null;
-  if (clienteData.nacionalidad !== undefined) camposDetalle.nacionalidad = clienteData.nacionalidad || null;
-  if (clienteData.fechaNacimiento !== undefined) camposDetalle.fecha_nacimiento = clienteData.fechaNacimiento || null;
-  if (clienteData.estadoCivil !== undefined) camposDetalle.estado_civil = clienteData.estadoCivil || null;
-  if (clienteData.profesion !== undefined) camposDetalle.profesion = clienteData.profesion || null;
-  if (clienteData.direccion !== undefined) camposDetalle.direccion = clienteData.direccion || null;
+  /* Campos de detalle (tabla detalles_cliente) */
+  const detallesData: Record<string, any> = {};
+  if (clienteData.ci !== undefined) detallesData.ci = clienteData.ci || null;
+  if (clienteData.expedido !== undefined) detallesData.expedido = clienteData.expedido || null;
 
-  if (Object.keys(camposDetalle).length > 0) {
-    const { error } = await supabase
-      .from('detalles_cliente')
-      .upsert({ perfil_id: id, ...camposDetalle }, { onConflict: 'perfil_id' });
-    if (error) { console.error('Error al actualizar detalles:', error.message); return false; }
+  if (Object.keys(detallesData).length > 0) {
+    const detallesResult = await actualizarDetallesAdmin(id, detallesData);
+    if (!detallesResult.success) {
+      console.error('Error al actualizar detalles del cliente:', detallesResult.error);
+      return false;
+    }
   }
 
   return true;
@@ -207,14 +216,15 @@ export async function actualizarCliente(
 export async function eliminarCliente(
   id: string
 ): Promise<{ success: boolean; error?: 'HAS_CASES' | string }> {
-  const supabase = createClient();
-  const { error } = await supabase.from('perfiles').delete().eq('id', id);
+  /* Delegamos al Server Action con service_role (bypass RLS) */
+  const result = await eliminarPerfilAdmin(id);
 
-  if (error) {
-    if (error.code === '23503') return { success: false, error: 'HAS_CASES' };
-    console.error('Error al eliminar cliente:', error.message);
-    return { success: false, error: error.message };
+  if (!result.success) {
+    if (result.error === 'HAS_CASES') return { success: false, error: 'HAS_CASES' };
+    console.error('Error al eliminar cliente:', result.error);
+    return { success: false, error: result.error };
   }
+
   return { success: true };
 }
 

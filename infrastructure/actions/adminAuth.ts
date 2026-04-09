@@ -65,3 +65,35 @@ export async function obtenerEmailUsuarioPorId(
     return '';
   }
 }
+
+/* ── Obtener emails en lote (para el directorio) ─────────────── */
+export async function obtenerEmailsUsuariosPorIds(
+  userIds: string[]
+): Promise<Record<string, string>> {
+  try {
+    const adminClient = createAdminClient();
+    const resultado: Record<string, string> = {};
+
+    /* Supabase Admin listUsers trae todos; filtramos en memoria */
+    const { data, error } = await adminClient.auth.admin.listUsers({
+      perPage: 1000,
+    });
+
+    if (error || !data.users) {
+      console.error('[adminAuth] Error listando usuarios:', error?.message);
+      return resultado;
+    }
+
+    const idsSet = new Set(userIds);
+    for (const user of data.users) {
+      if (idsSet.has(user.id) && user.email) {
+        resultado[user.id] = user.email;
+      }
+    }
+
+    return resultado;
+  } catch (e: any) {
+    console.error('[adminAuth] Excepción al obtener emails en lote:', e.message);
+    return {};
+  }
+}
