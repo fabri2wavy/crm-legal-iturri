@@ -271,9 +271,9 @@ export default function EquipoPage() {
     );
   }
 
-  /* ── Placeholder handler: "Añadir Miembro" (próximo lab) ───── */
+  /* ── Navegar a la vista de creación ──────────────────────── */
   const handleAnadirMiembro = () => {
-    /* Se implementará en un lab futuro */
+    router.push("/dashboard/equipo/nuevo");
   };
 
   return (

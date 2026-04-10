@@ -37,3 +37,74 @@ export async function obtenerEquipo(): Promise<MiembroEquipo[]> {
 
   return data.map(mapearMiembro);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   MUTACIÓN: Crear un nuevo miembro del equipo legal
+   ──────────────────────────────────────────────────────────────
+   Transacción de 2 pasos:
+     1. Insert en `perfiles` → captura el UUID generado.
+     2. Insert en `detalles_equipo` con ese UUID + campos profesionales.
+   ══════════════════════════════════════════════════════════════ */
+
+type DatosNuevoMiembro = Omit<MiembroEquipo, 'id' | 'estadoLaboral'>;
+
+export async function crearMiembroEquipo(
+  datos: DatosNuevoMiembro
+): Promise<MiembroEquipo> {
+  const supabase = createClient();
+
+  try {
+    /* ── Paso 1: Insertar en `perfiles` ──────────────────────── */
+    const { data: perfil, error: errorPerfil } = await supabase
+      .from('perfiles')
+      .insert({
+        nombres: datos.nombres,
+        apellido_paterno: datos.apellidoPaterno,
+        apellido_materno: datos.apellidoMaterno,
+        email: datos.email || null,
+        telefono: datos.telefono || null,
+        rol: datos.rol,
+      })
+      .select('id')
+      .single();
+
+    if (errorPerfil || !perfil) {
+      throw new Error(
+        `Error al crear el perfil del miembro: ${errorPerfil?.message ?? 'No se obtuvo el ID del perfil.'}`
+      );
+    }
+
+    /* ── Paso 2: Insertar en `detalles_equipo` ───────────────── */
+    const { error: errorDetalle } = await supabase
+      .from('detalles_equipo')
+      .insert({
+        id: perfil.id,
+        cargo: datos.cargo,
+        especialidad: datos.especialidad || null,
+        estado_laboral: 'activo',
+      });
+
+    if (errorDetalle) {
+      throw new Error(
+        `Error al crear los detalles del miembro: ${errorDetalle.message}`
+      );
+    }
+
+    /* ── Retornar la entidad de dominio completa ─────────────── */
+    return {
+      id: perfil.id,
+      nombres: datos.nombres,
+      apellidoPaterno: datos.apellidoPaterno,
+      apellidoMaterno: datos.apellidoMaterno,
+      email: datos.email || null,
+      telefono: datos.telefono || null,
+      rol: datos.rol,
+      cargo: datos.cargo,
+      especialidad: datos.especialidad || null,
+      estadoLaboral: 'activo',
+    };
+  } catch (err) {
+    if (err instanceof Error) throw err;
+    throw new Error('Error inesperado al crear el miembro del equipo.');
+  }
+}
