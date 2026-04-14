@@ -698,12 +698,14 @@ export default function DetalleExpedientePage() {
 
       {/* ── Modal de Confirmación de Eliminación ────────────────────── */}
       {isDeleteModalOpen && documentoToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" 
-            onClick={cancelarEliminacion} 
-          />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6"
+          onClick={cancelarEliminacion}
+        >
+          <div
+            className="relative w-full max-w-md bg-white rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-5">
                 <AlertTriangle className="h-8 w-8 text-red-600" aria-hidden="true" />

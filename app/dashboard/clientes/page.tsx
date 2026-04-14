@@ -337,8 +337,14 @@ export default function ClientesPage() {
           MODAL: REGISTRAR NUEVO CLIENTE (Multi-Step)
          ═══════════════════════════════════════════════════════════ */}
       {mostrarModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-gray-200 flex flex-col max-h-[90vh]">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6"
+          onClick={cerrarModal}
+        >
+          <div
+            className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
 
             {/* ── Header ──────────────────────────────────────── */}
             <div className="px-8 py-5 flex items-center justify-between border-b border-gray-100">
