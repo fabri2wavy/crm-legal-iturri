@@ -1,39 +1,73 @@
-ALTER TABLE public.agenda_eventos ENABLE ROW LEVEL SECURITY;
+-- Habilitar Row Level Security
+ALTER TABLE public.honorarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cuotas_pago ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.gastos_expediente ENABLE ROW LEVEL SECURITY;
 
--- SELECT: Visibilidad restringida al creador o asignado
-CREATE POLICY "select_agenda_eventos"
-ON public.agenda_eventos
-FOR SELECT
-USING (
-    asignado_a = (select auth.uid()) OR 
-    creado_por = (select auth.uid())
-);
+-- ==========================================
+-- POLÍTICAS PARA PUBLIC.HONORARIOS
+-- ==========================================
 
--- INSERT: Restricción absoluta de autoría al usuario autenticado
-CREATE POLICY "insert_agenda_eventos"
-ON public.agenda_eventos
-FOR INSERT
-WITH CHECK (
-    creado_por = (select auth.uid())
-);
+-- SELECT: Admins y Abogados (Lectura general de la firma)
+CREATE POLICY "honorarios_select_policy" ON public.honorarios
+FOR SELECT TO authenticated
+USING (true);
 
--- UPDATE: Modificación permitida a involucrados directos
-CREATE POLICY "update_agenda_eventos"
-ON public.agenda_eventos
-FOR UPDATE
-USING (
-    asignado_a = (select auth.uid()) OR 
-    creado_por = (select auth.uid())
-)
-WITH CHECK (
-    asignado_a = (select auth.uid()) OR 
-    creado_por = (select auth.uid())
-);
+-- INSERT: Solo Admin
+CREATE POLICY "honorarios_insert_admin" ON public.honorarios
+FOR INSERT TO authenticated
+WITH CHECK (EXISTS (SELECT 1 FROM public.perfiles WHERE id = (SELECT auth.uid()) AND rol = 'admin'));
 
--- DELETE: Destrucción exclusiva por el autor del registro
-CREATE POLICY "delete_agenda_eventos"
-ON public.agenda_eventos
-FOR DELETE
-USING (
-    creado_por = (select auth.uid())
-);
+-- UPDATE: Solo Admin
+CREATE POLICY "honorarios_update_admin" ON public.honorarios
+FOR UPDATE TO authenticated
+USING (EXISTS (SELECT 1 FROM public.perfiles WHERE id = (SELECT auth.uid()) AND rol = 'admin'))
+WITH CHECK (EXISTS (SELECT 1 FROM public.perfiles WHERE id = (SELECT auth.uid()) AND rol = 'admin'));
+
+-- DELETE: Solo Admin
+CREATE POLICY "honorarios_delete_admin" ON public.honorarios
+FOR DELETE TO authenticated
+USING (EXISTS (SELECT 1 FROM public.perfiles WHERE id = (SELECT auth.uid()) AND rol = 'admin'));
+
+-- ==========================================
+-- POLÍTICAS PARA PUBLIC.CUOTAS_PAGO
+-- ==========================================
+
+-- SELECT: Admins y Abogados
+CREATE POLICY "cuotas_select_policy" ON public.cuotas_pago
+FOR SELECT TO authenticated
+USING (true);
+
+-- INSERT/UPDATE/DELETE: Solo Admin
+CREATE POLICY "cuotas_insert_admin" ON public.cuotas_pago
+FOR INSERT TO authenticated
+WITH CHECK (EXISTS (SELECT 1 FROM public.perfiles WHERE id = (SELECT auth.uid()) AND rol = 'admin'));
+
+CREATE POLICY "cuotas_update_admin" ON public.cuotas_pago
+FOR UPDATE TO authenticated
+USING (EXISTS (SELECT 1 FROM public.perfiles WHERE id = (SELECT auth.uid()) AND rol = 'admin'));
+
+CREATE POLICY "cuotas_delete_admin" ON public.cuotas_pago
+FOR DELETE TO authenticated
+USING (EXISTS (SELECT 1 FROM public.perfiles WHERE id = (SELECT auth.uid()) AND rol = 'admin'));
+
+-- ==========================================
+-- POLÍTICAS PARA PUBLIC.GASTOS_EXPEDIENTE
+-- ==========================================
+
+-- SELECT: Admins y Abogados
+CREATE POLICY "gastos_select_policy" ON public.gastos_expediente
+FOR SELECT TO authenticated
+USING (true);
+
+-- INSERT/UPDATE/DELETE: Solo Admin
+CREATE POLICY "gastos_insert_admin" ON public.gastos_expediente
+FOR INSERT TO authenticated
+WITH CHECK (EXISTS (SELECT 1 FROM public.perfiles WHERE id = (SELECT auth.uid()) AND rol = 'admin'));
+
+CREATE POLICY "gastos_update_admin" ON public.gastos_expediente
+FOR UPDATE TO authenticated
+USING (EXISTS (SELECT 1 FROM public.perfiles WHERE id = (SELECT auth.uid()) AND rol = 'admin'));
+
+CREATE POLICY "gastos_delete_admin" ON public.gastos_expediente
+FOR DELETE TO authenticated
+USING (EXISTS (SELECT 1 FROM public.perfiles WHERE id = (SELECT auth.uid()) AND rol = 'admin'));

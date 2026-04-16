@@ -13,6 +13,18 @@ import {
 type CrearEventoPayload = Omit<EventoAgenda, 'id' | 'creadoEn' | 'creadoPor'>;
 
 /* ══════════════════════════════════════════════════════════════
+   Contrato de Filtros — campos opcionales para consultas
+   dinámicas sobre la tabla `agenda_eventos`.
+   ══════════════════════════════════════════════════════════════ */
+
+export interface FiltrosAgenda {
+  abogadoId?: string;
+  fechaInicio?: string;  // ISO 8601 — límite inferior (>=)
+  fechaFin?: string;     // ISO 8601 — límite superior (<=)
+  tipo?: TipoEventoAgenda;
+}
+
+/* ══════════════════════════════════════════════════════════════
    Helpers internos de mapeo snake_case → camelCase
    ══════════════════════════════════════════════════════════════ */
 
@@ -61,24 +73,50 @@ function mapearEventoDetallado(fila: FilaEventoDetallado): EventoAgendaDetallado
 }
 
 /* ══════════════════════════════════════════════════════════════
-   QUERY: Obtener todos los eventos con datos relacionales
+   QUERY: Obtener eventos con filtrado dinámico
    ──────────────────────────────────────────────────────────────
    Relaciones:
      • expedientes (LEFT JOIN — puede ser null)
-     • perfiles via FK asignado_a (INNER — obligatorio)
+     • perfiles via FK asignado_a (!inner — INNER JOIN obligatorio)
+
+   Filtros aplicados condicionalmente:
+     • abogadoId  → .eq('asignado_a', ...)
+     • fechaInicio → .gte('fecha_inicio', ...)
+     • fechaFin    → .lte('fecha_inicio', ...)
+     • tipo        → .eq('tipo_evento', ...)
    ══════════════════════════════════════════════════════════════ */
 
-export async function obtenerEventos(): Promise<EventoAgendaDetallado[]> {
+export async function obtenerEventos(
+  filtros?: FiltrosAgenda
+): Promise<EventoAgendaDetallado[]> {
   const supabase = createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('agenda_eventos')
     .select(`
       *,
       expedientes(numero_caso, titulo),
-      asignado:perfiles!asignado_a(nombres, apellido_paterno, apellido_materno)
-    `)
-    .order('fecha_inicio', { ascending: true });
+      asignado:perfiles!asignado_a!inner(nombres, apellido_paterno, apellido_materno)
+    `);
+
+  /* ── Inyección condicional de cláusulas ──────────────────── */
+  if (filtros?.abogadoId) {
+    query = query.eq('asignado_a', filtros.abogadoId);
+  }
+
+  if (filtros?.fechaInicio) {
+    query = query.gte('fecha_inicio', filtros.fechaInicio);
+  }
+
+  if (filtros?.fechaFin) {
+    query = query.lte('fecha_inicio', filtros.fechaFin);
+  }
+
+  if (filtros?.tipo) {
+    query = query.eq('tipo_evento', filtros.tipo);
+  }
+
+  const { data, error } = await query.order('fecha_inicio', { ascending: true });
 
   if (error) {
     throw new Error(`Error al obtener eventos de la agenda: ${error.message}`);
@@ -151,4 +189,42 @@ export async function crearEvento(
     creadoPor: data.creado_por,
     creadoEn: data.creado_en,
   };
+}
+export async function actualizarEvento(
+  id: string,
+  payload: Partial<CrearEventoPayload>
+): Promise<void> {
+  const supabase = createClient();
+
+  // Convertimos el payload camelCase a snake_case para Supabase
+  const updateData: any = {};
+  if (payload.titulo) updateData.titulo = payload.titulo;
+  if (payload.descripcion !== undefined) updateData.descripcion = payload.descripcion;
+  if (payload.tipoEvento) updateData.tipo_evento = payload.tipoEvento;
+  if (payload.estado) updateData.estado = payload.estado;
+  if (payload.fechaInicio) updateData.fecha_inicio = payload.fechaInicio;
+  if (payload.fechaFin) updateData.fecha_fin = payload.fechaFin;
+  if (payload.expedienteId !== undefined) updateData.expediente_id = payload.expedienteId;
+  if (payload.asignadoA) updateData.asignado_a = payload.asignadoA;
+
+  const { error } = await supabase
+    .from('agenda_eventos')
+    .update(updateData)
+    .eq('id', id);
+
+  if (error) throw new Error(`Error al actualizar el evento: ${error.message}`);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MUTATION: Eliminar un evento
+   ══════════════════════════════════════════════════════════════ */
+export async function eliminarEvento(id: string): Promise<void> {
+  const supabase = createClient();
+
+  const { error } = await supabase
+    .from('agenda_eventos')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw new Error(`Error al eliminar el evento: ${error.message}`);
 }

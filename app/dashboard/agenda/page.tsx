@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import {
   CalendarDays,
@@ -12,19 +13,32 @@ import {
   CheckSquare,
   X,
   CalendarOff,
+  Filter,
+  MoreVertical,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import {
   EventoAgendaDetallado,
   TipoEventoAgenda,
   EstadoEventoAgenda,
 } from "../../../domain/entities/EventoAgenda";
-import { obtenerEventos, crearEvento } from "../../../infrastructure/repositories/agendaRepository";
+import {
+  obtenerEventos,
+  crearEvento,
+  eliminarEvento,
+  FiltrosAgenda,
+} from "../../../infrastructure/repositories/agendaRepository";
 import { obtenerEquipo } from "../../../infrastructure/repositories/equipoRepository";
 import { obtenerExpedientes } from "../../../infrastructure/repositories/expedienteRepository";
+import { obtenerAbogados } from "../../../infrastructure/repositories/usuarioRepository";
 import { MiembroEquipo } from "../../../domain/entities/MiembroEquipo";
 import { Button } from "../../../components/ui/Button";
 import { FormField } from "../../../components/ui/FormField";
 import { SelectField } from "../../../components/ui/SelectField";
+import AgendaFiltros, { PARAM_KEYS } from "./AgendaFiltros";
+import EditarEventoModal from "./Modals/EditarEventoModal";
+import EliminarEventoDialog from "./Modals/EliminarEventoDialog";
 
 /* ══════════════════════════════════════════════════════════════
    CONFIGURACIÓN VISUAL: Badges por Tipo y Estado
@@ -170,6 +184,9 @@ function AgendaSkeleton() {
           <td className="py-3.5 px-5">
             <div className="skeleton h-5 w-20 rounded-full" />
           </td>
+          <td className="py-3.5 px-5">
+            <div className="skeleton h-6 w-6 rounded" />
+          </td>
         </tr>
       ))}
     </>
@@ -180,24 +197,46 @@ function AgendaSkeleton() {
    SUB-COMPONENTE: Estado vacío
    ══════════════════════════════════════════════════════════════ */
 
-function AgendaEmptyState({ onCrear }: { onCrear: () => void }) {
+function AgendaEmptyState({
+  onCrear,
+  hayFiltrosActivos,
+  onLimpiarFiltros,
+}: {
+  onCrear: () => void;
+  hayFiltrosActivos: boolean;
+  onLimpiarFiltros: () => void;
+}) {
   return (
     <tr>
-      <td colSpan={5} className="py-24 text-center">
+      <td colSpan={6} className="py-24 text-center">
         <div className="mx-auto w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mb-5 border border-gray-100">
-          <CalendarOff className="w-10 h-10 text-gray-300" strokeWidth={1.2} />
+          {hayFiltrosActivos ? (
+            <Filter className="w-10 h-10 text-gray-300" strokeWidth={1.2} />
+          ) : (
+            <CalendarOff className="w-10 h-10 text-gray-300" strokeWidth={1.2} />
+          )}
         </div>
         <h3 className="text-sm font-semibold text-gray-900 mb-1.5">
-          No tienes eventos programados
+          {hayFiltrosActivos
+            ? "No hay eventos para los criterios seleccionados"
+            : "No tienes eventos programados"}
         </h3>
         <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto leading-relaxed">
-          Tu agenda está libre. Haz clic en &ldquo;+ Nuevo Evento&rdquo; para
-          programar audiencias, reuniones, vencimientos o tareas.
+          {hayFiltrosActivos
+            ? "Modifique los filtros o cree una nueva entrada en la agenda."
+            : "Tu agenda está libre. Haz clic en \u201c+ Nuevo Evento\u201d para programar audiencias, reuniones, vencimientos o tareas."}
         </p>
-        <Button variant="primary" onClick={onCrear}>
-          <Plus className="w-4 h-4 mr-1.5" />
-          Nuevo Evento
-        </Button>
+        {hayFiltrosActivos ? (
+          <Button variant="ghost" onClick={onLimpiarFiltros}>
+            <X className="w-4 h-4 mr-1.5" />
+            Limpiar Filtros
+          </Button>
+        ) : (
+          <Button variant="primary" onClick={onCrear}>
+            <Plus className="w-4 h-4 mr-1.5" />
+            Nuevo Evento
+          </Button>
+        )}
       </td>
     </tr>
   );
@@ -207,7 +246,18 @@ function AgendaEmptyState({ onCrear }: { onCrear: () => void }) {
    SUB-COMPONENTE: Fila individual del evento
    ══════════════════════════════════════════════════════════════ */
 
-function EventoRow({ evento }: { evento: EventoAgendaDetallado }) {
+function EventoRow({
+  evento,
+  onEditar,
+  onEliminar,
+}: {
+  evento: EventoAgendaDetallado;
+  onEditar: (evento: EventoAgendaDetallado) => void;
+  onEliminar: (evento: EventoAgendaDetallado) => void;
+}) {
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   const tipo = TIPO_CONFIG[evento.tipoEvento];
   const estado = ESTADO_CONFIG[evento.estado];
   const urgente = esUrgente(evento.fechaInicio);
@@ -218,6 +268,18 @@ function EventoRow({ evento }: { evento: EventoAgendaDetallado }) {
     evento.asignado.apellidoPaterno,
     evento.asignado.apellidoMaterno
   );
+
+  /* Cerrar el menú al hacer click fuera */
+  useEffect(() => {
+    if (!menuAbierto) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuAbierto(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuAbierto]);
 
   return (
     <tr
@@ -291,6 +353,52 @@ function EventoRow({ evento }: { evento: EventoAgendaDetallado }) {
           <span className={`w-1.5 h-1.5 rounded-full ${estado.dot}`} />
           {estado.label}
         </span>
+      </td>
+
+      {/* ── Acciones ──────────────────────────────────────────── */}
+      <td className="py-3 px-5">
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setMenuAbierto((v) => !v)}
+            className="
+              w-8 h-8 flex items-center justify-center rounded-lg
+              text-gray-400 hover:text-gray-700 hover:bg-gray-100
+              opacity-0 group-hover:opacity-100 focus:opacity-100
+              transition-all
+            "
+            aria-label="Acciones del evento"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+
+          {menuAbierto && (
+            <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-20 py-1 animate-fade-up">
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuAbierto(false);
+                  onEditar(evento);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                Editar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuAbierto(false);
+                  onEliminar(evento);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Eliminar
+              </button>
+            </div>
+          )}
+        </div>
       </td>
     </tr>
   );
@@ -599,23 +707,75 @@ function ModalNuevoEvento({ isOpen, onClose, onCreado, onToast }: ModalNuevoEven
 
 /* ══════════════════════════════════════════════════════════════
    PÁGINA PRINCIPAL: Agenda Legal
+   ──────────────────────────────────────────────────────────────
+   Wrapper obligatorio: `useSearchParams` requiere un boundary
+   de <Suspense> en Next.js App Router para evitar errores de
+   hydration en production builds.
    ══════════════════════════════════════════════════════════════ */
 
 export default function AgendaPage() {
-  /* ── Estado ──────────────────────────────────────────────── */
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-7xl mx-auto py-24 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-t-transparent border-gray-400 mx-auto" />
+        </div>
+      }
+    >
+      <AgendaPageContent />
+    </Suspense>
+  );
+}
+
+function AgendaPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  /* ── Estado de UI ───────────────────────────────────────── */
   const [eventos, setEventos] = useState<EventoAgendaDetallado[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState<ToastData | null>(null);
 
-  /* ── Carga de datos ──────────────────────────────────────── */
+  /* ── Estado de edición y eliminación ───────────────────── */
+  const [eventoEditar, setEventoEditar] = useState<EventoAgendaDetallado | null>(null);
+  const [eventoEliminar, setEventoEliminar] = useState<EventoAgendaDetallado | null>(null);
+
+  /* ── Catálogo de abogados (una sola vez) ────────────────── */
+  const [abogados, setAbogados] = useState<Array<{ id: string; nombre_completo: string }>>([]);
+
+  useEffect(() => {
+    obtenerAbogados().then(setAbogados);
+  }, []);
+
+  /* ── Derivar filtros desde la URL (fuente única de verdad) ─ */
+  const asignadoParam = searchParams.get(PARAM_KEYS.asignado);
+  const desdeParam = searchParams.get(PARAM_KEYS.desde);
+  const hastaParam = searchParams.get(PARAM_KEYS.hasta);
+  const tipoParam = searchParams.get(PARAM_KEYS.tipo) as TipoEventoAgenda | null;
+
+  const hayFiltrosActivos =
+    asignadoParam !== null ||
+    desdeParam !== null ||
+    hastaParam !== null ||
+    tipoParam !== null;
+
+  /* ── Carga de datos (reactiva a cambios de URL) ─────────── */
   const cargarEventos = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
+    const filtrosRepo: FiltrosAgenda = {};
+    if (asignadoParam) filtrosRepo.abogadoId = asignadoParam;
+    if (desdeParam) filtrosRepo.fechaInicio = desdeParam;
+    if (hastaParam) filtrosRepo.fechaFin = hastaParam;
+    if (tipoParam) filtrosRepo.tipo = tipoParam;
+
     try {
-      const data = await obtenerEventos();
+      const data = await obtenerEventos(
+        Object.keys(filtrosRepo).length > 0 ? filtrosRepo : undefined
+      );
       setEventos(data);
     } catch (err) {
       setError(
@@ -626,7 +786,7 @@ export default function AgendaPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [asignadoParam, desdeParam, hastaParam, tipoParam]);
 
   useEffect(() => {
     cargarEventos();
@@ -645,6 +805,47 @@ export default function AgendaPage() {
   const handleEventoCreado = () => cargarEventos();
   const handleToast = useCallback((data: ToastData) => setToast(data), []);
   const handleCerrarToast = useCallback(() => setToast(null), []);
+
+  /** Limpia todos los filtros reseteando la URL */
+  const handleLimpiarFiltros = useCallback(() => {
+    router.replace("?", { scroll: false });
+  }, [router]);
+
+  /* ── Handlers de edición y eliminación ─────────────────── */
+  const handleAbrirEditar = useCallback((ev: EventoAgendaDetallado) => {
+    setEventoEditar(ev);
+  }, []);
+
+  const handleCerrarEditar = useCallback(() => {
+    setEventoEditar(null);
+  }, []);
+
+  const handleEventoActualizado = useCallback(() => {
+    cargarEventos();
+  }, [cargarEventos]);
+
+  const handleAbrirEliminar = useCallback((ev: EventoAgendaDetallado) => {
+    setEventoEliminar(ev);
+  }, []);
+
+  const handleCerrarEliminar = useCallback(() => {
+    setEventoEliminar(null);
+  }, []);
+
+  const handleConfirmarEliminar = useCallback(async () => {
+    if (!eventoEliminar) return;
+    try {
+      await eliminarEvento(eventoEliminar.id);
+      setToast({ message: "Evento eliminado correctamente.", type: "success" });
+      setEventoEliminar(null);
+      cargarEventos();
+    } catch (err) {
+      setToast({
+        message: err instanceof Error ? err.message : "No se pudo eliminar el evento.",
+        type: "error",
+      });
+    }
+  }, [eventoEliminar, cargarEventos]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-fade-up">
@@ -671,6 +872,12 @@ export default function AgendaPage() {
           {error}
         </div>
       )}
+
+      {/* ── Barra de filtros (URL-driven) ─────────────────────── */}
+      <AgendaFiltros
+        abogados={abogados}
+        isLoading={isLoading}
+      />
 
       {/* ── Tarjetas métricas ───────────────────────────────── */}
       {!isLoading && !error && eventos.length > 0 && (
@@ -729,6 +936,9 @@ export default function AgendaPage() {
                 <th className="py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-widest">
                   Estado
                 </th>
+                <th className="py-3 px-5 text-xs font-semibold text-gray-500 uppercase tracking-widest w-12">
+                  <span className="sr-only">Acciones</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -737,13 +947,22 @@ export default function AgendaPage() {
 
               {/* Empty */}
               {!isLoading && !error && eventos.length === 0 && (
-                <AgendaEmptyState onCrear={handleAbrirModal} />
+                <AgendaEmptyState
+                  onCrear={handleAbrirModal}
+                  hayFiltrosActivos={hayFiltrosActivos}
+                  onLimpiarFiltros={handleLimpiarFiltros}
+                />
               )}
 
               {/* Data */}
               {!isLoading &&
                 eventos.map((evento) => (
-                  <EventoRow key={evento.id} evento={evento} />
+                  <EventoRow
+                    key={evento.id}
+                    evento={evento}
+                    onEditar={handleAbrirEditar}
+                    onEliminar={handleAbrirEliminar}
+                  />
                 ))}
             </tbody>
           </table>
@@ -757,6 +976,27 @@ export default function AgendaPage() {
         onCreado={handleEventoCreado}
         onToast={handleToast}
       />
+
+      {/* ── Modal de edición ────────────────────────────────── */}
+      {eventoEditar && (
+        <EditarEventoModal
+          isOpen={true}
+          evento={eventoEditar}
+          onClose={handleCerrarEditar}
+          onActualizado={handleEventoActualizado}
+          onToast={handleToast}
+        />
+      )}
+
+      {/* ── Diálogo de eliminación ───────────────────────────── */}
+      {eventoEliminar && (
+        <EliminarEventoDialog
+          isOpen={true}
+          tituloEvento={eventoEliminar.titulo}
+          onConfirm={handleConfirmarEliminar}
+          onClose={handleCerrarEliminar}
+        />
+      )}
 
       {/* ── Toast de retroalimentación ──────────────────────── */}
       {toast && <Toast data={toast} onClose={handleCerrarToast} />}
