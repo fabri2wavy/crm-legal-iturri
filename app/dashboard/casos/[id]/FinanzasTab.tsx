@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { DollarSign, CreditCard, TrendingDown, Receipt, Plus, Banknote, X, Calendar, FileText, CheckCircle } from "lucide-react";
 import {
   EstadoCuentaExpediente,
@@ -42,6 +43,15 @@ const ESTADO_BADGE: Record<EstadoCuota, { bg: string; text: string; label: strin
   pendiente: { bg: "bg-amber-100",   text: "text-amber-700",   label: "Pendiente" },
   atrasado:  { bg: "bg-rose-100",    text: "text-rose-700",    label: "Atrasado" },
 };
+
+/* ══════════════════════════════════════════════════════════════
+   Portal wrapper — rompe el stacking context de los Tabs
+   ══════════════════════════════════════════════════════════════ */
+
+function ModalPortal({ children }: { children: React.ReactNode }) {
+  if (typeof document === "undefined") return null;
+  return createPortal(children, document.body);
+}
 
 /* ══════════════════════════════════════════════════════════════
    Props
@@ -470,7 +480,8 @@ function ModalCrearContrato({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
+    <ModalPortal>
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
       <div
         className="relative w-full max-w-2xl bg-[var(--color-surface-card)] rounded-xl shadow-2xl
                    max-h-[90vh] overflow-y-auto animate-fade-up"
@@ -668,6 +679,7 @@ function ModalCrearContrato({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
 
@@ -734,7 +746,8 @@ function ModalRegistrarGasto({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
+    <ModalPortal>
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
       <div
         className="relative w-full max-w-md bg-[var(--color-surface-card)] rounded-xl shadow-2xl
                    max-h-[90vh] overflow-y-auto animate-fade-up"
@@ -870,6 +883,7 @@ function ModalRegistrarGasto({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
 

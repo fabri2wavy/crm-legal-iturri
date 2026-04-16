@@ -89,12 +89,20 @@ export default function DashboardLayout({
       </svg>
     );
 
+    const finanzasIcon = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      </svg>
+    );
+
     if (userRol === 'admin') {
       return [
         inicioItem,
         { href: "/dashboard/casos", label: "Expedientes", icon: casosIcon },
         { href: "/dashboard/clientes", label: "Clientes", icon: clientesIcon },
         { href: "/dashboard/agenda", label: "Agenda", icon: agendaIcon },
+        { href: "/dashboard/finanzas", label: "Finanzas", icon: finanzasIcon },
         { href: "/dashboard/equipo", label: "Equipo", icon: equipoIcon },
       ];
     } else if (userRol === 'abogado') {

@@ -74,3 +74,30 @@ export type CreateHonorarioDTO = Omit<Honorario, 'id' | 'creadoEn'>;
 export type CreateCuotaDTO = Omit<CuotaPago, 'id' | 'honorarioId' | 'creadoEn'>;
 
 export type CreateGastoDTO = Omit<GastoExpediente, 'id' | 'creadoEn'>;
+
+/* ══════════════════════════════════════════════════════════════
+   Reporte Financiero Global — Dashboard de dirección
+   ══════════════════════════════════════════════════════════════ */
+
+export type EstadoPagoExpediente = 'al_dia' | 'en_proceso' | 'moroso';
+
+export interface FilaReporteFinanciero {
+  expedienteId: string;
+  numeroCaso: string;
+  tituloExpediente: string;
+  nombreCliente: string;
+  abogadoNombre: string;
+  montoTotal: number;
+  moneda: MonedaHonorario;
+  totalPagado: number;
+  totalPendiente: number;
+  cuotasAtrasadas: number;
+  estadoPago: EstadoPagoExpediente;
+}
+
+export interface ReporteFinancieroGlobal {
+  filas: FilaReporteFinanciero[];
+  totalFacturado: number;
+  totalPendiente: number;
+  totalMora: number;
+}

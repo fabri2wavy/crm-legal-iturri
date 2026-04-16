@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '../supabase/client';
+import { createClient } from '../supabase/server';
 import {
   Honorario,
   CuotaPago,
@@ -12,6 +12,9 @@ import {
   CreateHonorarioDTO,
   CreateCuotaDTO,
   CreateGastoDTO,
+  FilaReporteFinanciero,
+  ReporteFinancieroGlobal,
+  EstadoPagoExpediente,
 } from '../../domain/entities/Finanzas';
 
 /* ══════════════════════════════════════════════════════════════
@@ -111,7 +114,7 @@ function mapearGasto(fila: FilaGasto): GastoExpediente {
 export async function obtenerEstadoCuenta(
   expedienteId: string
 ): Promise<RepositoryResponse<EstadoCuentaExpediente>> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   try {
     /* ── Honorario + cuotas anidadas (relación 1:N) ──────────── */
@@ -160,28 +163,34 @@ export async function obtenerEstadoCuenta(
    MUTATION: Crear honorario con su bloque de cuotas
    ──────────────────────────────────────────────────────────────
    Flujo controlado en 2 pasos:
-     1. Inserta el contrato principal → captura `id` retornado.
-     2. Inserta las N cuotas vinculadas al honorario_id.
+     1. Valida identidad del usuario autenticado (SSR cookies).
+     2. Inserta el contrato principal → captura `id` retornado.
+     3. Inserta las N cuotas vinculadas al honorario_id.
+   
+   El campo `creado_por` se inyecta forzosamente desde la sesión
+   del servidor. Prohibido aceptarlo desde el cliente.
    ══════════════════════════════════════════════════════════════ */
 
 export async function crearHonorarioConCuotas(
   data: CreateHonorarioDTO,
   cuotas: CreateCuotaDTO[]
 ): Promise<RepositoryResponse<{ honorario: Honorario; cuotas: CuotaPago[] }>> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   try {
-    /* ── Validación de identidad en servidor ──────────────────── */
+    /* ── Validación asíncrona de identidad (Early Return) ─────── */
     const { data: authData, error: authError } = await supabase.auth.getUser();
 
     if (authError || !authData.user) {
       return {
         data: null,
-        error: `No se pudo verificar la sesión: ${authError?.message ?? 'Usuario no autenticado.'}`,
+        error: 'No autorizado: Sesión expirada o inválida.',
       };
     }
 
-    /* ── Paso 1: Insertar honorario ──────────────────────────── */
+    const userId = authData.user.id;
+
+    /* ── Paso 1: Insertar honorario con creado_por inyectado ─── */
     const { data: honorarioInsertado, error: honorarioError } = await supabase
       .from('honorarios')
       .insert({
@@ -189,6 +198,7 @@ export async function crearHonorarioConCuotas(
         monto_total: data.montoTotal,
         moneda: data.moneda,
         estado_contrato: data.estadoContrato,
+        creado_por: userId,
       })
       .select()
       .single();
@@ -240,25 +250,30 @@ export async function crearHonorarioConCuotas(
 
 /* ══════════════════════════════════════════════════════════════
    MUTATION: Registrar gasto operativo de un expediente
+   ──────────────────────────────────────────────────────────────
+   El campo `creado_por` se inyecta forzosamente desde la sesión
+   del servidor. Prohibido aceptarlo desde el cliente.
    ══════════════════════════════════════════════════════════════ */
 
 export async function registrarGasto(
   gasto: CreateGastoDTO
 ): Promise<RepositoryResponse<GastoExpediente>> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   try {
-    /* ── Validación de identidad en servidor ──────────────────── */
+    /* ── Validación asíncrona de identidad (Early Return) ─────── */
     const { data: authData, error: authError } = await supabase.auth.getUser();
 
     if (authError || !authData.user) {
       return {
         data: null,
-        error: `No se pudo verificar la sesión: ${authError?.message ?? 'Usuario no autenticado.'}`,
+        error: 'No autorizado: Sesión expirada o inválida.',
       };
     }
 
-    /* ── Inserción DML ───────────────────────────────────────── */
+    const userId = authData.user.id;
+
+    /* ── Inserción DML con creado_por inyectado ───────────────── */
     const { data: gastoInsertado, error: gastoError } = await supabase
       .from('gastos_expediente')
       .insert({
@@ -268,6 +283,7 @@ export async function registrarGasto(
         fecha: gasto.fecha,
         reembolsado: gasto.reembolsado,
         comprobante_url: gasto.comprobanteUrl,
+        creado_por: userId,
       })
       .select()
       .single();
@@ -285,6 +301,128 @@ export async function registrarGasto(
     };
   } catch (err) {
     const mensaje = err instanceof Error ? err.message : 'Error desconocido al registrar gasto.';
+    return { data: null, error: mensaje };
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   QUERY: Reporte financiero global para dashboard de dirección
+   ──────────────────────────────────────────────────────────────
+   Consolida todos los honorarios activos con sus cuotas,
+   expedientes y perfiles (cliente + abogado) para generar
+   métricas agregadas de la firma.
+   ══════════════════════════════════════════════════════════════ */
+
+interface FilaHonorarioGlobal {
+  id: string;
+  expediente_id: string;
+  monto_total: number;
+  moneda: string;
+  estado_contrato: string;
+  creado_en: string;
+  cuotas_pago: FilaCuota[];
+  expedientes: {
+    id: string;
+    numero_caso: string;
+    titulo: string;
+    cliente: { nombres: string; apellido_paterno: string; apellido_materno: string } | null;
+    abogado: { nombres: string; apellido_paterno: string; apellido_materno: string } | null;
+  } | null;
+}
+
+function construirNombre(
+  nombres?: string | null,
+  apellidoPaterno?: string | null,
+  apellidoMaterno?: string | null,
+  fallback = 'Sin registrar'
+): string {
+  return [nombres, apellidoPaterno, apellidoMaterno]
+    .filter(Boolean)
+    .join(' ')
+    .trim() || fallback;
+}
+
+function clasificarEstadoPago(cuotas: FilaCuota[]): EstadoPagoExpediente {
+  if (cuotas.length === 0) return 'al_dia';
+
+  const tieneAtrasadas = cuotas.some((c) => c.estado === 'atrasado');
+  if (tieneAtrasadas) return 'moroso';
+
+  const tienePendientes = cuotas.some((c) => c.estado === 'pendiente');
+  if (tienePendientes) return 'en_proceso';
+
+  return 'al_dia';
+}
+
+export async function obtenerReporteFinancieroGlobal(): Promise<RepositoryResponse<ReporteFinancieroGlobal>> {
+  const supabase = await createClient();
+
+  try {
+    const { data: honorariosRaw, error: queryError } = await supabase
+      .from('honorarios')
+      .select(`
+        *,
+        cuotas_pago(*),
+        expedientes!expediente_id(
+          id, numero_caso, titulo,
+          cliente:perfiles!cliente_id(nombres, apellido_paterno, apellido_materno),
+          abogado:perfiles!abogado_asignado_id(nombres, apellido_paterno, apellido_materno)
+        )
+      `)
+      .eq('estado_contrato', 'vigente')
+      .order('creado_en', { ascending: false });
+
+    if (queryError) {
+      return { data: null, error: `Error al obtener reporte financiero: ${queryError.message}` };
+    }
+
+    const filas: FilaReporteFinanciero[] = ((honorariosRaw ?? []) as unknown as FilaHonorarioGlobal[]).map((fila) => {
+      const cuotas = fila.cuotas_pago ?? [];
+      const expediente = fila.expedientes;
+
+      const totalPagado = cuotas
+        .filter((c) => c.estado === 'pagado')
+        .reduce((s, c) => s + c.monto, 0);
+
+      const cuotasAtrasadas = cuotas.filter((c) => c.estado === 'atrasado').length;
+
+      return {
+        expedienteId: fila.expediente_id,
+        numeroCaso: expediente?.numero_caso ?? '—',
+        tituloExpediente: expediente?.titulo ?? '—',
+        nombreCliente: construirNombre(
+          expediente?.cliente?.nombres,
+          expediente?.cliente?.apellido_paterno,
+          expediente?.cliente?.apellido_materno,
+          'Cliente desconocido'
+        ),
+        abogadoNombre: construirNombre(
+          expediente?.abogado?.nombres,
+          expediente?.abogado?.apellido_paterno,
+          expediente?.abogado?.apellido_materno,
+          'Sin asignar'
+        ),
+        montoTotal: fila.monto_total,
+        moneda: fila.moneda as MonedaHonorario,
+        totalPagado,
+        totalPendiente: fila.monto_total - totalPagado,
+        cuotasAtrasadas,
+        estadoPago: clasificarEstadoPago(cuotas),
+      };
+    });
+
+    const totalFacturado = filas.reduce((s, f) => s + f.montoTotal, 0);
+    const totalPendiente = filas.reduce((s, f) => s + f.totalPendiente, 0);
+    const totalMora = filas
+      .filter((f) => f.estadoPago === 'moroso')
+      .reduce((s, f) => s + f.totalPendiente, 0);
+
+    return {
+      data: { filas, totalFacturado, totalPendiente, totalMora },
+      error: null,
+    };
+  } catch (err) {
+    const mensaje = err instanceof Error ? err.message : 'Error desconocido al obtener reporte financiero.';
     return { data: null, error: mensaje };
   }
 }
