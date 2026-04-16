@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { User, Mail, Phone, ExternalLink, Gavel, Hash, FileText, Pencil, Users, UploadCloud, Download, Trash2, FileImage, File, FileSpreadsheet, AlertTriangle } from "lucide-react";
 import InformesTab from "./InformesTab";
+import FinanzasTab from "./FinanzasTab";
 import { obtenerExpedientePorId, actualizarExpediente } from "../../../../infrastructure/repositories/expedienteRepository";
 import { 
   obtenerDocumentos, 
@@ -45,12 +46,19 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
   ),
+  finanzas: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="1" x2="12" y2="23" />
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    </svg>
+  ),
 };
 
 const TAB_ITEMS = [
   { key: "info", label: "Información" },
   { key: "docs", label: "Documentos" },
   { key: "informe", label: "Informes (Bitácora)" },
+  { key: "finanzas", label: "Finanzas" },
 ];
 
 export default function DetalleExpedientePage() {
@@ -693,6 +701,10 @@ export default function DetalleExpedientePage() {
 
         {pestañaActiva === "informe" && (
           <InformesTab expedienteId={idCaso} />
+        )}
+
+        {pestañaActiva === "finanzas" && (
+          <FinanzasTab expedienteId={idCaso} />
         )}
       </div>
 
