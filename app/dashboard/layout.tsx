@@ -80,6 +80,14 @@ export default function DashboardLayout({
       </svg>
     );
 
+    const reportesIcon = (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    );
+
     const agendaIcon = (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -104,6 +112,7 @@ export default function DashboardLayout({
         { href: "/dashboard/agenda", label: "Agenda", icon: agendaIcon },
         { href: "/dashboard/finanzas", label: "Finanzas", icon: finanzasIcon },
         { href: "/dashboard/equipo", label: "Equipo", icon: equipoIcon },
+        { href: "/dashboard/reportes", label: "Reportes", icon: reportesIcon },
       ];
     } else if (userRol === 'abogado') {
       return [
