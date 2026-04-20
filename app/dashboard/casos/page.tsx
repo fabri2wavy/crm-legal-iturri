@@ -6,6 +6,8 @@ import { FolderOpen, Plus, Search, Filter, ShieldAlert, FileText, CheckCircle2, 
 import { obtenerExpedientes, crearExpediente } from "../../../infrastructure/repositories/expedienteRepository";
 import { obtenerClientes } from "../../../infrastructure/repositories/clienteRepository";
 import { obtenerAbogados } from "../../../infrastructure/repositories/usuarioRepository";
+import { obtenerConfiguraciones } from "@/infrastructure/repositories/configuracionRepository";
+import type { ConfiguracionGlobal } from "@/domain/entities/ConfiguracionGlobal";
 import { Button } from "../../../components/ui/Button";
 import { FormField } from "../../../components/ui/FormField";
 import { SelectField } from "../../../components/ui/SelectField";
@@ -47,6 +49,10 @@ export default function CasosPage() {
   const [cargando, setCargando] = useState(true);
   const [errorClientes, setErrorClientes] = useState(false);
 
+  /* ── Configuraciones dinámicas ──────────────────────────────── */
+  const [materiasDB, setMateriasDB] = useState<ConfiguracionGlobal[]>([]);
+  const [juzgadosDB, setJuzgadosDB] = useState<ConfiguracionGlobal[]>([]);
+
   /* ── Estados de filtro ─────────────────────────────────────── */
   const [searchTerm, setSearchTerm] = useState("");
   const [materiaFilter, setMateriaFilter] = useState("");
@@ -77,16 +83,19 @@ export default function CasosPage() {
   /* ── Carga inicial ──────────────────────────────────────────── */
   useEffect(() => {
     async function cargarDatosIniciales() {
-      const [dataCasos, dataClientes, dataAbogados] = await Promise.all([
+      const [dataCasos, dataClientes, dataAbogados, resMaterias, resJuzgados] = await Promise.all([
         obtenerExpedientes(),
         obtenerClientes(),
         obtenerAbogados(),
+        obtenerConfiguraciones('materia'),
+        obtenerConfiguraciones('juzgado'),
       ]);
       setExpedientes(dataCasos);
       setListaAbogados(dataAbogados);
 
-      // Guardamos los clientes y marcamos error si la lista llegó vacía
-      // para informar al usuario en el selector en lugar de mostrar un desplegable silencioso
+      if (resMaterias.data) setMateriasDB(resMaterias.data);
+      if (resJuzgados.data) setJuzgadosDB(resJuzgados.data);
+
       if (dataClientes.length === 0) {
         setErrorClientes(true);
       }
@@ -240,9 +249,16 @@ export default function CasosPage() {
             onChange={(e) => setMateriaFilter(e.target.value)}
           >
             <option value="">Todas las materias</option>
+            {/* Materias del FLUJO_LEGAL (estáticas) */}
             {MATERIAS_BASE.filter(m => m !== "Otro").map(mat => (
               <option key={mat} value={mat}>{mat}</option>
             ))}
+            {/* Materias dinámicas de configuración global (si no están duplicadas) */}
+            {materiasDB
+              .filter(m => !MATERIAS_BASE.includes(m.valor))
+              .map(m => (
+                <option key={m.id} value={m.valor}>{m.valor}</option>
+              ))}
           </select>
         </div>
       </div>
@@ -445,12 +461,26 @@ export default function CasosPage() {
                         <label className="text-base font-semibold text-gray-900 block">Juzgado *</label>
                         <div className="relative">
                           <Gavel className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                          <input 
-                            required type="text" placeholder="Ej. 3ro Público"
-                            className="w-full pl-11 pr-4 py-3 text-base lg:text-lg rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 placeholder:text-gray-400"
-                            value={formData.juzgado}
-                            onChange={(e) => setFormData({ ...formData, juzgado: e.target.value })}
-                          />
+                          {juzgadosDB.length > 0 ? (
+                            <select
+                              required
+                              className="w-full pl-11 pr-4 py-3 text-base lg:text-lg rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 appearance-none cursor-pointer"
+                              value={formData.juzgado}
+                              onChange={(e) => setFormData({ ...formData, juzgado: e.target.value })}
+                            >
+                              <option value="" disabled>Seleccione un juzgado...</option>
+                              {juzgadosDB.map(j => (
+                                <option key={j.id} value={j.valor}>{j.valor}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input 
+                              required type="text" placeholder="Ej. 3ro Público"
+                              className="w-full pl-11 pr-4 py-3 text-base lg:text-lg rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 placeholder:text-gray-400"
+                              value={formData.juzgado}
+                              onChange={(e) => setFormData({ ...formData, juzgado: e.target.value })}
+                            />
+                          )}
                         </div>
                       </div>
                     </div>
@@ -469,12 +499,18 @@ export default function CasosPage() {
                     <div className="grid grid-cols-2 gap-4 p-5 bg-blue-50/40 rounded-2xl border border-blue-100 mt-4">
                        <div className="space-y-2">
                         <label className="text-sm font-bold text-gray-800 uppercase tracking-wider block">Materia</label>
-                        <select 
+                         <select 
                           className="w-full text-base lg:text-lg px-3 py-2.5 bg-white rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition-all"
                           value={formData.materiaSelect}
                           onChange={handleMateriaChange}
                         >
                           {MATERIAS_BASE.map(m => <option key={m} value={m}>{m}</option>)}
+                          {/* Materias dinámicas de configuración global */}
+                          {materiasDB
+                            .filter(m => !MATERIAS_BASE.includes(m.valor))
+                            .map(m => (
+                              <option key={m.id} value={m.valor}>{m.valor}</option>
+                            ))}
                         </select>
                       </div>
 

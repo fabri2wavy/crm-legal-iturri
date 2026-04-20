@@ -1,5 +1,6 @@
 import { createClient } from '../supabase/client';
 import { Documento } from '../../domain/entities/Documento';
+import { registrarLog } from '@/infrastructure/repositories/auditoriaRepository';
 
 function construirNombre(n?: string | null, p?: string | null, m?: string | null): string {
   return [n, p, m].filter(Boolean).join(' ').trim() || 'Desconocido';
@@ -77,6 +78,22 @@ export async function subirDocumento(
     return null;
   }
 
+  /* ── Audit Log (non-blocking) ──────────────────────────────── */
+  try {
+    await registrarLog({
+      accion: 'CREAR',
+      entidad: 'documentos',
+      entidad_id: insertData.id,
+      detalles: {
+        nombre_archivo: file.name,
+        expediente_id: expedienteId,
+        tamano_bytes: file.size,
+        tipo_archivo: file.type,
+        timestamp_operacion: new Date().toISOString(),
+      },
+    });
+  } catch { /* El log no debe bloquear la operación principal */ }
+
   return {
     id: insertData.id,
     nombre: insertData.nombre_archivo,
@@ -111,6 +128,20 @@ export async function eliminarDocumento(
   ruta: string
 ): Promise<boolean> {
   const supabase = createClient();
+
+  /* ── Audit Log ANTES de la purga (captura ID mientras existe) ── */
+  try {
+    await registrarLog({
+      accion: 'ELIMINAR',
+      entidad: 'documentos',
+      entidad_id: id,
+      detalles: {
+        ruta_storage: ruta,
+        timestamp_operacion: new Date().toISOString(),
+      },
+    });
+  } catch { /* El log no debe bloquear la operación principal */ }
+
   const { error: dbError } = await supabase
     .from('documentos')
     .delete()

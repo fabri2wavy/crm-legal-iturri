@@ -1,6 +1,7 @@
 import { createClient } from '../supabase/client';
 import { Expediente, EstadoExpediente } from '../../domain/entities/Expediente';
 import { obtenerClientePorId } from './clienteRepository';
+import { registrarLog } from '@/infrastructure/repositories/auditoriaRepository';
 
 function construirNombre(
   nombres?: string | null,
@@ -43,6 +44,21 @@ export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'f
     console.error("Error al crear expediente:", error.message);
     return null;
   }
+
+  /* ── Audit Log (non-blocking) ──────────────────────────────── */
+  try {
+    await registrarLog({
+      accion: 'CREAR',
+      entidad: 'expedientes',
+      entidad_id: data.id,
+      detalles: {
+        numero_caso: data.numero_caso,
+        titulo: data.titulo,
+        materia: data.materia,
+        timestamp_operacion: new Date().toISOString(),
+      },
+    });
+  } catch { /* El log no debe bloquear la operación principal */ }
 
   return {
     id: data.id,
@@ -179,6 +195,19 @@ export async function actualizarExpediente(
     console.error("Error al actualizar:", error.message);
     return false;
   }
+
+  /* ── Audit Log (non-blocking) ──────────────────────────────── */
+  try {
+    await registrarLog({
+      accion: 'EDITAR',
+      entidad: 'expedientes',
+      entidad_id: id,
+      detalles: {
+        campos_actualizados: datosActualizados,
+        timestamp_operacion: new Date().toISOString(),
+      },
+    });
+  } catch { /* El log no debe bloquear la operación principal */ }
 
   return true;
 }

@@ -32,6 +32,8 @@ import {
 import { obtenerEquipo } from "../../../infrastructure/repositories/equipoRepository";
 import { obtenerExpedientes } from "../../../infrastructure/repositories/expedienteRepository";
 import { obtenerAbogados } from "../../../infrastructure/repositories/usuarioRepository";
+import { obtenerConfiguraciones } from "@/infrastructure/repositories/configuracionRepository";
+import type { ConfiguracionGlobal } from "@/domain/entities/ConfiguracionGlobal";
 import { MiembroEquipo } from "../../../domain/entities/MiembroEquipo";
 import { Button } from "../../../components/ui/Button";
 import { FormField } from "../../../components/ui/FormField";
@@ -476,6 +478,7 @@ function ModalNuevoEvento({ isOpen, onClose, onCreado, onToast }: ModalNuevoEven
   /* Opciones para selects */
   const [miembros, setMiembros] = useState<MiembroEquipo[]>([]);
   const [expedientes, setExpedientes] = useState<ExpedienteOption[]>([]);
+  const [tiposEventoDB, setTiposEventoDB] = useState<ConfiguracionGlobal[]>([]);
   const [cargandoOpciones, setCargandoOpciones] = useState(true);
 
   useEffect(() => {
@@ -486,14 +489,16 @@ function ModalNuevoEvento({ isOpen, onClose, onCreado, onToast }: ModalNuevoEven
     async function cargarOpciones() {
       setCargandoOpciones(true);
       try {
-        const [equipoData, expedientesData] = await Promise.all([
+        const [equipoData, expedientesData, resTiposEvento] = await Promise.all([
           obtenerEquipo(),
           obtenerExpedientes(),
+          obtenerConfiguraciones('tipo_evento'),
         ]);
 
         if (cancelado) return;
 
         setMiembros(equipoData);
+        if (resTiposEvento.data) setTiposEventoDB(resTiposEvento.data);
         setExpedientes(
           expedientesData.map((e: { id: string; numeroCaso: string; titulo: string }) => ({
             id: e.id,
@@ -631,6 +636,9 @@ function ModalNuevoEvento({ isOpen, onClose, onCreado, onToast }: ModalNuevoEven
                 { value: "reunion", label: "Reunión" },
                 { value: "vencimiento", label: "Vencimiento" },
                 { value: "tarea", label: "Tarea" },
+                ...tiposEventoDB
+                  .filter(t => !['audiencia', 'reunion', 'vencimiento', 'tarea'].includes(t.valor.toLowerCase()))
+                  .map(t => ({ value: t.valor, label: t.valor })),
               ]}
               value={tipoEvento}
               onChange={(e) => setTipoEvento(e.target.value as TipoEventoAgenda)}

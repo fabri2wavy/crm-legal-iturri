@@ -4,6 +4,7 @@ import { createClient } from '../supabase/server';
 import type { Plantilla, TipoPlantilla } from '@/domain/entities/Plantilla';
 import { procesarPlantilla } from '@/util/documentGenerator';
 import type { DatosExpediente } from '@/util/documentGenerator';
+import { registrarLog } from '@/infrastructure/repositories/auditoriaRepository';
 
 /* ══════════════════════════════════════════════════════════════
    Contrato de respuesta canónico
@@ -97,6 +98,20 @@ export async function crearPlantilla(
       };
     }
 
+    /* ── Audit Log (non-blocking) ──────────────────────────────── */
+    try {
+      await registrarLog({
+        accion: 'CREAR',
+        entidad: 'plantillas',
+        entidad_id: plantillaInsertada.id,
+        detalles: {
+          nombre: payload.nombre,
+          tipo: payload.tipo,
+          timestamp_operacion: new Date().toISOString(),
+        },
+      });
+    } catch { /* El log no debe bloquear la operación principal */ }
+
     return { data: plantillaInsertada as Plantilla, error: null };
   } catch (err) {
     const mensaje = err instanceof Error ? err.message : 'Error desconocido al crear plantilla.';
@@ -157,6 +172,18 @@ export async function eliminarPlantilla(
   const supabase = await createClient();
 
   try {
+    /* ── Audit Log ANTES de la purga ──────────────────────────── */
+    try {
+      await registrarLog({
+        accion: 'ELIMINAR',
+        entidad: 'plantillas',
+        entidad_id: id,
+        detalles: {
+          timestamp_operacion: new Date().toISOString(),
+        },
+      });
+    } catch { /* El log no debe bloquear la operación principal */ }
+
     const { error } = await supabase
       .from('plantillas_documentos')
       .delete()

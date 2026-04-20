@@ -10,6 +10,7 @@ type NavItem = {
   href: string;
   label: string;
   icon: React.ReactNode;
+  section?: string;
 };
 
 export default function DashboardLayout({
@@ -113,6 +114,22 @@ export default function DashboardLayout({
     );
 
     if (userRol === 'admin') {
+      const configuracionIcon = (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      );
+
+      const auditoriaIcon = (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+          <line x1="9" y1="12" x2="15" y2="12" />
+          <line x1="9" y1="16" x2="13" y2="16" />
+        </svg>
+      );
+
       return [
         inicioItem,
         { href: "/dashboard/casos", label: "Expedientes", icon: casosIcon },
@@ -122,6 +139,8 @@ export default function DashboardLayout({
         { href: "/dashboard/plantillas", label: "Plantillas", icon: plantillasIcon },
         { href: "/dashboard/equipo", label: "Equipo", icon: equipoIcon },
         { href: "/dashboard/reportes", label: "Reportes", icon: reportesIcon },
+        { href: "/dashboard/configuracion", label: "Configuración", icon: configuracionIcon, section: "ADMINISTRACIÓN" },
+        { href: "/dashboard/auditoria", label: "Auditoría", icon: auditoriaIcon },
       ];
     } else if (userRol === 'abogado') {
       return [
@@ -210,37 +229,46 @@ export default function DashboardLayout({
             navItems.map((item) => {
               const active = isActive(item.href);
               return (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
-                  style={{
-                    background: active
-                      ? "rgba(201, 168, 76, 0.12)"
-                      : "transparent",
-                    color: active
-                      ? "var(--color-gold-light)"
-                      : "rgba(200, 210, 225, 0.7)",
-                    borderLeft: active
-                      ? "3px solid var(--color-gold)"
-                      : "3px solid transparent",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                      e.currentTarget.style.color = "rgba(240, 234, 216, 0.95)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "rgba(200, 210, 225, 0.7)";
-                    }
-                  }}
-                >
-                  {item.icon}
-                  {item.label}
-                </a>
+                <div key={item.label}>
+                  {item.section && (
+                    <p
+                      className="text-[9px] font-bold uppercase tracking-[0.2em] px-4 pt-5 pb-2"
+                      style={{ color: "rgba(201, 168, 76, 0.5)" }}
+                    >
+                      {item.section}
+                    </p>
+                  )}
+                  <a
+                    href={item.href}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+                    style={{
+                      background: active
+                        ? "rgba(201, 168, 76, 0.12)"
+                        : "transparent",
+                      color: active
+                        ? "var(--color-gold-light)"
+                        : "rgba(200, 210, 225, 0.7)",
+                      borderLeft: active
+                        ? "3px solid var(--color-gold)"
+                        : "3px solid transparent",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                        e.currentTarget.style.color = "rgba(240, 234, 216, 0.95)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = "rgba(200, 210, 225, 0.7)";
+                      }
+                    }}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </a>
+                </div>
               );
             })
           )}
