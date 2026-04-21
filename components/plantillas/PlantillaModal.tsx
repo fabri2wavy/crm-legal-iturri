@@ -7,11 +7,11 @@ import type { Plantilla, TipoPlantilla } from "@/domain/entities/Plantilla";
 import {
   crearPlantillaAction,
   actualizarPlantillaAction,
-} from "@/app/dashboard/plantillas/actions";
+} from "@/infrastructure/actions/plantillasActions";
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { SelectField } from "@/components/ui/SelectField";
-import { TAGS_DISPONIBLES } from "@/util/documentGenerator";
+import { TAGS_DISPONIBLES } from "@/domain/services/documentGenerator";
 
 /* ══════════════════════════════════════════════════════════════
    Opciones del selector de tipo (enum SQL)

@@ -8,10 +8,10 @@ import {
   ReporteFinancieroGlobal,
   EstadoPagoExpediente,
   MonedaHonorario,
-} from "../../../domain/entities/Finanzas";
-import { obtenerReporteFinancieroGlobal } from "../../../infrastructure/repositories/finanzasRepository";
-import { obtenerAbogados, UsuarioPerfil } from "../../../infrastructure/repositories/usuarioRepository";
-import { ToastContainer, useToasts } from "../../../components/ui/Toast";
+} from "@/domain/entities/Finanzas";
+import { obtenerReporteFinancieroGlobal } from "@/infrastructure/repositories/finanzasRepository";
+import { obtenerAbogados, UsuarioPerfil } from "@/infrastructure/repositories/usuarioRepository";
+import { ToastContainer, useToasts } from "@/components/ui/Toast";
 
 /* ══════════════════════════════════════════════════════════════
    Helpers

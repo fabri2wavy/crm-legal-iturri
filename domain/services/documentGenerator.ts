@@ -1,8 +1,10 @@
 /* ══════════════════════════════════════════════════════════════
-   Motor de generación de documentos (Template Engine)
+   Servicio de Dominio: Motor de Generación de Documentos
    ──────────────────────────────────────────────────────────────
    Función pura que realiza reemplazo de tags dinámicos sobre
    un string de contenido utilizando datos de un expediente.
+   Reubicado desde util/ a domain/services/ por ser lógica
+   de negocio pura sin dependencias de infraestructura.
    ══════════════════════════════════════════════════════════════ */
 
 export interface DatosExpediente {

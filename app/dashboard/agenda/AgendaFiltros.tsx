@@ -11,7 +11,7 @@ import {
   XCircle,
   CalendarRange,
 } from "lucide-react";
-import { TipoEventoAgenda } from "../../../domain/entities/EventoAgenda";
+import { TipoEventoAgenda } from "@/domain/entities/EventoAgenda";
 
 /* ══════════════════════════════════════════════════════════════
    Claves de URL — contrato estricto con el page.tsx

@@ -1,13 +1,13 @@
-import { redirect } from "next/navigation";
-
 /* ══════════════════════════════════════════════════════════════
-   Página Raíz: Redirect automático
+   Entidad de Dominio: UsuarioPerfil
    ──────────────────────────────────────────────────────────────
-   La página raíz del sitio redirige inmediatamente al dashboard.
-   El middleware de autenticación se encargará de redirigir a
-   /login si el usuario no está autenticado.
+   Representación del perfil de un usuario del sistema.
+   Extraída de la capa de infraestructura para mantener la
+   independencia de la capa de dominio.
    ══════════════════════════════════════════════════════════════ */
 
-export default function Home() {
-  redirect("/dashboard");
+export interface UsuarioPerfil {
+  id: string;
+  nombre_completo: string;
+  rol: string;
 }

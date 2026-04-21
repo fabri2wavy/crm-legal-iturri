@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import type { Plantilla } from "@/domain/entities/Plantilla";
-import { verificarAccesoAdmin, fetchPlantillas } from "./actions";
+import { verificarAccesoAdmin, fetchPlantillas } from "@/infrastructure/actions/plantillasActions";
 import PlantillasTable from "@/components/plantillas/PlantillasTable";
 
 /* ══════════════════════════════════════════════════════════════

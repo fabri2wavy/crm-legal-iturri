@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "../../infrastructure/supabase/client";
+import { iniciarSesion, registrarUsuario } from "@/infrastructure/repositories/authRepository";
 
-import { AuthCard } from "../../components/ui/AuthCard";
-import { FormField } from "../../components/ui/FormField";
-import { Alert } from "../../components/ui/Alert";
-import { Button } from "../../components/ui/Button";
+import { AuthCard } from "@/components/ui/AuthCard";
+import { FormField } from "@/components/ui/FormField";
+import { Alert } from "@/components/ui/Alert";
+import { Button } from "@/components/ui/Button";
 import styles from "./page.module.css";
 
 export default function LoginPage() {
@@ -17,20 +17,15 @@ export default function LoginPage() {
   const [mensaje, setMensaje] = useState("");
   const router = useRouter();
 
-  const supabase = createClient();
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMensaje("");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const resultado = await iniciarSesion(email, password);
 
-    if (error) {
-      setMensaje("Error al iniciar sesión: " + error.message);
+    if (!resultado.success) {
+      setMensaje("Error al iniciar sesión: " + resultado.error);
       setLoading(false);
     } else {
       setMensaje("¡Login exitoso! Entrando al sistema...");
@@ -43,13 +38,10 @@ export default function LoginPage() {
     setLoading(true);
     setMensaje("");
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    const resultado = await registrarUsuario(email, password);
 
-    if (error) {
-      setMensaje("Error al registrar: " + error.message);
+    if (!resultado.success) {
+      setMensaje("Error al registrar: " + resultado.error);
     } else {
       setMensaje("¡Usuario creado en auth y perfiles!");
     }

@@ -3,15 +3,15 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { FolderOpen, Plus, Search, Filter, ShieldAlert, FileText, CheckCircle2, Archive, Hash, Gavel, FileSignature } from "lucide-react";
-import { obtenerExpedientes, crearExpediente } from "../../../infrastructure/repositories/expedienteRepository";
-import { obtenerClientes } from "../../../infrastructure/repositories/clienteRepository";
-import { obtenerAbogados } from "../../../infrastructure/repositories/usuarioRepository";
+import { obtenerExpedientes, crearExpediente } from "@/infrastructure/repositories/expedienteRepository";
+import { obtenerClientes } from "@/infrastructure/repositories/clienteRepository";
+import { obtenerAbogados } from "@/infrastructure/repositories/usuarioRepository";
 import { obtenerConfiguraciones } from "@/infrastructure/repositories/configuracionRepository";
 import type { ConfiguracionGlobal } from "@/domain/entities/ConfiguracionGlobal";
-import { Button } from "../../../components/ui/Button";
-import { FormField } from "../../../components/ui/FormField";
-import { SelectField } from "../../../components/ui/SelectField";
-import { Alert } from "../../../components/ui/Alert";
+import { Button } from "@/components/ui/Button";
+import { FormField } from "@/components/ui/FormField";
+import { SelectField } from "@/components/ui/SelectField";
+import { Alert } from "@/components/ui/Alert";
 
 /* ── FLUJO LEGAL (MÉTODO ALDIA) ──────────────────────────────── */
 const FLUJO_LEGAL: Record<string, string[]> = {

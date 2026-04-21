@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, UserPlus, CheckCircle2 } from "lucide-react";
-import { registrarNuevoMiembro } from "../../../../infrastructure/actions/equipoActions";
-import { Button } from "../../../../components/ui/Button";
+import { registrarNuevoMiembro } from "@/infrastructure/actions/equipoActions";
+import { Button } from "@/components/ui/Button";
 
 /* ══════════════════════════════════════════════════════════════
    CONSTANTES

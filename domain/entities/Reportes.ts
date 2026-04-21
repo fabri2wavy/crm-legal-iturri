@@ -1,13 +1,23 @@
-import { redirect } from "next/navigation";
-
 /* ══════════════════════════════════════════════════════════════
-   Página Raíz: Redirect automático
+   Entidades de Dominio: Módulo de Reportes (BI)
    ──────────────────────────────────────────────────────────────
-   La página raíz del sitio redirige inmediatamente al dashboard.
-   El middleware de autenticación se encargará de redirigir a
-   /login si el usuario no está autenticado.
+   Shapes de solo lectura para el módulo de analítica de negocio.
+   Extraídas de reportesRepository para mantener la independencia
+   de la capa de dominio respecto a la infraestructura.
    ══════════════════════════════════════════════════════════════ */
 
-export default function Home() {
-  redirect("/dashboard");
+export interface KpisFinancieros {
+  totalFacturado: number;
+  totalCobrado: number;
+  totalEnMora: number;
+}
+
+export interface CargaAbogado {
+  abogado: string;
+  casosActivos: number;
+}
+
+export interface DistribucionMateria {
+  materia: string;
+  cantidad: number;
 }

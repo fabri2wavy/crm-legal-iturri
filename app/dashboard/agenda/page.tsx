@@ -22,22 +22,22 @@ import {
   EventoAgendaDetallado,
   TipoEventoAgenda,
   EstadoEventoAgenda,
-} from "../../../domain/entities/EventoAgenda";
+} from "@/domain/entities/EventoAgenda";
 import {
   obtenerEventos,
   crearEvento,
   eliminarEvento,
   FiltrosAgenda,
-} from "../../../infrastructure/repositories/agendaRepository";
-import { obtenerEquipo } from "../../../infrastructure/repositories/equipoRepository";
-import { obtenerExpedientes } from "../../../infrastructure/repositories/expedienteRepository";
-import { obtenerAbogados } from "../../../infrastructure/repositories/usuarioRepository";
+} from "@/infrastructure/repositories/agendaRepository";
+import { obtenerEquipo } from "@/infrastructure/repositories/equipoRepository";
+import { obtenerExpedientes } from "@/infrastructure/repositories/expedienteRepository";
+import { obtenerAbogados } from "@/infrastructure/repositories/usuarioRepository";
 import { obtenerConfiguraciones } from "@/infrastructure/repositories/configuracionRepository";
 import type { ConfiguracionGlobal } from "@/domain/entities/ConfiguracionGlobal";
-import { MiembroEquipo } from "../../../domain/entities/MiembroEquipo";
-import { Button } from "../../../components/ui/Button";
-import { FormField } from "../../../components/ui/FormField";
-import { SelectField } from "../../../components/ui/SelectField";
+import { MiembroEquipo } from "@/domain/entities/MiembroEquipo";
+import { Button } from "@/components/ui/Button";
+import { FormField } from "@/components/ui/FormField";
+import { SelectField } from "@/components/ui/SelectField";
 import AgendaFiltros, { PARAM_KEYS } from "./AgendaFiltros";
 import EditarEventoModal from "./Modals/EditarEventoModal";
 import EliminarEventoDialog from "./Modals/EliminarEventoDialog";

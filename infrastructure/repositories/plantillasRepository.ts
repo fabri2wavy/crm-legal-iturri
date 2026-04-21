@@ -2,8 +2,8 @@
 
 import { createClient } from '../supabase/server';
 import type { Plantilla, TipoPlantilla } from '@/domain/entities/Plantilla';
-import { procesarPlantilla } from '@/util/documentGenerator';
-import type { DatosExpediente } from '@/util/documentGenerator';
+import { procesarPlantilla } from '@/domain/services/documentGenerator';
+import type { DatosExpediente } from '@/domain/services/documentGenerator';
 import { registrarLog } from '@/infrastructure/repositories/auditoriaRepository';
 
 /* ══════════════════════════════════════════════════════════════
@@ -13,10 +13,7 @@ import { registrarLog } from '@/infrastructure/repositories/auditoriaRepository'
    pueda discriminar éxito/fallo sin try/catch.
    ══════════════════════════════════════════════════════════════ */
 
-interface RepositoryResponse<T> {
-  data: T | null;
-  error: string | null;
-}
+import type { RepositoryResponse } from '@/domain/types/RepositoryResponse';
 
 /* ══════════════════════════════════════════════════════════════
    DTO de creación

@@ -2,15 +2,8 @@
 
 import { createClient } from '@/infrastructure/supabase/server';
 import type { ConfiguracionGlobal } from '@/domain/entities/ConfiguracionGlobal';
+import type { RepositoryResponse } from '@/domain/types/RepositoryResponse';
 import { revalidatePath } from 'next/cache';
-
-/* ══════════════════════════════════════════════════════════════
-   Contrato de respuesta del repositorio
-   ══════════════════════════════════════════════════════════════ */
-export interface RepositoryResponse<T> {
-  data: T | null;
-  error: string | null;
-}
 
 export type CreateConfiguracionDTO = Omit<ConfiguracionGlobal, 'id' | 'creado_en'>;
 export type UpdateConfiguracionDTO = Partial<CreateConfiguracionDTO>;

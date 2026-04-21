@@ -2,14 +2,7 @@
 
 import { createClient } from '@/infrastructure/supabase/server';
 import type { AuditoriaLog } from '@/domain/entities/AuditoriaLog';
-
-/* ══════════════════════════════════════════════════════════════
-   Contrato de respuesta del repositorio
-   ══════════════════════════════════════════════════════════════ */
-export interface RepositoryResponse<T> {
-  data: T | null;
-  error: string | null;
-}
+import type { RepositoryResponse } from '@/domain/types/RepositoryResponse';
 
 export type CreateAuditoriaLogDTO = Omit<AuditoriaLog, 'id' | 'creado_en' | 'usuario_id'>;
 

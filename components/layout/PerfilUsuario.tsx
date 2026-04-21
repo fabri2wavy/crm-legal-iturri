@@ -1,31 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "../infrastructure/supabase/client";
+import { obtenerPerfilConRol } from "@/infrastructure/repositories/authRepository";
 
 export default function PerfilUsuario() {
   const [rol, setRol] = useState<string>("Cargando...");
   const [email, setEmail] = useState<string>("");
-  const supabase = createClient();
 
   useEffect(() => {
     async function obtenerPerfil() {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        setEmail(user.email || "");
-    
-        const { data: perfil } = await supabase
-          .from("perfiles")
-          .select("rol")
-          .eq("id", user.id)
-          .single(); 
-          
-        if (perfil) {
-          setRol(perfil.rol);
-        } else {
-          setRol("Sin rol asignado");
-        }
+      const perfil = await obtenerPerfilConRol();
+
+      if (perfil) {
+        setEmail(perfil.email);
+        setRol(perfil.rol);
+      } else {
+        setRol("Sin rol asignado");
       }
     }
 

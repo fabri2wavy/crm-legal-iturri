@@ -15,8 +15,8 @@ import type { Plantilla, TipoPlantilla } from "@/domain/entities/Plantilla";
 import {
   fetchPlantillas,
   generarDocumentoAction,
-} from "@/app/dashboard/plantillas/actions";
-import { TAGS_DISPONIBLES } from "@/util/documentGenerator";
+} from "@/infrastructure/actions/plantillasActions";
+import { TAGS_DISPONIBLES } from "@/domain/services/documentGenerator";
 import { ToastContainer, useToasts } from "@/components/ui/Toast";
 
 /* ══════════════════════════════════════════════════════════════

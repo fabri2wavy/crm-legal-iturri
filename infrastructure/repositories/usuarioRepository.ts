@@ -1,10 +1,7 @@
-import { createClient } from '../supabase/client';
+import { createClient } from '@/infrastructure/supabase/client';
+import type { UsuarioPerfil } from '@/domain/entities/UsuarioPerfil';
 
-export interface UsuarioPerfil {
-  id: string;
-  nombre_completo: string;
-  rol: string;
-}
+export type { UsuarioPerfil };
 
 function mapearUsuario(fila: any): UsuarioPerfil {
   const nombreCompleto = [fila.nombres, fila.apellido_paterno, fila.apellido_materno]

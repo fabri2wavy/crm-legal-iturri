@@ -8,7 +8,7 @@ import {
   actualizarPlantillaAction,
   eliminarPlantillaAction,
   fetchPlantillas,
-} from "@/app/dashboard/plantillas/actions";
+} from "@/infrastructure/actions/plantillasActions";
 import { Button } from "@/components/ui/Button";
 import { ToastContainer, useToasts } from "@/components/ui/Toast";
 import PlantillaModal from "./PlantillaModal";

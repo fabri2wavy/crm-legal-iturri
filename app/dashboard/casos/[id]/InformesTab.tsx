@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Send, Clock, Eye, Lock, User } from "lucide-react";
-import { EntradaBitacora } from "../../../../domain/entities/EntradaBitacora";
+import { EntradaBitacora } from "@/domain/entities/EntradaBitacora";
 import {
   obtenerBitacoraPorExpediente,
   crearEntradaBitacora,
-} from "../../../../infrastructure/repositories/bitacoraRepository";
-import { createClient } from "../../../../infrastructure/supabase/client";
+} from "@/infrastructure/repositories/bitacoraRepository";
+import { obtenerUsuarioActualId } from "@/infrastructure/repositories/authRepository";
 
 /* ── Helpers ───────────────────────────────────────────────── */
 function formatearFechaHora(fecha: Date): string {
@@ -61,10 +61,9 @@ export default function InformesTab({ expedienteId }: InformesTabProps) {
     setError("");
 
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const userId = await obtenerUsuarioActualId();
 
-      if (!user) {
+      if (!userId) {
         setError("No se pudo identificar tu sesión. Inicia sesión nuevamente.");
         setPublicando(false);
         return;
@@ -74,7 +73,7 @@ export default function InformesTab({ expedienteId }: InformesTabProps) {
         expedienteId,
         textoLimpio,
         visibleCliente,
-        user.id
+        userId
       );
 
       if (resultado) {

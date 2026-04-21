@@ -1,38 +1,8 @@
 'use server';
 
-import { createClient } from '../supabase/server';
-
-/* ══════════════════════════════════════════════════════════════
-   Tipos de retorno para el módulo de analítica (BI)
-   ──────────────────────────────────────────────────────────────
-   Todos los shapes son de solo lectura; este repositorio
-   jamás ejecuta operaciones DML.
-   ══════════════════════════════════════════════════════════════ */
-
-export interface KpisFinancieros {
-  totalFacturado: number;
-  totalCobrado: number;
-  totalEnMora: number;
-}
-
-export interface CargaAbogado {
-  abogado: string;
-  casosActivos: number;
-}
-
-export interface DistribucionMateria {
-  materia: string;
-  cantidad: number;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   Contrato de respuesta estándar
-   ══════════════════════════════════════════════════════════════ */
-
-interface RepositoryResponse<T> {
-  data: T | null;
-  error: string | null;
-}
+import { createClient } from '@/infrastructure/supabase/server';
+import type { KpisFinancieros, CargaAbogado, DistribucionMateria } from '@/domain/entities/Reportes';
+import type { RepositoryResponse } from '@/domain/types/RepositoryResponse';
 
 /* ══════════════════════════════════════════════════════════════
    Interfaces internas de filas (snake_case desde Supabase)

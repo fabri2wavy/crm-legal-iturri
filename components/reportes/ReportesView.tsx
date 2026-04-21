@@ -16,25 +16,7 @@ import {
 } from 'recharts';
 import { DollarSign, Pickaxe, AlertCircle } from 'lucide-react';
 
-/* ══════════════════════════════════════════════════════════════
-   Contratos TypeScript (Interfaces de Dominio)
-   ══════════════════════════════════════════════════════════════ */
-
-export interface KpisFinancieros {
-  totalFacturado: number;
-  totalCobrado: number;
-  totalEnMora: number;
-}
-
-export interface CargaAbogado {
-  abogado: string;
-  casosActivos: number;
-}
-
-export interface DistribucionMateria {
-  materia: string;
-  cantidad: number;
-}
+import type { KpisFinancieros, CargaAbogado, DistribucionMateria } from '@/domain/entities/Reportes';
 
 interface ReportesViewProps {
   kpis: KpisFinancieros;

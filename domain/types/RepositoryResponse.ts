@@ -1,13 +1,12 @@
-import { redirect } from "next/navigation";
-
 /* ══════════════════════════════════════════════════════════════
-   Página Raíz: Redirect automático
+   Tipo Genérico de Dominio: RepositoryResponse<T>
    ──────────────────────────────────────────────────────────────
-   La página raíz del sitio redirige inmediatamente al dashboard.
-   El middleware de autenticación se encargará de redirigir a
-   /login si el usuario no está autenticado.
+   Contrato de respuesta estándar para todas las operaciones
+   de repositorio. Unifica el shape de retorno eliminando la
+   duplicación entre auditoriaRepository y configuracionRepository.
    ══════════════════════════════════════════════════════════════ */
 
-export default function Home() {
-  redirect("/dashboard");
+export interface RepositoryResponse<T> {
+  data: T | null;
+  error: string | null;
 }

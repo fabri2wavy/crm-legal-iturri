@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { Briefcase, Users, Calendar } from "lucide-react";
-import { obtenerTotalClientes } from "../../../infrastructure/repositories/clienteRepository";
-import { obtenerTotalExpedientes } from "../../../infrastructure/repositories/expedienteRepository";
+import { obtenerTotalClientes } from "@/infrastructure/repositories/clienteRepository";
+import { obtenerTotalExpedientes } from "@/infrastructure/repositories/expedienteRepository";
 
 interface AdminDashboardProps {
   nombre: string;

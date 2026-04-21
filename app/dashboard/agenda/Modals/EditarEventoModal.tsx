@@ -6,14 +6,14 @@ import { CalendarDays, Plus, X } from "lucide-react";
 import {
   EventoAgendaDetallado,
   TipoEventoAgenda,
-} from "../../../../domain/entities/EventoAgenda";
-import { actualizarEvento } from "../../../../infrastructure/repositories/agendaRepository";
-import { obtenerEquipo } from "../../../../infrastructure/repositories/equipoRepository";
-import { obtenerExpedientes } from "../../../../infrastructure/repositories/expedienteRepository";
-import { MiembroEquipo } from "../../../../domain/entities/MiembroEquipo";
-import { Button } from "../../../../components/ui/Button";
-import { FormField } from "../../../../components/ui/FormField";
-import { SelectField } from "../../../../components/ui/SelectField";
+} from "@/domain/entities/EventoAgenda";
+import { actualizarEvento } from "@/infrastructure/repositories/agendaRepository";
+import { obtenerEquipo } from "@/infrastructure/repositories/equipoRepository";
+import { obtenerExpedientes } from "@/infrastructure/repositories/expedienteRepository";
+import { MiembroEquipo } from "@/domain/entities/MiembroEquipo";
+import { Button } from "@/components/ui/Button";
+import { FormField } from "@/components/ui/FormField";
+import { SelectField } from "@/components/ui/SelectField";
 
 /* ══════════════════════════════════════════════════════════════
    Modal de edición de evento — pre-rellena con datos existentes

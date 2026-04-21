@@ -3,9 +3,9 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { UserPlus, CheckCircle2, Users, Plus, Check, ArrowRight, ArrowLeft, Search } from "lucide-react";
-import { Cliente } from "../../../domain/entities/Cliente";
-import { obtenerClientes, crearCliente } from "../../../infrastructure/repositories/clienteRepository";
-import { Button } from "../../../components/ui/Button";
+import { Cliente } from "@/domain/entities/Cliente";
+import { obtenerClientes, crearCliente } from "@/infrastructure/repositories/clienteRepository";
+import { Button } from "@/components/ui/Button";
 import css from "./page.module.css";
 
 /* ── Opciones de Select ──────────────────────────────────────── */

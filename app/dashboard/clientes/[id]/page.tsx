@@ -14,16 +14,16 @@ import {
   ShieldAlert,
   KeyRound,
 } from "lucide-react";
-import { Cliente } from "../../../../domain/entities/Cliente";
-import { Expediente } from "../../../../domain/entities/Expediente";
+import { Cliente } from "@/domain/entities/Cliente";
+import { Expediente } from "@/domain/entities/Expediente";
 import {
   obtenerClientePorId,
   obtenerExpedientesPorCliente,
   actualizarCliente,
   eliminarCliente,
-} from "../../../../infrastructure/repositories/clienteRepository";
-import { Button } from "../../../../components/ui/Button";
-import { FormField } from "../../../../components/ui/FormField";
+} from "@/infrastructure/repositories/clienteRepository";
+import { Button } from "@/components/ui/Button";
+import { FormField } from "@/components/ui/FormField";
 
 /* ── Helper: colores semánticos por estado procesal ──────────── */
 function getEstadoDesign(estado: string | undefined | null): string {

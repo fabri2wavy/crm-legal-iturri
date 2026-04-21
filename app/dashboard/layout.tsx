@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import BotonSalir from "../../components/BotonSalir";
-import PerfilUsuario from "../../components/PerfilUsuario";
-import { obtenerPerfilActual } from "../../infrastructure/repositories/usuarioRepository";
+import BotonSalir from "@/components/layout/BotonSalir";
+import PerfilUsuario from "@/components/layout/PerfilUsuario";
+import { obtenerPerfilActual } from "@/infrastructure/repositories/usuarioRepository";
 
 type NavItem = {
   href: string;

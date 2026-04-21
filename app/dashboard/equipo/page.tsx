@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Plus, MoreHorizontal, Briefcase, Shield } from "lucide-react";
-import { MiembroEquipo } from "../../../domain/entities/MiembroEquipo";
-import { obtenerEquipo } from "../../../infrastructure/repositories/equipoRepository";
-import { obtenerPerfilActual } from "../../../infrastructure/repositories/usuarioRepository";
-import { Button } from "../../../components/ui/Button";
+import { MiembroEquipo } from "@/domain/entities/MiembroEquipo";
+import { obtenerEquipo } from "@/infrastructure/repositories/equipoRepository";
+import { obtenerPerfilActual } from "@/infrastructure/repositories/usuarioRepository";
+import { Button } from "@/components/ui/Button";
 
 /* ══════════════════════════════════════════════════════════════
    HELPERS: Configuración visual de Badges

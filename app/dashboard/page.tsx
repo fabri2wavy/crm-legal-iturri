@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { obtenerPerfilActual, UsuarioPerfil } from "../../infrastructure/repositories/usuarioRepository";
+import { obtenerPerfilActual, UsuarioPerfil } from "@/infrastructure/repositories/usuarioRepository";
 import AdminDashboard from "./views/AdminDashboard";
 import AbogadoDashboard from "./views/AbogadoDashboard";
 import ClienteDashboard from "./views/ClienteDashboard";

@@ -7,17 +7,17 @@ import { User, Mail, Phone, ExternalLink, Gavel, Hash, FileText, Pencil, Users, 
 import InformesTab from "./InformesTab";
 import FinanzasTab from "./FinanzasTab";
 import PlantillasTab from "./PlantillasTab";
-import { obtenerExpedientePorId, actualizarExpediente } from "../../../../infrastructure/repositories/expedienteRepository";
+import { obtenerExpedientePorId, actualizarExpediente } from "@/infrastructure/repositories/expedienteRepository";
 import { 
   obtenerDocumentos, 
   subirDocumento, 
   obtenerUrlDescarga, 
   eliminarDocumento,
   actualizarVisibilidad 
-} from "../../../../infrastructure/repositories/documentoRepository";
-import { Documento } from "../../../../domain/entities/Documento";
-import { obtenerAbogados } from "../../../../infrastructure/repositories/usuarioRepository";
-import { Alert } from "../../../../components/ui/Alert";
+} from "@/infrastructure/repositories/documentoRepository";
+import { Documento } from "@/domain/entities/Documento";
+import { obtenerAbogados } from "@/infrastructure/repositories/usuarioRepository";
+import { Alert } from "@/components/ui/Alert";
 
 /* ── Mapa de colores semánticos por estado ─────────────────── */
 const ESTADO_STYLES: Record<string, { bg: string; color: string; border: string }> = {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle } from "lucide-react";
-import { Button } from "../../../../components/ui/Button";
+import { Button } from "@/components/ui/Button";
 
 /* ══════════════════════════════════════════════════════════════
    Diálogo de confirmación de eliminación de evento

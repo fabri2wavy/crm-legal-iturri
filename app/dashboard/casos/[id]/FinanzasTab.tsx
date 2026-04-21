@@ -13,13 +13,13 @@ import {
   CreateGastoDTO,
   MonedaHonorario,
   EstadoCuota,
-} from "../../../../domain/entities/Finanzas";
+} from "@/domain/entities/Finanzas";
 import {
   obtenerEstadoCuenta,
   crearHonorarioConCuotas,
   registrarGasto,
-} from "../../../../infrastructure/repositories/finanzasRepository";
-import { ToastContainer, useToasts } from "../../../../components/ui/Toast";
+} from "@/infrastructure/repositories/finanzasRepository";
+import { ToastContainer, useToasts } from "@/components/ui/Toast";
 
 /* ══════════════════════════════════════════════════════════════
    Helpers
