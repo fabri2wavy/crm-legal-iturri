@@ -108,3 +108,56 @@ export async function crearMiembroEquipo(
     throw new Error('Error inesperado al crear el miembro del equipo.');
   }
 }
+
+export async function obtenerMiembroPorId(id: string): Promise<MiembroEquipo | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('perfiles')
+    .select('*, detalles_equipo!inner(*)')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) {
+    console.error(`Error al obtener miembro por ID (${id}):`, error?.message);
+    return null;
+  }
+  return mapearMiembro(data);
+}
+
+export async function actualizarMiembro(
+  id: string,
+  datos: Partial<MiembroEquipo>
+): Promise<boolean> {
+  const supabase = createClient();
+
+  const datosPerfil: any = {};
+  if (datos.nombres !== undefined) datosPerfil.nombres = datos.nombres;
+  if (datos.apellidoPaterno !== undefined) datosPerfil.apellido_paterno = datos.apellidoPaterno;
+  if (datos.apellidoMaterno !== undefined) datosPerfil.apellido_materno = datos.apellidoMaterno;
+  if (datos.telefono !== undefined) datosPerfil.telefono = datos.telefono;
+  if (datos.rol !== undefined) datosPerfil.rol = datos.rol;
+
+  if (Object.keys(datosPerfil).length > 0) {
+    const { error } = await supabase.from('perfiles').update(datosPerfil).eq('id', id);
+    if (error) {
+      console.error("Error al actualizar perfil:", error.message);
+      return false;
+    }
+  }
+
+  const datosDetalle: any = {};
+  if (datos.cargo !== undefined) datosDetalle.cargo = datos.cargo;
+  if (datos.especialidad !== undefined) datosDetalle.especialidad = datos.especialidad;
+  if (datos.estadoLaboral !== undefined) datosDetalle.estado_laboral = datos.estadoLaboral;
+
+  if (Object.keys(datosDetalle).length > 0) {
+    const { error } = await supabase.from('detalles_equipo').update(datosDetalle).eq('id', id);
+    if (error) {
+      console.error("Error al actualizar detalles_equipo:", error.message);
+      return false;
+    }
+  }
+
+  return true;
+}
+

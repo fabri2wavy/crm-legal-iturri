@@ -13,11 +13,6 @@ import {
 } from "lucide-react";
 import { TipoEventoAgenda } from "@/domain/entities/EventoAgenda";
 
-/* ══════════════════════════════════════════════════════════════
-   Claves de URL — contrato estricto con el page.tsx
-   ══════════════════════════════════════════════════════════════ */
-
-/** Parámetros de búsqueda que la barra inyecta en la URL */
 export const PARAM_KEYS = {
   asignado: "asignado",
   desde: "desde",

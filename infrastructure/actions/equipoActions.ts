@@ -22,7 +22,10 @@ const supabaseAdmin = createClient(
    Tipo de entrada (sin campos generados por el servidor)
    ══════════════════════════════════════════════════════════════ */
 
-type DatosNuevoMiembro = Omit<MiembroEquipo, 'id' | 'estadoLaboral'>;
+type DatosNuevoMiembro = Omit<MiembroEquipo, 'id' | 'estadoLaboral'> & {
+  /** Contraseña temporal asignada por el admin para el primer inicio de sesión */
+  password: string;
+};
 
 /* ══════════════════════════════════════════════════════════════
    SERVER ACTION: Registrar nuevo miembro del equipo
@@ -48,9 +51,14 @@ export async function registrarNuevoMiembro(
       return { success: false, error: 'El correo electrónico es obligatorio para crear la cuenta.' };
     }
 
+    const password = datos.password?.trim();
+    if (!password || password.length < 6) {
+      return { success: false, error: 'La contraseña temporal debe tener al menos 6 caracteres.' };
+    }
+
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password: 'Temporal123!',
+      password,
       email_confirm: true,
     });
 
@@ -127,5 +135,73 @@ export async function registrarNuevoMiembro(
     }
 
     return { success: false, error: `Error inesperado: ${err.message}` };
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SERVER ACTION: Actualizar miembro del equipo
+   ══════════════════════════════════════════════════════════════ */
+export async function actualizarMiembroAction(
+  id: string,
+  datos: Partial<MiembroEquipo>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const datosPerfil: any = {};
+    if (datos.nombres !== undefined) datosPerfil.nombres = datos.nombres;
+    if (datos.apellidoPaterno !== undefined) datosPerfil.apellido_paterno = datos.apellidoPaterno;
+    if (datos.apellidoMaterno !== undefined) datosPerfil.apellido_materno = datos.apellidoMaterno;
+    if (datos.telefono !== undefined) datosPerfil.telefono = datos.telefono;
+    if (datos.rol !== undefined) datosPerfil.rol = datos.rol;
+
+    if (Object.keys(datosPerfil).length > 0) {
+      const { error } = await supabaseAdmin.from('perfiles').update(datosPerfil).eq('id', id);
+      if (error) throw new Error(error.message);
+    }
+
+    const datosDetalle: any = {};
+    if (datos.cargo !== undefined) datosDetalle.cargo = datos.cargo;
+    if (datos.especialidad !== undefined) datosDetalle.especialidad = datos.especialidad;
+    if (datos.estadoLaboral !== undefined) datosDetalle.estado_laboral = datos.estadoLaboral;
+
+    if (Object.keys(datosDetalle).length > 0) {
+      const { error } = await supabaseAdmin.from('detalles_equipo').update(datosDetalle).eq('id', id);
+      if (error) throw new Error(error.message);
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('[equipoActions] Error en actualizarMiembroAction:', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SERVER ACTION: Eliminar miembro del equipo
+   ──────────────────────────────────────────────────────────────
+   Orden estricto para evitar errores de integridad:
+   1. detalles_equipo
+   2. perfiles
+   3. auth.users
+   ══════════════════════════════════════════════════════════════ */
+export async function eliminarMiembroAction(
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // 1. Eliminar de detalles_equipo
+    const { error: detError } = await supabaseAdmin.from('detalles_equipo').delete().eq('id', id);
+    if (detError) throw new Error(`Error al eliminar detalles: ${detError.message}`);
+
+    // 2. Eliminar de perfiles
+    const { error: perfError } = await supabaseAdmin.from('perfiles').delete().eq('id', id);
+    if (perfError) throw new Error(`Error al eliminar perfil: ${perfError.message}`);
+
+    // 3. Eliminar de auth.users
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
+    if (authError) throw new Error(`Error al eliminar usuario de autenticación: ${authError.message}`);
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('[equipoActions] Error en eliminarMiembroAction:', err.message);
+    return { success: false, error: err.message };
   }
 }

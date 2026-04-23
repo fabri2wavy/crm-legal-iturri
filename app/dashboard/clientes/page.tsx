@@ -8,7 +8,6 @@ import { obtenerClientes, crearCliente } from "@/infrastructure/repositories/cli
 import { Button } from "@/components/ui/Button";
 import css from "./page.module.css";
 
-/* ── Opciones de Select ──────────────────────────────────────── */
 const DEPARTAMENTOS = [
   { value: "LP", label: "La Paz" },
   { value: "SCZ", label: "Santa Cruz" },
