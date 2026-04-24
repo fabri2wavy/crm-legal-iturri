@@ -1,11 +1,19 @@
--- ELIMINACIÓN DE ÍNDICE DUPLICADO
--- Se elimina el índice redundante para liberar recursos y optimizar el rendimiento de escritura.
-DROP INDEX IF EXISTS public.idx_agenda_eventos_rango_fechas;
+-- 1. Política para ACTUALIZAR (Editar) expedientes
+CREATE POLICY "update_expedientes_seguro" 
+ON public.expedientes 
+FOR UPDATE 
+USING (
+    -- El abogado asignado puede editar su propio caso (ej. cambiar el estado)
+    abogado_asignado_id = auth.uid() 
+    -- O el Administrador, que puede editar y reasignar CUALQUIER caso
+    OR public.get_user_rol() = 'admin'
+);
 
--- REAFIRMACIÓN DEL ÍNDICE PRINCIPAL (Si no existiera o para asegurar consistencia)
--- Se asume que el índice está basado en las columnas de tiempo para el módulo de agenda.
-CREATE INDEX IF NOT EXISTS idx_agenda_eventos_fechas 
-ON public.agenda_eventos (fecha_inicio, fecha_fin);
-
--- ANALYZE para actualizar las estadísticas del optimizador de consultas
-ANALYZE public.agenda_eventos;
+-- 2. Política para INSERTAR (Crear) nuevos expedientes
+CREATE POLICY "insert_expedientes_seguro" 
+ON public.expedientes 
+FOR INSERT 
+WITH CHECK (
+    -- Solo admins y abogados pueden crear casos nuevos
+    public.get_user_rol() IN ('admin', 'abogado')
+);

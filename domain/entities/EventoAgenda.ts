@@ -1,9 +1,4 @@
 // domain/entities/EventoAgenda.ts
-
-/* ══════════════════════════════════════════════════════════════
-   Tipos de dominio estricto (reflejan ENUMs de PostgreSQL)
-   ══════════════════════════════════════════════════════════════ */
-
 export type TipoEventoAgenda =
   | 'audiencia'
   | 'reunion'
@@ -14,10 +9,6 @@ export type EstadoEventoAgenda =
   | 'pendiente'
   | 'completado'
   | 'cancelado';
-
-/* ══════════════════════════════════════════════════════════════
-   Entidad base — mapeo 1:1 con columnas de `agenda_eventos`
-   ══════════════════════════════════════════════════════════════ */
 
 export interface EventoAgenda {
   id: string;
@@ -32,10 +23,6 @@ export interface EventoAgenda {
   creadoPor: string;     // UUID → perfiles(id)
   creadoEn: string;      // ISO 8601
 }
-
-/* ══════════════════════════════════════════════════════════════
-   Entidad extendida — hidratación relacional para vistas
-   ══════════════════════════════════════════════════════════════ */
 
 export interface EventoAgendaDetallado extends EventoAgenda {
   expediente: {
