@@ -16,7 +16,7 @@ import {
   actualizarVisibilidad 
 } from "@/infrastructure/repositories/documentoRepository";
 import { Documento } from "@/domain/entities/Documento";
-import { obtenerAbogados } from "@/infrastructure/repositories/usuarioRepository";
+import { obtenerAbogados, obtenerPerfilActual } from "@/infrastructure/repositories/usuarioRepository";
 import { Alert } from "@/components/ui/Alert";
 
 /* ── Mapa de colores semánticos por estado ─────────────────── */
@@ -78,6 +78,7 @@ export default function DetalleExpedientePage() {
   const [cargando, setCargando] = useState(true);
   const [pestañaActiva, setPestañaActiva] = useState("info");
   const [abogados, setAbogados] = useState<any[]>([]);
+  const [perfilUsuario, setPerfilUsuario] = useState<any>(null);
   const [cambiandoAbogado, setCambiandoAbogado] = useState(false);
 
   const [errorMsg, setErrorMsg] = useState("");
@@ -142,12 +143,14 @@ export default function DetalleExpedientePage() {
 
   useEffect(() => {
     async function cargarDetalle() {
-      const [data, listaAbogados] = await Promise.all([
+      const [data, listaAbogados, perfil] = await Promise.all([
         obtenerExpedientePorId(idCaso),
-        obtenerAbogados()
+        obtenerAbogados(),
+        obtenerPerfilActual()
       ]);
       setCaso(data);
       setAbogados(listaAbogados);
+      setPerfilUsuario(perfil);
       setCargando(false);
     }
     cargarDetalle();
@@ -497,36 +500,38 @@ export default function DetalleExpedientePage() {
             </div>
 
             {/* ── TARJETA 3: Asignación Interna (col-span completo) ── */}
-            <div className="lg:col-span-2 p-5 sm:p-6 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-surface-border)] shadow-[var(--shadow-sm)]">
-              <div className="flex items-center justify-between mb-5 pb-3 border-b border-[var(--color-surface-border)]">
-                <h3 className="text-base font-bold flex items-center gap-2.5 text-[var(--color-text-primary)]">
-                  <Users className="w-[18px] h-[18px] text-[var(--color-gold)]" strokeWidth={2} />
-                  Asignación Interna
-                </h3>
-              </div>
-              <div className="max-w-md">
-                <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] block mb-2">Abogado Responsable</span>
-                <div className="flex items-center gap-3">
-                  <select
-                    value={caso.abogado_id || ""}
-                    onChange={(e) => handleChangeAbogado(e.target.value)}
-                    disabled={cambiandoAbogado}
-                    className="w-full px-4 py-2.5 text-sm font-medium rounded-lg border border-gray-200
-                               bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm
-                               focus:outline-none focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)]
-                               disabled:opacity-50 transition-all"
-                  >
-                    <option value="" disabled>Seleccione un abogado</option>
-                    {abogados.map(a => (
-                      <option key={a.id} value={a.id}>{a.nombre_completo}</option>
-                    ))}
-                  </select>
-                  {cambiandoAbogado && (
-                    <div className="w-5 h-5 rounded-full border-2 border-[var(--color-surface-border)] border-t-[var(--color-gold)] animate-spin shrink-0" />
-                  )}
+            {perfilUsuario?.rol === 'admin' && (
+              <div className="lg:col-span-2 p-5 sm:p-6 rounded-xl bg-[var(--color-surface-card)] border border-[var(--color-surface-border)] shadow-[var(--shadow-sm)]">
+                <div className="flex items-center justify-between mb-5 pb-3 border-b border-[var(--color-surface-border)]">
+                  <h3 className="text-base font-bold flex items-center gap-2.5 text-[var(--color-text-primary)]">
+                    <Users className="w-[18px] h-[18px] text-[var(--color-gold)]" strokeWidth={2} />
+                    Asignación Interna
+                  </h3>
+                </div>
+                <div className="max-w-md">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] block mb-2">Abogado Responsable</span>
+                  <div className="flex items-center gap-3">
+                    <select
+                      value={caso.abogado_id || ""}
+                      onChange={(e) => handleChangeAbogado(e.target.value)}
+                      disabled={cambiandoAbogado}
+                      className="w-full px-4 py-2.5 text-sm font-medium rounded-lg border border-gray-200
+                                 bg-[var(--color-surface-card)] text-[var(--color-text-primary)] shadow-sm
+                                 focus:outline-none focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)]
+                                 disabled:opacity-50 transition-all"
+                    >
+                      <option value="" disabled>Seleccione un abogado</option>
+                      {abogados.map(a => (
+                        <option key={a.id} value={a.id}>{a.nombre_completo}</option>
+                      ))}
+                    </select>
+                    {cambiandoAbogado && (
+                      <div className="w-5 h-5 rounded-full border-2 border-[var(--color-surface-border)] border-t-[var(--color-gold)] animate-spin shrink-0" />
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
           </div>
         )}
