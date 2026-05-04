@@ -1,13 +1,14 @@
 "use server";
 
 import { createClient } from '@supabase/supabase-js';
+import { revalidatePath } from 'next/cache';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function completarRegistroClienteAdmin(userId: string, datos: any) {
+export async function completarRegistroClienteAdmin(userId: string, datos: any, creadoPorId?: string) {
     try {
         const { error: perfilError } = await supabaseAdmin
             .from('perfiles')
@@ -17,6 +18,7 @@ export async function completarRegistroClienteAdmin(userId: string, datos: any) 
                 apellido_materno: datos.apellidoMaterno || null,
                 telefono: datos.telefono || null,
                 rol: 'cliente',
+                creado_por: creadoPorId || null,
             })
             .eq('id', userId);
 
@@ -36,6 +38,9 @@ export async function completarRegistroClienteAdmin(userId: string, datos: any) 
             }]);
 
         if (detalleError) throw new Error(detalleError.message);
+
+        revalidatePath('/dashboard/casos');
+        revalidatePath('/dashboard/casos/nuevo');
 
         return { success: true };
     } catch (error: any) {

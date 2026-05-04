@@ -62,6 +62,9 @@ function mapearCliente(fila: any): Cliente {
 export async function crearCliente(
   datos: DatosNuevoCliente
 ): Promise<{ success: boolean; data?: Cliente; error?: string }> {
+  const supabase = createClient();
+  const { data: userData } = await supabase.auth.getUser();
+  const loggedInUserId = userData.user?.id;
 
   const authResult = await crearUsuarioDesdeAdmin(datos.email, datos.password);
 
@@ -74,7 +77,7 @@ export async function crearCliente(
   const nombreCompleto = construirNombreCompleto(datos.nombres, datos.apellidoPaterno, datos.apellidoMaterno);
 
 
-  const registroResult = await completarRegistroClienteAdmin(userId, datos);
+  const registroResult = await completarRegistroClienteAdmin(userId, datos, loggedInUserId);
 
   if (!registroResult.success) {
     console.error('Error al guardar datos del cliente en DB:', registroResult.error);
