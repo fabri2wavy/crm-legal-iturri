@@ -5,7 +5,8 @@ import Link from "next/link";
 import { FolderOpen, Plus, Search, Filter, ShieldAlert, FileText, CheckCircle2, Archive, Hash, Gavel, FileSignature } from "lucide-react";
 import { obtenerExpedientes, crearExpediente } from "@/infrastructure/repositories/expedienteRepository";
 import { obtenerClientes } from "@/infrastructure/repositories/clienteRepository";
-import { obtenerAbogados } from "@/infrastructure/repositories/usuarioRepository";
+import { obtenerAbogados, obtenerPerfilActual } from "@/infrastructure/repositories/usuarioRepository";
+import type { UsuarioPerfil } from "@/domain/entities/UsuarioPerfil";
 import { obtenerConfiguraciones } from "@/infrastructure/repositories/configuracionRepository";
 import type { ConfiguracionGlobal } from "@/domain/entities/ConfiguracionGlobal";
 import { Button } from "@/components/ui/Button";
@@ -48,6 +49,7 @@ export default function CasosPage() {
   const [listaAbogados, setListaAbogados] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorClientes, setErrorClientes] = useState(false);
+  const [perfilActual, setPerfilActual] = useState<UsuarioPerfil | null>(null);
 
   /* ── Configuraciones dinámicas ──────────────────────────────── */
   const [materiasDB, setMateriasDB] = useState<ConfiguracionGlobal[]>([]);
@@ -83,15 +85,17 @@ export default function CasosPage() {
   /* ── Carga inicial ──────────────────────────────────────────── */
   useEffect(() => {
     async function cargarDatosIniciales() {
-      const [dataCasos, dataClientes, dataAbogados, resMaterias, resJuzgados] = await Promise.all([
+      const [dataCasos, dataClientes, dataAbogados, resMaterias, resJuzgados, perfil] = await Promise.all([
         obtenerExpedientes(),
         obtenerClientes(),
         obtenerAbogados(),
         obtenerConfiguraciones('materia'),
         obtenerConfiguraciones('juzgado'),
+        obtenerPerfilActual(),
       ]);
       setExpedientes(dataCasos);
       setListaAbogados(dataAbogados);
+      setPerfilActual(perfil);
 
       if (resMaterias.data) setMateriasDB(resMaterias.data);
       if (resJuzgados.data) setJuzgadosDB(resJuzgados.data);
@@ -100,6 +104,12 @@ export default function CasosPage() {
         setErrorClientes(true);
       }
       setListaClientes(dataClientes);
+
+      /* Si el usuario es abogado, auto-asignar su ID al formulario */
+      if (perfil && perfil.rol === 'abogado') {
+        setFormData(prev => ({ ...prev, abogado_id: perfil.id }));
+      }
+
       setCargando(false);
     }
     cargarDatosIniciales();
@@ -412,19 +422,29 @@ export default function CasosPage() {
 
                     <div className="space-y-2">
                       <label className="text-base font-semibold text-gray-900 block">Abogado Responsable *</label>
-                      <select 
-                        required
-                        className="w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50"
-                        value={formData.abogado_id}
-                        onChange={(e) => setFormData({ ...formData, abogado_id: e.target.value })}
-                      >
-                        <option value="" disabled>Ej. Lic. Jorge Pérez</option>
-                        {listaAbogados.map(abogado => (
-                          <option key={abogado.id} value={abogado.id}>
-                            {abogado.nombre_completo}
-                          </option>
-                        ))}
-                      </select>
+                      {perfilActual?.rol === 'abogado' ? (
+                        <input
+                          type="text"
+                          readOnly
+                          disabled
+                          value={perfilActual.nombre_completo}
+                          className="w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-600 cursor-not-allowed outline-none"
+                        />
+                      ) : (
+                        <select 
+                          required
+                          className="w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50"
+                          value={formData.abogado_id}
+                          onChange={(e) => setFormData({ ...formData, abogado_id: e.target.value })}
+                        >
+                          <option value="" disabled>Ej. Lic. Jorge Pérez</option>
+                          {listaAbogados.map(abogado => (
+                            <option key={abogado.id} value={abogado.id}>
+                              {abogado.nombre_completo}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
                     <div className="space-y-2">

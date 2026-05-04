@@ -1,20 +1,20 @@
 import { redirect } from "next/navigation";
 import type { Plantilla } from "@/domain/entities/Plantilla";
-import { verificarAccesoAdmin, fetchPlantillas } from "@/infrastructure/actions/plantillasActions";
+import { verificarAccesoPlantillas, fetchPlantillas } from "@/infrastructure/actions/plantillasActions";
 import PlantillasTable from "@/components/plantillas/PlantillasTable";
 
 /* ══════════════════════════════════════════════════════════════
    PAGE: Plantillas de Documentos (Server Component)
    ──────────────────────────────────────────────────────────────
    Responsabilidades:
-     1. Verificar acceso (admin-only) server-side.
+     1. Verificar acceso (admin + abogado) server-side.
      2. Fetch inicial de datos.
      3. Delegar rendering al Client Component PlantillasTable.
    ══════════════════════════════════════════════════════════════ */
 
 export default async function PlantillasPage() {
   /* ── 1. Guard de acceso ─────────────────────────────────── */
-  const acceso = await verificarAccesoAdmin();
+  const acceso = await verificarAccesoPlantillas();
 
   if (!acceso.success) {
     redirect("/dashboard");

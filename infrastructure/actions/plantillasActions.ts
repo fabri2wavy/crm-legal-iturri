@@ -58,6 +58,41 @@ export async function verificarAccesoAdmin(): Promise<ActionResponse<{ rol: stri
 }
 
 /* ══════════════════════════════════════════════════════════════
+   ACTION: Verificar acceso para Plantillas (admin + abogado)
+   ══════════════════════════════════════════════════════════════ */
+
+export async function verificarAccesoPlantillas(): Promise<ActionResponse<{ rol: string }>> {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, error: 'Sesión expirada o inválida.' };
+    }
+
+    const { data: perfil, error: perfilError } = await supabase
+      .from('perfiles')
+      .select('rol')
+      .eq('id', user.id)
+      .single();
+
+    if (perfilError || !perfil) {
+      return { success: false, error: 'No se pudo verificar el rol del usuario.' };
+    }
+
+    const rolesPermitidos = ['admin', 'abogado'];
+    if (!rolesPermitidos.includes(perfil.rol)) {
+      return { success: false, error: 'Acceso denegado: Se requiere rol de administrador o abogado.' };
+    }
+
+    return { success: true, data: { rol: perfil.rol } };
+  } catch (err) {
+    const mensaje = err instanceof Error ? err.message : 'Error al verificar acceso.';
+    return { success: false, error: mensaje };
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
    ACTION: Listar todas las plantillas
    ══════════════════════════════════════════════════════════════ */
 

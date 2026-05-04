@@ -143,11 +143,20 @@ export default function DashboardLayout({
         { href: "/dashboard/auditoria", label: "Auditoría", icon: auditoriaIcon },
       ];
     } else if (userRol === 'abogado') {
+      const perfilIcon = (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      );
+
       return [
         inicioItem,
         { href: "/dashboard/casos", label: "Mis Casos", icon: casosIcon },
         { href: "/dashboard/clientes", label: "Mis Clientes", icon: clientesIcon },
         { href: "/dashboard/agenda", label: "Agenda", icon: agendaIcon },
+        { href: "/dashboard/plantillas", label: "Plantillas", icon: plantillasIcon },
+        { href: "/dashboard/perfil", label: "Mi Perfil", icon: perfilIcon, section: "MI CUENTA" },
       ];
     } else {
       return [
