@@ -231,12 +231,18 @@ export default function CasosPage() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-2">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Expedientes</h1>
-          <p className="mt-1 text-sm text-gray-500">Gestión de causas legales y flujo procesal.</p>
+          <p className="mt-1 text-sm text-gray-500">
+            {perfilActual?.rol === 'cliente'
+              ? 'Consulta el estado y avance de tus causas legales.'
+              : 'Gestión de causas legales y flujo procesal.'}
+          </p>
         </div>
-        <Button variant="primary" onClick={() => setMostrarModal(true)}>
-          <Plus className="w-5 h-5 mr-2" />
-          Nuevo Expediente
-        </Button>
+        {(perfilActual?.rol === 'admin' || perfilActual?.rol === 'abogado') && (
+          <Button variant="primary" onClick={() => setMostrarModal(true)}>
+            <Plus className="w-5 h-5 mr-2" />
+            Nuevo Expediente
+          </Button>
+        )}
       </div>
 
       {/* ── Barra de Filtros Minimalista ──────────────────────── */}
@@ -283,14 +289,16 @@ export default function CasosPage() {
                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Partes y Juzgado</th>
                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Materia</th>
                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Estado (Flujo Legal)</th>
-                <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest text-right">Acción</th>
+                {perfilActual?.rol !== 'cliente' && (
+                  <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest text-right">Acción</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               
               {cargando && (
                 <tr>
-                  <td colSpan={5} className="py-20 text-center">
+                  <td colSpan={perfilActual?.rol === 'cliente' ? 4 : 5} className="py-20 text-center">
                     <div className="flex flex-col items-center justify-center space-y-3">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" />
                       <p className="text-gray-500 text-sm">Cargando base de datos legal...</p>
@@ -301,7 +309,7 @@ export default function CasosPage() {
 
               {!cargando && expedientesFiltrados.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-24 text-center">
+                  <td colSpan={perfilActual?.rol === 'cliente' ? 4 : 5} className="py-24 text-center">
                     <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                       <FolderOpen className="w-8 h-8 text-gray-300" strokeWidth={1.5} />
                     </div>
@@ -342,13 +350,15 @@ export default function CasosPage() {
                     </span>
                   </td>
 
-                  <td className="py-4 px-6 text-right">
-                    <Link href={`/dashboard/casos/${caso.id}`}>
-                      <button className="text-sm font-medium text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
-                        Revisar
-                      </button>
-                    </Link>
-                  </td>
+                  {perfilActual?.rol !== 'cliente' && (
+                    <td className="py-4 px-6 text-right">
+                      <Link href={`/dashboard/casos/${caso.id}`}>
+                        <button className="text-sm font-medium text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
+                          Revisar
+                        </button>
+                      </Link>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

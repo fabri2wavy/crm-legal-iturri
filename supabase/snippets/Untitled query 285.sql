@@ -1,14 +1,11 @@
--- Todos los abogados y admins pueden VER las plantillas
-CREATE POLICY "select_plantillas" 
-ON public.plantillas_documentos FOR SELECT 
-USING (public.get_user_rol() IN ('admin', 'abogado'));
+-- 1. Destruimos la regla anterior para evitar el error
+DROP POLICY IF EXISTS "select_expedientes_seguro" ON public.expedientes;
 
--- Un abogado puede CREAR una plantilla (asegurando que él sea el autor)
-CREATE POLICY "insert_plantillas" 
-ON public.plantillas_documentos FOR INSERT 
-WITH CHECK (creado_por = auth.uid() AND public.get_user_rol() IN ('admin', 'abogado'));
-
--- Un abogado solo puede EDITAR/ELIMINAR sus propias plantillas (Admin todo)
-CREATE POLICY "update_delete_mis_plantillas" 
-ON public.plantillas_documentos FOR ALL 
-USING (creado_por = auth.uid() OR public.get_user_rol() = 'admin');
+-- 2. Creamos la regla actualizada con el acceso para el Cliente
+CREATE POLICY "select_expedientes_seguro" 
+ON public.expedientes FOR SELECT 
+USING (
+    public.get_user_rol() = 'admin' 
+    OR abogado_asignado_id = auth.uid() 
+    OR cliente_id = auth.uid() 
+);
