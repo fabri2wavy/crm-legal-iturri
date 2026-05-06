@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { iniciarSesion, registrarUsuario } from "@/infrastructure/repositories/authRepository";
+import { iniciarSesion } from "@/infrastructure/repositories/authRepository";
 
 import { AuthCard } from "@/components/ui/AuthCard";
 import { FormField } from "@/components/ui/FormField";
@@ -31,21 +31,6 @@ export default function LoginPage() {
       setMensaje("¡Login exitoso! Entrando al sistema...");
       router.push("/dashboard");
     }
-  };
-
-  const handleRegistro = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMensaje("");
-
-    const resultado = await registrarUsuario(email, password);
-
-    if (!resultado.success) {
-      setMensaje("Error al registrar: " + resultado.error);
-    } else {
-      setMensaje("¡Usuario creado en auth y perfiles!");
-    }
-    setLoading(false);
   };
 
   const isError = mensaje.toLowerCase().includes("error");
@@ -89,17 +74,6 @@ export default function LoginPage() {
             loading={loading}
           >
             {loading ? "Procesando…" : "Iniciar Sesión"}
-          </Button>
-
-          <Button
-            type="button"
-            variant="secondary"
-            size="lg"
-            fullWidth
-            disabled={loading}
-            onClick={handleRegistro}
-          >
-            Crear Usuario (Dev)
           </Button>
         </div>
       </form>
