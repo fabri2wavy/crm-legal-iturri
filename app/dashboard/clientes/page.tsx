@@ -46,6 +46,8 @@ const FORM_INIT = {
   estadoCivil: "",
   profesion: "",
   direccion: "",
+  referidoPor: "",
+  contactoReferidor: "",
 };
 
 /* ── Tipo para errores de validación ─────────────────────────── */
@@ -595,6 +597,32 @@ export default function ClientesPage() {
                           className={INPUT + " resize-none"}
                           value={formData.direccion}
                           onChange={(e) => actualizarCampo("direccion", e.target.value)}
+                        />
+                      </div>
+
+                      {/* Referido por */}
+                      <div className="space-y-2">
+                        <label htmlFor="referidoPor" className={LABEL}>Referido por</label>
+                        <input
+                          id="referidoPor"
+                          type="text"
+                          placeholder="Ej. Juan Pérez / Redes sociales"
+                          className={INPUT}
+                          value={formData.referidoPor}
+                          onChange={(e) => actualizarCampo("referidoPor", e.target.value)}
+                        />
+                      </div>
+
+                      {/* Contacto del Referidor */}
+                      <div className="space-y-2">
+                        <label htmlFor="contactoReferidor" className={LABEL}>Contacto del Referidor (Tel/Email)</label>
+                        <input
+                          id="contactoReferidor"
+                          type="text"
+                          placeholder="Ej. 70099999 / juan@correo.com"
+                          className={INPUT}
+                          value={formData.contactoReferidor}
+                          onChange={(e) => actualizarCampo("contactoReferidor", e.target.value)}
                         />
                       </div>
                     </div>

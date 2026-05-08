@@ -33,6 +33,11 @@ export interface DatosNuevoCliente {
   estadoCivil?: string;
   profesion?: string;
   direccion?: string;
+
+  /** Nombre o descripción de quien refirió al cliente. */
+  referidoPor?: string;
+  /** Teléfono, email u otro dato de contacto del referidor. */
+  contactoReferidor?: string;
 }
 
 function mapearCliente(fila: any): Cliente {
@@ -56,6 +61,9 @@ function mapearCliente(fila: any): Cliente {
     estadoCivil: detalle.estado_civil ?? undefined,
     profesion: detalle.profesion ?? undefined,
     direccion: detalle.direccion ?? undefined,
+
+    referidoPor: detalle.referido_por ?? undefined,
+    contactoReferidor: detalle.contacto_referidor ?? undefined,
   };
 }
 
@@ -101,6 +109,8 @@ export async function crearCliente(
       estadoCivil: datos.estadoCivil,
       profesion: datos.profesion,
       direccion: datos.direccion,
+      referidoPor: datos.referidoPor,
+      contactoReferidor: datos.contactoReferidor,
     },
   };
 }
@@ -204,6 +214,8 @@ export async function actualizarCliente(
   const detallesData: Record<string, any> = {};
   if (clienteData.ci !== undefined) detallesData.ci = clienteData.ci || null;
   if (clienteData.expedido !== undefined) detallesData.expedido = clienteData.expedido || null;
+  if (clienteData.referidoPor !== undefined) detallesData.referido_por = clienteData.referidoPor || null;
+  if (clienteData.contactoReferidor !== undefined) detallesData.contacto_referidor = clienteData.contactoReferidor || null;
 
   if (Object.keys(detallesData).length > 0) {
     const detallesResult = await actualizarDetallesAdmin(id, detallesData);

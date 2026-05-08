@@ -35,7 +35,18 @@ export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'f
       informe_despacho: expedienteData.informeDespacho,
       informe_cliente: expedienteData.informeCliente,
       cliente_id: expedienteData.clienteId,
-      abogado_asignado_id: expedienteData.abogado_id
+      abogado_asignado_id: expedienteData.abogado_id,
+      // ── Campos legales opcionales ─────────────────────────────
+      rol_cliente: expedienteData.rolCliente ?? null,
+      tipo_proceso: expedienteData.tipoProceso ?? null,
+      nurej: expedienteData.nurej ?? null,
+      numero_fiscalia: expedienteData.numeroFiscalia ?? null,
+      numero_felcc: expedienteData.numeroFelcc ?? null,
+      juez_actual: expedienteData.juezActual ?? null,
+      secretario_actuario: expedienteData.secretarioActuario ?? null,
+      fiscal_actual: expedienteData.fiscalActual ?? null,
+      investigador_asignado: expedienteData.investigadorAsignado ?? null,
+      etapa_procesal: expedienteData.etapaProcesal ?? null,
     }])
     .select()
     .single();
@@ -73,7 +84,17 @@ export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'f
     clienteId: data.cliente_id,
     abogado_id: data.abogado_asignado_id,
     fechaCreacion: new Date(data.fecha_creacion),
-    fechaActualizacion: new Date(data.fecha_actualizacion)
+    fechaActualizacion: new Date(data.fecha_actualizacion),
+    rolCliente: data.rol_cliente ?? undefined,
+    tipoProceso: data.tipo_proceso ?? undefined,
+    nurej: data.nurej ?? undefined,
+    numeroFiscalia: data.numero_fiscalia ?? undefined,
+    numeroFelcc: data.numero_felcc ?? undefined,
+    juezActual: data.juez_actual ?? undefined,
+    secretarioActuario: data.secretario_actuario ?? undefined,
+    fiscalActual: data.fiscal_actual ?? undefined,
+    investigadorAsignado: data.investigador_asignado ?? undefined,
+    etapaProcesal: data.etapa_procesal ?? undefined,
   };
 }
 
@@ -114,7 +135,18 @@ export async function obtenerExpedientes(): Promise<any[]> {
       fila.abogado?.apellido_materno,
       'Sin asignar'
     ),
-    fechaCreacion: new Date(fila.fecha_creacion)
+    fechaCreacion: new Date(fila.fecha_creacion),
+    // ── Campos legales opcionales ───────────────────────────────
+    rolCliente: fila.rol_cliente ?? undefined,
+    tipoProceso: fila.tipo_proceso ?? undefined,
+    nurej: fila.nurej ?? undefined,
+    numeroFiscalia: fila.numero_fiscalia ?? undefined,
+    numeroFelcc: fila.numero_felcc ?? undefined,
+    juezActual: fila.juez_actual ?? undefined,
+    secretarioActuario: fila.secretario_actuario ?? undefined,
+    fiscalActual: fila.fiscal_actual ?? undefined,
+    investigadorAsignado: fila.investigador_asignado ?? undefined,
+    etapaProcesal: fila.etapa_procesal ?? undefined,
   }));
 }
 
@@ -171,12 +203,39 @@ export async function obtenerExpedientePorId(id: string): Promise<any | null> {
       'Sin asignar'
     ),
     fechaCreacion: new Date(data.fecha_creacion),
+    // ── Campos legales opcionales ───────────────────────────────
+    rolCliente: data.rol_cliente ?? undefined,
+    tipoProceso: data.tipo_proceso ?? undefined,
+    nurej: data.nurej ?? undefined,
+    numeroFiscalia: data.numero_fiscalia ?? undefined,
+    numeroFelcc: data.numero_felcc ?? undefined,
+    juezActual: data.juez_actual ?? undefined,
+    secretarioActuario: data.secretario_actuario ?? undefined,
+    fiscalActual: data.fiscal_actual ?? undefined,
+    investigadorAsignado: data.investigador_asignado ?? undefined,
+    etapaProcesal: data.etapa_procesal ?? undefined,
   };
 }
 
 export async function actualizarExpediente(
   id: string,
-  datosActualizados: { estado?: string; informeDespacho?: string; informeCliente?: string; abogado_id?: string }
+  datosActualizados: {
+    estado?: string;
+    informeDespacho?: string;
+    informeCliente?: string;
+    abogado_id?: string;
+    // ── Campos legales opcionales ─────────────────────────────
+    rolCliente?: string;
+    tipoProceso?: string;
+    nurej?: string;
+    numeroFiscalia?: string;
+    numeroFelcc?: string;
+    juezActual?: string;
+    secretarioActuario?: string;
+    fiscalActual?: string;
+    investigadorAsignado?: string;
+    etapaProcesal?: string;
+  }
 ): Promise<boolean> {
   const supabase = createClient();
   const paqueteActualizacion: any = {};
@@ -185,6 +244,16 @@ export async function actualizarExpediente(
   if (datosActualizados.informeDespacho !== undefined) paqueteActualizacion.informe_despacho = datosActualizados.informeDespacho;
   if (datosActualizados.informeCliente !== undefined) paqueteActualizacion.informe_cliente = datosActualizados.informeCliente;
   if (datosActualizados.abogado_id !== undefined) paqueteActualizacion.abogado_asignado_id = datosActualizados.abogado_id;
+  if (datosActualizados.rolCliente !== undefined) paqueteActualizacion.rol_cliente = datosActualizados.rolCliente;
+  if (datosActualizados.tipoProceso !== undefined) paqueteActualizacion.tipo_proceso = datosActualizados.tipoProceso;
+  if (datosActualizados.nurej !== undefined) paqueteActualizacion.nurej = datosActualizados.nurej;
+  if (datosActualizados.numeroFiscalia !== undefined) paqueteActualizacion.numero_fiscalia = datosActualizados.numeroFiscalia;
+  if (datosActualizados.numeroFelcc !== undefined) paqueteActualizacion.numero_felcc = datosActualizados.numeroFelcc;
+  if (datosActualizados.juezActual !== undefined) paqueteActualizacion.juez_actual = datosActualizados.juezActual;
+  if (datosActualizados.secretarioActuario !== undefined) paqueteActualizacion.secretario_actuario = datosActualizados.secretarioActuario;
+  if (datosActualizados.fiscalActual !== undefined) paqueteActualizacion.fiscal_actual = datosActualizados.fiscalActual;
+  if (datosActualizados.investigadorAsignado !== undefined) paqueteActualizacion.investigador_asignado = datosActualizados.investigadorAsignado;
+  if (datosActualizados.etapaProcesal !== undefined) paqueteActualizacion.etapa_procesal = datosActualizados.etapaProcesal;
 
   const { error } = await supabase
     .from('expedientes')

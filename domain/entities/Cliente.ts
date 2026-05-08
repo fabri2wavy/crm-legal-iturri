@@ -15,4 +15,9 @@ export interface Cliente {
   estadoCivil?: string;
   profesion?: string;
   direccion?: string;
+
+  /** Nombre o descripción de quien refirió al cliente a la firma. */
+  referidoPor?: string;
+  /** Teléfono, email u otro dato de contacto del referidor. */
+  contactoReferidor?: string;
 }

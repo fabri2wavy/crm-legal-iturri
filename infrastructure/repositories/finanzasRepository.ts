@@ -63,6 +63,7 @@ interface FilaGasto {
   reembolsado: boolean;
   comprobante_url: string | null;
   creado_en: string;
+  observaciones: string | null;
 }
 
 function mapearHonorario(fila: FilaHonorario): Honorario {
@@ -99,6 +100,7 @@ function mapearGasto(fila: FilaGasto): GastoExpediente {
     reembolsado: fila.reembolsado,
     comprobanteUrl: fila.comprobante_url,
     creadoEn: fila.creado_en,
+    observaciones: fila.observaciones ?? null,
   };
 }
 
@@ -273,7 +275,7 @@ export async function registrarGasto(
 
     const userId = authData.user.id;
 
-    /* ── Inserción DML con creado_por inyectado ───────────────── */
+    /* ── Inserción DML con creado_por inyectado ───────────────────── */
     const { data: gastoInsertado, error: gastoError } = await supabase
       .from('gastos_expediente')
       .insert({
@@ -283,6 +285,7 @@ export async function registrarGasto(
         fecha: gasto.fecha,
         reembolsado: gasto.reembolsado,
         comprobante_url: gasto.comprobanteUrl,
+        observaciones: gasto.observaciones ?? null,
         creado_por: userId,
       })
       .select()

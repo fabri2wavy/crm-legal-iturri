@@ -700,6 +700,7 @@ function ModalRegistrarGasto({
   const [monto, setMonto] = useState("");
   const [fecha, setFecha] = useState("");
   const [reembolsado, setReembolsado] = useState(false);
+  const [observaciones, setObservaciones] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -731,6 +732,7 @@ function ModalRegistrarGasto({
       fecha,
       reembolsado,
       comprobanteUrl: null,
+      observaciones: observaciones.trim() || null,
     };
 
     const resultado = await registrarGasto(gastoDTO);
@@ -848,6 +850,24 @@ function ModalRegistrarGasto({
             <span className={`text-sm font-medium transition-colors ${reembolsado ? "text-emerald-700" : "text-[var(--color-text-muted)]"}`}>
               {reembolsado ? "Gasto reembolsado" : "No reembolsado"}
             </span>
+          </div>
+
+          {/* Observaciones */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] mb-1.5">
+              Observaciones
+            </label>
+            <textarea
+              id="gasto-observaciones"
+              rows={3}
+              value={observaciones}
+              onChange={(e) => setObservaciones(e.target.value)}
+              placeholder="Detalles adicionales del gasto: proveedor, justificación, estado de reembolso..."
+              className="w-full px-4 py-2.5 text-sm rounded-lg border border-[var(--color-surface-border)]
+                         bg-[var(--color-surface-card)] text-[var(--color-text-primary)]
+                         focus:outline-none focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)]
+                         transition-all placeholder:text-[var(--color-text-muted)] resize-none"
+            />
           </div>
         </div>
 

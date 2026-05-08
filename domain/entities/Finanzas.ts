@@ -51,6 +51,8 @@ export interface GastoExpediente {
    reembolsado: boolean;
    comprobanteUrl: string | null;
    creadoEn: string;           // ISO 8601
+   /** Notas adicionales: justificación, proveedor, estado de reembolso, etc. */
+   observaciones: string | null;
 }
 
 /* ══════════════════════════════════════════════════════════════
