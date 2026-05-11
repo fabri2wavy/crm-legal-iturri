@@ -47,6 +47,7 @@ export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'f
       fiscal_actual: expedienteData.fiscalActual ?? null,
       investigador_asignado: expedienteData.investigadorAsignado ?? null,
       etapa_procesal: expedienteData.etapaProcesal ?? null,
+      cuantia: expedienteData.cuantia ?? null,
     }])
     .select()
     .single();
@@ -95,6 +96,7 @@ export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'f
     fiscalActual: data.fiscal_actual ?? undefined,
     investigadorAsignado: data.investigador_asignado ?? undefined,
     etapaProcesal: data.etapa_procesal ?? undefined,
+    cuantia: data.cuantia ?? undefined,
   };
 }
 
@@ -147,6 +149,7 @@ export async function obtenerExpedientes(): Promise<any[]> {
     fiscalActual: fila.fiscal_actual ?? undefined,
     investigadorAsignado: fila.investigador_asignado ?? undefined,
     etapaProcesal: fila.etapa_procesal ?? undefined,
+    cuantia: fila.cuantia ?? undefined,
   }));
 }
 
@@ -214,6 +217,7 @@ export async function obtenerExpedientePorId(id: string): Promise<any | null> {
     fiscalActual: data.fiscal_actual ?? undefined,
     investigadorAsignado: data.investigador_asignado ?? undefined,
     etapaProcesal: data.etapa_procesal ?? undefined,
+    cuantia: data.cuantia ?? undefined,
   };
 }
 
@@ -235,6 +239,7 @@ export async function actualizarExpediente(
     fiscalActual?: string;
     investigadorAsignado?: string;
     etapaProcesal?: string;
+    cuantia?: string;
   }
 ): Promise<boolean> {
   const supabase = createClient();
@@ -254,6 +259,7 @@ export async function actualizarExpediente(
   if (datosActualizados.fiscalActual !== undefined) paqueteActualizacion.fiscal_actual = datosActualizados.fiscalActual;
   if (datosActualizados.investigadorAsignado !== undefined) paqueteActualizacion.investigador_asignado = datosActualizados.investigadorAsignado;
   if (datosActualizados.etapaProcesal !== undefined) paqueteActualizacion.etapa_procesal = datosActualizados.etapaProcesal;
+  if (datosActualizados.cuantia !== undefined) paqueteActualizacion.cuantia = datosActualizados.cuantia;
 
   const { error } = await supabase
     .from('expedientes')

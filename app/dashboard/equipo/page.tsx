@@ -421,7 +421,7 @@ export default function EquipoPage() {
           MODAL: CREAR / EDITAR MIEMBRO
          ═══════════════════════════════════════════════════════════ */}
       {mostrarModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6" onClick={cerrarModal}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6">
           <div className="relative w-full max-w-3xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
@@ -528,7 +528,7 @@ export default function EquipoPage() {
           ALERT DIALOG: ELIMINAR MIEMBRO
          ═══════════════════════════════════════════════════════════ */}
       {mostrarAlertDialog && miembroAEliminar && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4" onClick={() => !isDeleting && setMostrarAlertDialog(false)}>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center">

@@ -20,4 +20,7 @@ export interface Cliente {
   referidoPor?: string;
   /** Teléfono, email u otro dato de contacto del referidor. */
   contactoReferidor?: string;
+
+  telefonoLaboral?: string;
+  direccionOficina?: string;
 }

@@ -46,6 +46,8 @@ const FORM_INIT = {
   estadoCivil: "",
   profesion: "",
   direccion: "",
+  telefonoLaboral: "",
+  direccionOficina: "",
   referidoPor: "",
   contactoReferidor: "",
 };
@@ -340,10 +342,9 @@ export default function ClientesPage() {
       {mostrarModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6"
-          onClick={cerrarModal}
         >
           <div
-            className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
 
@@ -371,7 +372,10 @@ export default function ClientesPage() {
             <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col overflow-hidden min-h-0">
 
               {/* ── Body ──────────────────────────────────────── */}
-              <div className="px-8 py-6 overflow-y-auto flex-1 min-h-0">
+              <div 
+                className="px-8 py-6 overflow-y-auto flex-1 min-h-0"
+                style={{ maxHeight: '80vh', paddingRight: '10px' }}
+              >
 
                 {/* Stepper Visual */}
                 <Stepper pasoActual={paso} />
@@ -597,6 +601,32 @@ export default function ClientesPage() {
                           className={INPUT + " resize-none"}
                           value={formData.direccion}
                           onChange={(e) => actualizarCampo("direccion", e.target.value)}
+                        />
+                      </div>
+
+                      {/* Teléfono Laboral */}
+                      <div className="space-y-2">
+                        <label htmlFor="telefonoLaboral" className={LABEL}>Teléfono Laboral</label>
+                        <input
+                          id="telefonoLaboral"
+                          type="tel"
+                          placeholder="Ej. 2-2440000"
+                          className={INPUT}
+                          value={formData.telefonoLaboral}
+                          onChange={(e) => actualizarCampo("telefonoLaboral", e.target.value)}
+                        />
+                      </div>
+
+                      {/* Dirección de Oficina */}
+                      <div className="space-y-2">
+                        <label htmlFor="direccionOficina" className={LABEL}>Dirección de Oficina</label>
+                        <input
+                          id="direccionOficina"
+                          type="text"
+                          placeholder="Ej. Av. 6 de Agosto #2905, Of. 302"
+                          className={INPUT}
+                          value={formData.direccionOficina}
+                          onChange={(e) => actualizarCampo("direccionOficina", e.target.value)}
                         />
                       </div>
 

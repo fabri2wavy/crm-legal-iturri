@@ -21,10 +21,6 @@ import {
 } from "@/infrastructure/repositories/finanzasRepository";
 import { ToastContainer, useToasts } from "@/components/ui/Toast";
 
-/* ══════════════════════════════════════════════════════════════
-   Helpers
-   ══════════════════════════════════════════════════════════════ */
-
 function formatearMoneda(monto: number, moneda: MonedaHonorario = "BS"): string {
   const prefijo = moneda === "USD" ? "$" : "Bs.";
   return `${prefijo} ${monto.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -44,26 +40,14 @@ const ESTADO_BADGE: Record<EstadoCuota, { bg: string; text: string; label: strin
   atrasado:  { bg: "bg-rose-100",    text: "text-rose-700",    label: "Atrasado" },
 };
 
-/* ══════════════════════════════════════════════════════════════
-   Portal wrapper — rompe el stacking context de los Tabs
-   ══════════════════════════════════════════════════════════════ */
-
 function ModalPortal({ children }: { children: React.ReactNode }) {
   if (typeof document === "undefined") return null;
   return createPortal(children, document.body);
 }
 
-/* ══════════════════════════════════════════════════════════════
-   Props
-   ══════════════════════════════════════════════════════════════ */
-
 interface FinanzasTabProps {
   expedienteId: string;
 }
-
-/* ══════════════════════════════════════════════════════════════
-   Skeleton Loading
-   ══════════════════════════════════════════════════════════════ */
 
 function FinanzasSkeleton() {
   return (
@@ -89,10 +73,6 @@ function FinanzasSkeleton() {
     </div>
   );
 }
-
-/* ══════════════════════════════════════════════════════════════
-   Empty State
-   ══════════════════════════════════════════════════════════════ */
 
 function EmptyStateFinanzas({ onCrear }: { onCrear: () => void }) {
   return (
@@ -121,10 +101,6 @@ function EmptyStateFinanzas({ onCrear }: { onCrear: () => void }) {
     </div>
   );
 }
-
-/* ══════════════════════════════════════════════════════════════
-   KPI Cards
-   ══════════════════════════════════════════════════════════════ */
 
 interface KPICardProps {
   icon: React.ReactNode;
@@ -201,10 +177,6 @@ function ResumenFinancieroCards({
     </div>
   );
 }
-
-/* ══════════════════════════════════════════════════════════════
-   Tabla Plan de Pagos
-   ══════════════════════════════════════════════════════════════ */
 
 function TablaPlanPagos({ cuotas, moneda }: { cuotas: CuotaPago[]; moneda: MonedaHonorario }) {
   return (
@@ -293,10 +265,6 @@ function TablaPlanPagos({ cuotas, moneda }: { cuotas: CuotaPago[]; moneda: Moned
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
-   Lista de Gastos Operativos
-   ══════════════════════════════════════════════════════════════ */
-
 function ListaGastosOperativos({
   gastos,
   moneda,
@@ -369,10 +337,6 @@ function ListaGastosOperativos({
     </div>
   );
 }
-
-/* ══════════════════════════════════════════════════════════════
-   Modal: Crear Contrato de Honorarios + Cuotas
-   ══════════════════════════════════════════════════════════════ */
 
 interface CuotaFormRow {
   descripcion: string;
@@ -481,7 +445,7 @@ function ModalCrearContrato({
 
   return (
     <ModalPortal>
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div
         className="relative w-full max-w-2xl bg-[var(--color-surface-card)] rounded-xl shadow-2xl
                    max-h-[90vh] overflow-y-auto animate-fade-up"
@@ -683,10 +647,6 @@ function ModalCrearContrato({
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
-   Modal: Registrar Gasto
-   ══════════════════════════════════════════════════════════════ */
-
 function ModalRegistrarGasto({
   expedienteId,
   onClose,
@@ -749,7 +709,7 @@ function ModalRegistrarGasto({
 
   return (
     <ModalPortal>
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div
         className="relative w-full max-w-md bg-[var(--color-surface-card)] rounded-xl shadow-2xl
                    max-h-[90vh] overflow-y-auto animate-fade-up"
@@ -907,10 +867,6 @@ function ModalRegistrarGasto({
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
-   COMPONENTE PRINCIPAL: FinanzasTab
-   ══════════════════════════════════════════════════════════════ */
-
 export default function FinanzasTab({ expedienteId }: FinanzasTabProps) {
   const [estadoCuenta, setEstadoCuenta] = useState<EstadoCuentaExpediente | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -920,7 +876,6 @@ export default function FinanzasTab({ expedienteId }: FinanzasTabProps) {
 
   const { toasts, addToast, removeToast } = useToasts();
 
-  /* ── Carga de datos ──────────────────────────────────────── */
   const cargarEstadoCuenta = useCallback(async () => {
     setIsLoading(true);
     setError("");
@@ -941,7 +896,6 @@ export default function FinanzasTab({ expedienteId }: FinanzasTabProps) {
     cargarEstadoCuenta();
   }, [cargarEstadoCuenta]);
 
-  /* ── Callbacks de éxito post-mutación ────────────────────── */
   const handleContratoCreado = () => {
     addToast("success", "Contrato de honorarios creado correctamente.");
     cargarEstadoCuenta();
@@ -952,12 +906,10 @@ export default function FinanzasTab({ expedienteId }: FinanzasTabProps) {
     cargarEstadoCuenta();
   };
 
-  /* ── Render: Loading ───────────────────────────────────────── */
   if (isLoading) {
     return <FinanzasSkeleton />;
   }
 
-  /* ── Render: Error ─────────────────────────────────────────── */
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -966,7 +918,6 @@ export default function FinanzasTab({ expedienteId }: FinanzasTabProps) {
     );
   }
 
-  /* ── Render: Empty State (sin honorario) ───────────────────── */
   if (!estadoCuenta?.honorario) {
     return (
       <>
@@ -985,7 +936,6 @@ export default function FinanzasTab({ expedienteId }: FinanzasTabProps) {
     );
   }
 
-  /* ── Render: Data View ─────────────────────────────────────── */
   const { honorario, cuotas, gastos } = estadoCuenta;
 
   return (

@@ -114,6 +114,7 @@ export default function CasosPage() {
         numeroFelcc:          values.numeroFelcc,
         fiscalActual:         values.fiscalActual,
         investigadorAsignado: values.investigadorAsignado,
+        cuantia:              values.cuantia,
       } as any);
 
       if (nuevo) {

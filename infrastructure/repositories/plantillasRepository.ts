@@ -217,6 +217,7 @@ interface ExpedienteConRelaciones {
     detalles: {
       ci: string | null;
       expedido: string | null;
+      direccion: string | null;
     };
   };
 }
@@ -255,7 +256,8 @@ export async function generarDocumento(
           apellido_materno,
           detalles:detalles_cliente!inner (
             ci,
-            expedido
+            expedido,
+            direccion
           )
         )
       `)
@@ -291,6 +293,7 @@ export async function generarDocumento(
       numeroCaso: expediente.numero_caso ?? '',
       materia: expediente.materia ?? '',
       juzgado: expediente.juzgado ?? '',
+      domicilioCliente: expediente.cliente?.detalles?.direccion ?? '',
     };
 
     const documentoGenerado = procesarPlantilla(plantilla.contenido, datosExpediente);

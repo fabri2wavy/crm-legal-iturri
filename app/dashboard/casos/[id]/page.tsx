@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { User, Mail, Phone, ExternalLink, Gavel, Hash, FileText, Pencil, Users, UploadCloud, Download, Trash2, FileImage, File, FileSpreadsheet, AlertTriangle } from "lucide-react";
 import InformesTab from "./InformesTab";
+import InformesAvanceTab from "./InformesAvanceTab";
 import FinanzasTab from "./FinanzasTab";
 import PlantillasTab from "./PlantillasTab";
 import { obtenerExpedientePorId, actualizarExpediente } from "@/infrastructure/repositories/expedienteRepository";
@@ -60,12 +61,21 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
       <path d="M9 15l2 2 4-4" />
     </svg>
   ),
+  avance: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  ),
 };
 
 const TAB_ITEMS = [
   { key: "info", label: "Información" },
   { key: "docs", label: "Documentos" },
-  { key: "informe", label: "Informes (Bitácora)" },
+  { key: "informe", label: "Bitácora" },
+  { key: "avance", label: "Informes Avance" },
   { key: "finanzas", label: "Finanzas" },
   { key: "plantillas", label: "Plantillas" },
 ];
@@ -717,6 +727,10 @@ export default function DetalleExpedientePage() {
           <InformesTab expedienteId={idCaso} />
         )}
 
+        {pestañaActiva === "avance" && (
+          <InformesAvanceTab expedienteId={idCaso} />
+        )}
+
         {pestañaActiva === "finanzas" && (
           <FinanzasTab expedienteId={idCaso} />
         )}
@@ -730,7 +744,6 @@ export default function DetalleExpedientePage() {
       {isDeleteModalOpen && documentoToDelete && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6"
-          onClick={cancelarEliminacion}
         >
           <div
             className="relative w-full max-w-md bg-white rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200"

@@ -39,4 +39,6 @@ export interface Expediente {
   investigadorAsignado?: string;
   /** Etapa procesal actual: Investigación Preliminar, Acusación, Juicio Oral, etc. */
   etapaProcesal?: string;
+  /** Cuantía o valor económico del proceso. */
+  cuantia?: string;
 }

@@ -5,10 +5,6 @@ import { createPortal } from "react-dom";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
-/* ══════════════════════════════════════════════════════════════
-   Diálogo de confirmación de eliminación de evento
-   ══════════════════════════════════════════════════════════════ */
-
 interface EliminarEventoDialogProps {
   isOpen: boolean;
   tituloEvento: string;
@@ -38,7 +34,6 @@ export default function EliminarEventoDialog({
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6"
-      onClick={onClose}
     >
       <div
         className="relative w-full max-w-md bg-white rounded-xl shadow-2xl animate-fade-up"

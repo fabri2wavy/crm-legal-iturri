@@ -13,6 +13,8 @@ import {
   Lock,
   ShieldAlert,
   KeyRound,
+  Briefcase,
+  MapPin,
 } from "lucide-react";
 import { Cliente } from "@/domain/entities/Cliente";
 import { Expediente } from "@/domain/entities/Expediente";
@@ -92,6 +94,8 @@ export default function DetalleClientePage() {
     telefono: "",
     ci: "",
     expedido: "",
+    telefonoLaboral: "",
+    direccionOficina: "",
   });
 
   /* ── Email (solo lectura, se muestra pero no se edita) ─────── */
@@ -116,6 +120,8 @@ export default function DetalleClientePage() {
           telefono: resCliente.telefono || "",
           ci: resCliente.ci || "",
           expedido: resCliente.expedido || "",
+          telefonoLaboral: resCliente.telefonoLaboral || "",
+          direccionOficina: resCliente.direccionOficina || "",
         });
         setEmailDisplay(resCliente.email || "");
       }
@@ -158,6 +164,8 @@ export default function DetalleClientePage() {
         telefono: formData.telefono,
         ci: formData.ci,
         expedido: formData.expedido,
+        telefonoLaboral: formData.telefonoLaboral,
+        direccionOficina: formData.direccionOficina,
       });
       showToast("success", "Datos del cliente actualizados correctamente.");
     } else {
@@ -391,6 +399,38 @@ export default function DetalleClientePage() {
                       <option value="PA">PA</option>
                     </select>
                   </div>
+                </div>
+
+                {/* Teléfono Laboral */}
+                <div className="space-y-1">
+                  <label htmlFor="telefonoLaboral" className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                    <Briefcase className="w-3.5 h-3.5 text-gray-400" />
+                    Teléfono Laboral
+                  </label>
+                  <input
+                    id="telefonoLaboral"
+                    type="tel"
+                    placeholder="Ej. 2-2440000"
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-300 bg-gray-50/50 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400"
+                    value={formData.telefonoLaboral}
+                    onChange={(e) => actualizarCampo("telefonoLaboral", e.target.value)}
+                  />
+                </div>
+
+                {/* Dirección de Oficina */}
+                <div className="space-y-1">
+                  <label htmlFor="direccionOficina" className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                    Dirección de Oficina
+                  </label>
+                  <input
+                    id="direccionOficina"
+                    type="text"
+                    placeholder="Ej. Av. 6 de Agosto #2905, Of. 302"
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-300 bg-gray-50/50 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400"
+                    value={formData.direccionOficina}
+                    onChange={(e) => actualizarCampo("direccionOficina", e.target.value)}
+                  />
                 </div>
               </div>
 

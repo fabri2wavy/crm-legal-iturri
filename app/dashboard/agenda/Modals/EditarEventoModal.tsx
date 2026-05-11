@@ -15,10 +15,6 @@ import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { SelectField } from "@/components/ui/SelectField";
 
-/* ══════════════════════════════════════════════════════════════
-   Modal de edición de evento — pre-rellena con datos existentes
-   ══════════════════════════════════════════════════════════════ */
-
 interface EditarEventoModalProps {
   isOpen: boolean;
   evento: EventoAgendaDetallado;
@@ -33,7 +29,6 @@ interface ExpedienteOption {
   titulo: string;
 }
 
-/** Convierte ISO string a formato datetime-local (YYYY-MM-DDTHH:mm) */
 function toDatetimeLocal(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -47,7 +42,6 @@ export default function EditarEventoModal({
   onActualizado,
   onToast,
 }: EditarEventoModalProps) {
-  /* ── Estado del formulario (precargado desde el evento) ──── */
   const [titulo, setTitulo] = useState(evento.titulo);
   const [descripcion, setDescripcion] = useState(evento.descripcion ?? "");
   const [tipoEvento, setTipoEvento] = useState<TipoEventoAgenda>(evento.tipoEvento);
@@ -56,13 +50,10 @@ export default function EditarEventoModal({
   const [expedienteId, setExpedienteId] = useState(evento.expedienteId ?? "");
   const [asignadoA, setAsignadoA] = useState(evento.asignadoA);
   const [guardando, setGuardando] = useState(false);
-
-  /* ── Opciones de selects ────────────────────────────────── */
   const [miembros, setMiembros] = useState<MiembroEquipo[]>([]);
   const [expedientes, setExpedientes] = useState<ExpedienteOption[]>([]);
   const [cargandoOpciones, setCargandoOpciones] = useState(true);
 
-  /* Resetear datos cuando el evento cambie */
   useEffect(() => {
     setTitulo(evento.titulo);
     setDescripcion(evento.descripcion ?? "");
@@ -73,7 +64,6 @@ export default function EditarEventoModal({
     setAsignadoA(evento.asignadoA);
   }, [evento]);
 
-  /* Cargar opciones de selects al abrir */
   useEffect(() => {
     if (!isOpen) return;
 
@@ -110,7 +100,6 @@ export default function EditarEventoModal({
     return () => { cancelado = true; };
   }, [isOpen, onToast]);
 
-  /* ── Submit ─────────────────────────────────────────────── */
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -155,7 +144,6 @@ export default function EditarEventoModal({
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6"
-      onClick={onClose}
     >
       <div
         className="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto animate-fade-up"

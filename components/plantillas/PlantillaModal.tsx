@@ -149,7 +149,6 @@ export default function PlantillaModal({
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-sm p-4 sm:p-6"
-      onClick={onClose}
     >
       <div
         className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto animate-fade-up"

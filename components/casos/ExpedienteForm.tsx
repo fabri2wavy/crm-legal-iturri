@@ -41,6 +41,7 @@ const expedienteSchema = z.object({
   investigadorAsignado: z.string().optional(),
   informeDespacho:      z.string().optional(),
   informeCliente:       z.string().optional(),
+  cuantia:              z.string().optional(),
 });
 export type ExpedienteFormValues = z.infer<typeof expedienteSchema>;
 
@@ -103,6 +104,7 @@ export function ExpedienteForm({
 
   const materia = watch("materia");
   const esPenal = materia === "Penal";
+  const mostrarCuantia = ["Civil", "Comercial", "Laboral"].includes(materia);
 
   /* Auto-assign abogado */
   useEffect(() => {
@@ -115,6 +117,9 @@ export function ExpedienteForm({
     if (!esPenal) {
       (["numeroFiscalia","numeroFelcc","fiscalActual","investigadorAsignado"] as const)
         .forEach(f => setValue(f, ""));
+    }
+    if (!["Civil", "Comercial", "Laboral"].includes(materia)) {
+      setValue("cuantia", "");
     }
   }, [materia, esPenal, setValue]);
 
@@ -186,7 +191,7 @@ export function ExpedienteForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <div>
-            <Label req>N° Caso Interno</Label>
+            <Label req>Nº Control Interno</Label>
             <div className="relative">
               <Hash className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input {...register("numeroCaso")} type="text" placeholder="2025-..." className={`${inp} pl-9`} disabled={isLoading} />
@@ -253,6 +258,14 @@ export function ExpedienteForm({
           <div>
             <Label>Secretario Actuario</Label>
             <input {...register("secretarioActuario")} type="text" placeholder="Nombre del secretario actuario" className={inp} disabled={isLoading} />
+          </div>
+        </div>
+
+        {/* Cuantía condicional (Civil, Comercial, Laboral) */}
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${mostrarCuantia ? "max-h-[120px] opacity-100 mt-4" : "max-h-0 opacity-0 pointer-events-none"}`}>
+          <div>
+            <Label>Cuantía (Bs.)</Label>
+            <input {...register("cuantia")} type="text" placeholder="Ej. 150.000,00" className={inp} disabled={isLoading} />
           </div>
         </div>
       </section>

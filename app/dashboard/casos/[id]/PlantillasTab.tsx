@@ -190,7 +190,6 @@ function PreviewModal({
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-sm p-4 sm:p-6"
-      onClick={onClose}
     >
       <div
         className="relative w-full max-w-3xl bg-white rounded-xl shadow-2xl max-h-[90vh] flex flex-col animate-fade-up"

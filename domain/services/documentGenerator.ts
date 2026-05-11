@@ -13,6 +13,7 @@ export interface DatosExpediente {
   numeroCaso: string;
   materia: string;
   juzgado: string;
+  domicilioCliente: string;
 }
 
 /** Tags dinámicos soportados por el motor de generación. */
@@ -22,6 +23,7 @@ export const TAGS_DISPONIBLES = [
   '{{NUMERO_EXPEDIENTE}}',
   '{{MATERIA}}',
   '{{JUZGADO}}',
+  '{{DOMICILIO_CLIENTE}}',
   '{{FECHA_ACTUAL}}',
 ] as const;
 
@@ -49,6 +51,7 @@ export function procesarPlantilla(
     '{{NUMERO_EXPEDIENTE}}': datos.numeroCaso || '',
     '{{MATERIA}}': datos.materia || '',
     '{{JUZGADO}}': datos.juzgado || '',
+    '{{DOMICILIO_CLIENTE}}': datos.domicilioCliente || '',
     '{{FECHA_ACTUAL}}': fechaActual,
   };
 

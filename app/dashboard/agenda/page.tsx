@@ -17,11 +17,6 @@ import CalendarioInteractivo from "@/components/agenda/CalendarioInteractivo";
 import ModalEvento from "@/components/agenda/ModalEvento";
 import type { ToastData } from "@/components/agenda/ModalEvento";
 
-/* ══════════════════════════════════════════════════════════════
-   HELPERS
-   ══════════════════════════════════════════════════════════════ */
-
-/** Determina si un evento es "urgente" (dentro de las próximas 48h) */
 function esUrgente(fechaInicio: string): boolean {
   const ahora = new Date();
   const inicio = new Date(fechaInicio);
@@ -29,12 +24,6 @@ function esUrgente(fechaInicio: string): boolean {
   const horasRestantes = diferenciaMs / (1000 * 60 * 60);
   return horasRestantes >= 0 && horasRestantes <= 48;
 }
-
-/* ══════════════════════════════════════════════════════════════
-   PÁGINA PRINCIPAL: Agenda Legal
-   ──────────────────────────────────────────────────────────────
-   Wrapper con Suspense para Next.js App Router.
-   ══════════════════════════════════════════════════════════════ */
 
 export default function AgendaPage() {
   return (
@@ -51,16 +40,11 @@ export default function AgendaPage() {
 }
 
 function AgendaPageContent() {
-  /* ── Estado de UI ───────────────────────────────────────────── */
   const [eventos, setEventos] = useState<EventoAgendaDetallado[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  /* ── Modal de creación directa (botón cabecera) ────────────── */
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false);
   const [toast, setToast] = useState<ToastData | null>(null);
-
-  /* ── Carga inicial de datos ─────────────────────────────────── */
   const cargarEventos = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -82,7 +66,6 @@ function AgendaPageContent() {
     cargarEventos();
   }, [cargarEventos]);
 
-  /* ── Métricas KPI (compactas) ──────────────────────────────── */
   const eventosPendientes = eventos.filter(
     (e) => e.estado === "pendiente"
   ).length;
@@ -93,7 +76,6 @@ function AgendaPageContent() {
     (e) => e.estado === "completado"
   ).length;
 
-  /* ── Handlers ───────────────────────────────────────────────── */
   const handleToast = useCallback((data: ToastData) => setToast(data), []);
 
   return (

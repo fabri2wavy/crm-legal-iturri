@@ -30,12 +30,7 @@ export function ModalCrearExpediente({
   onClose,
   onSubmit,
 }: ModalCrearExpedienteProps) {
-  /* Close on ESC */
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [onClose]);
+  /* ESC cierre deshabilitado: el modal solo se cierra con X o Cancelar */
 
   /* Prevent body scroll */
   useEffect(() => {
@@ -48,7 +43,6 @@ export function ModalCrearExpediente({
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6"
-      onClick={onClose}
     >
       <div
         className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[92vh] border border-slate-200"

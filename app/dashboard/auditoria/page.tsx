@@ -18,10 +18,6 @@ import { obtenerLogs } from "@/infrastructure/repositories/auditoriaRepository";
 import { obtenerPerfilActual } from "@/infrastructure/repositories/usuarioRepository";
 import { ToastContainer, useToasts } from "@/components/ui/Toast";
 
-/* ══════════════════════════════════════════════════════════════
-   Constantes de acción → visual mapping
-   ══════════════════════════════════════════════════════════════ */
-
 const ACCION_BADGE: Record<
   string,
   { bg: string; text: string; border: string; icon: React.ElementType }
@@ -58,10 +54,6 @@ function getAccionBadge(accion: string) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
-   SUB-COMPONENTE: ActionBadge
-   ══════════════════════════════════════════════════════════════ */
-
 function ActionBadge({ accion }: { accion: string }) {
   const badge = getAccionBadge(accion);
   const Icon = badge.icon;
@@ -75,10 +67,6 @@ function ActionBadge({ accion }: { accion: string }) {
     </span>
   );
 }
-
-/* ══════════════════════════════════════════════════════════════
-   SUB-COMPONENTE: JsonDetailsModal
-   ══════════════════════════════════════════════════════════════ */
 
 function JsonDetailsModal({
   log,
@@ -94,7 +82,6 @@ function JsonDetailsModal({
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-sm p-4"
-      onClick={onClose}
     >
       <div
         className="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl max-h-[80vh] flex flex-col animate-fade-up"
@@ -168,10 +155,6 @@ function JsonDetailsModal({
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
-   SUB-COMPONENTE: Table Skeleton
-   ══════════════════════════════════════════════════════════════ */
-
 function AuditSkeleton() {
   return (
     <>
@@ -198,10 +181,6 @@ function AuditSkeleton() {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════
-   SUB-COMPONENTE: Acceso Denegado
-   ══════════════════════════════════════════════════════════════ */
-
 function AccesoDenegado() {
   const router = useRouter();
 
@@ -226,13 +205,6 @@ function AccesoDenegado() {
     </div>
   );
 }
-
-/* ══════════════════════════════════════════════════════════════
-   PÁGINA PRINCIPAL: Auditoría del Sistema
-   ──────────────────────────────────────────────────────────────
-   Vista de solo lectura. Sin eventos de mutación.
-   Ningún onClick sugiere edición — solo consulta de detalle.
-   ══════════════════════════════════════════════════════════════ */
 
 export default function AuditoriaPage() {
   const [verificando, setVerificando] = useState(true);
@@ -285,7 +257,6 @@ export default function AuditoriaPage() {
     };
   }, [cargarLogs]);
 
-  /* ── Guard ──────────────────────────────────────────────────── */
   if (verificando) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
