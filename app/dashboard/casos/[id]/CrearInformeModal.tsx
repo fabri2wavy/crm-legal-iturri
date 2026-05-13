@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { X, Loader2, CalendarDays } from "lucide-react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { X, CalendarDays, CheckCircle2 } from "lucide-react";
 import type { InformeAvance } from "@/domain/entities/InformeAvance";
 
 interface CrearInformeModalProps {
@@ -40,6 +41,14 @@ export default function CrearInformeModal({
 
   const mesesDisponibles = generarMesesRecientes(12);
 
+  // 1. Bloquear scroll del fondo para que la pantalla principal no se mueva
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mesAnio.trim()) return;
@@ -57,43 +66,36 @@ export default function CrearInformeModal({
     setIsSubmitting(false);
   };
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6"
-    >
-      {/* Contenedor Principal (Con min-h-0 vital para el scroll) */}
+  // Evitar error de hidratación si el document aún no existe
+  if (typeof document === "undefined") return null;
+
+  // 2. Usar createPortal para enviar el modal por encima de toda la app (z-[9999])
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6">
       <div
-        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-        style={{ maxHeight: "85vh" }}
+        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[92vh] border border-slate-200 animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header Fijo ── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-              <CalendarDays className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-gray-900">
-                Nuevo Informe de Avance
-              </h2>
-              <p className="text-xs text-gray-500">
-                Registra el estado mensual del caso.
-              </p>
-            </div>
-          </div>
+        <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 flex-shrink-0">
+          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+            <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-50 text-blue-600">
+              <CalendarDays className="w-5 h-5" />
+            </span>
+            Nuevo Informe de Avance
+          </h3>
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors disabled:opacity-50"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* ── Body con Scroll Interno ── */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
+        <div className="flex-1 overflow-y-auto px-8 py-6">
           <form id="informe-form" onSubmit={handleSubmit} className="space-y-4">
             {/* Mes / Año */}
             <div>
@@ -176,12 +178,12 @@ export default function CrearInformeModal({
         </div>
 
         {/* ── Footer Fijo ── */}
-        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 shrink-0 bg-gray-50/50">
+        <div className="flex items-center justify-end gap-3 px-8 py-5 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl flex-shrink-0">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="px-5 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -189,19 +191,23 @@ export default function CrearInformeModal({
             type="submit"
             form="informe-form"
             disabled={isSubmitting || !mesAnio.trim()}
-            className="inline-flex items-center gap-2 px-6 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg transition-all disabled:opacity-60 min-w-[180px]"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                 Guardando...
               </>
             ) : (
-              "Guardar Informe"
+              <>
+                <CheckCircle2 className="w-4 h-4" strokeWidth={2.5} />
+                Guardar Informe
+              </>
             )}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
