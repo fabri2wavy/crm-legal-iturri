@@ -279,61 +279,60 @@ export default function DetalleClientePage() {
         </h1>
       </header>
 
-      {/* ─── Layout Principal (Side by Side, viewport-lock solo en lg+) */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch overflow-y-auto lg:overflow-hidden">
+      {/* ─── Layout Principal ─── */}
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-        {/* ─── COLUMNA IZQUIERDA: Identidad (Estática, h-full) ── */}
-        <div className="lg:col-span-4 lg:h-full flex flex-col">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden lg:h-full flex flex-col">
-            {/* Card Header */}
-            <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2">
-              <User className="w-4 h-4 text-blue-600" strokeWidth={2} />
-              <h2 className="text-sm font-bold text-gray-900">
-                Información Personal
-              </h2>
-            </div>
+        {/* ─── Panel Izquierdo: Formulario Compacto (lg:col-span-5) ── */}
+        <div className="lg:col-span-5 flex flex-col min-h-0 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          {/* Card Header */}
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50/50 shrink-0">
+            <User className="w-4 h-4 text-blue-600" strokeWidth={2} />
+            <h2 className="text-sm font-bold text-gray-900">
+              Información Personal
+            </h2>
+          </div>
 
-            {/* Card Body: Form */}
-            <form onSubmit={handleUpdate} className="flex-1 px-4 py-4 flex flex-col">
-              {/* Grupo de campos */}
-              <div className="space-y-4">
-                {/* Nombres (ancho completo) */}
-                <FormField
-                  id="nombresLegales"
-                  label="Nombres"
-                  variant="light"
-                  placeholder="Ej. María Elena"
-                  value={formData.nombresLegales}
-                  onChange={(e) => actualizarCampo("nombresLegales", e.target.value)}
-                  required
-                />
-
-                {/* Apellidos (dos columnas) */}
-                <div className="grid grid-cols-2 gap-4">
+          {/* Card Body: Form */}
+          <form onSubmit={handleUpdate} className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="grid grid-cols-2 gap-3">
+                {/* Nombres */}
+                <div className="col-span-2">
                   <FormField
-                    id="apellidoPaterno"
-                    label="Ap. Paterno"
+                    id="nombresLegales"
+                    label="Nombres"
                     variant="light"
-                    placeholder="Ej. García"
-                    value={formData.apellidoPaterno}
-                    onChange={(e) => actualizarCampo("apellidoPaterno", e.target.value)}
+                    placeholder="Ej. María Elena"
+                    value={formData.nombresLegales}
+                    onChange={(e) => actualizarCampo("nombresLegales", e.target.value)}
                     required
-                  />
-                  <FormField
-                    id="apellidoMaterno"
-                    label="Ap. Materno"
-                    variant="light"
-                    placeholder="Ej. Soliz"
-                    value={formData.apellidoMaterno}
-                    onChange={(e) => actualizarCampo("apellidoMaterno", e.target.value)}
                   />
                 </div>
 
-                {/* Email (Disabled — solo lectura) */}
+                {/* Apellidos */}
+                <FormField
+                  id="apellidoPaterno"
+                  label="Ap. Paterno"
+                  variant="light"
+                  placeholder="Ej. García"
+                  value={formData.apellidoPaterno}
+                  onChange={(e) => actualizarCampo("apellidoPaterno", e.target.value)}
+                  required
+                />
+                <FormField
+                  id="apellidoMaterno"
+                  label="Ap. Materno"
+                  variant="light"
+                  placeholder="Ej. Soliz"
+                  value={formData.apellidoMaterno}
+                  onChange={(e) => actualizarCampo("apellidoMaterno", e.target.value)}
+                />
+
+                {/* Email (Disabled) */}
                 <div className="space-y-1">
                   <label htmlFor="email" className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-gray-400" />
-                    Correo Electrónico
+                    Correo
                     <Lock className="w-3 h-3 text-gray-400" />
                   </label>
                   <input
@@ -350,7 +349,7 @@ export default function DetalleClientePage() {
                 <div className="space-y-1">
                   <label htmlFor="telefono" className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-gray-400" />
-                    Teléfono / Celular
+                    Celular
                   </label>
                   <input
                     id="telefono"
@@ -362,50 +361,50 @@ export default function DetalleClientePage() {
                   />
                 </div>
 
-                {/* C.I. / Expedido (grilla asimétrica 3 cols) */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="col-span-2 space-y-1">
-                    <label htmlFor="ci" className="text-xs font-semibold text-gray-700">
-                      Cédula de Identidad (C.I.)
-                    </label>
-                    <input
-                      id="ci"
-                      type="text"
-                      placeholder="Ej. 12345678"
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-300 bg-gray-50/50 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400"
-                      value={formData.ci}
-                      onChange={(e) => actualizarCampo("ci", e.target.value)}
-                    />
-                  </div>
-                  <div className="col-span-1 space-y-1">
-                    <label htmlFor="expedido" className="text-xs font-semibold text-gray-700">
-                      Expedido
-                    </label>
-                    <select
-                      id="expedido"
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-300 bg-gray-50/50 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-700 appearance-none cursor-pointer"
-                      value={formData.expedido}
-                      onChange={(e) => actualizarCampo("expedido", e.target.value)}
-                    >
-                      <option value="">—</option>
-                      <option value="LP">LP</option>
-                      <option value="CB">CB</option>
-                      <option value="SC">SC</option>
-                      <option value="OR">OR</option>
-                      <option value="PT">PT</option>
-                      <option value="TJ">TJ</option>
-                      <option value="CH">CH</option>
-                      <option value="BN">BN</option>
-                      <option value="PA">PA</option>
-                    </select>
-                  </div>
+                {/* C.I. */}
+                <div className="space-y-1">
+                  <label htmlFor="ci" className="text-xs font-semibold text-gray-700">
+                    C.I.
+                  </label>
+                  <input
+                    id="ci"
+                    type="text"
+                    placeholder="Ej. 12345678"
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-300 bg-gray-50/50 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400"
+                    value={formData.ci}
+                    onChange={(e) => actualizarCampo("ci", e.target.value)}
+                  />
+                </div>
+
+                {/* Expedido */}
+                <div className="space-y-1">
+                  <label htmlFor="expedido" className="text-xs font-semibold text-gray-700">
+                    Expedido
+                  </label>
+                  <select
+                    id="expedido"
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-300 bg-gray-50/50 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-700 appearance-none cursor-pointer"
+                    value={formData.expedido}
+                    onChange={(e) => actualizarCampo("expedido", e.target.value)}
+                  >
+                    <option value="">—</option>
+                    <option value="LP">LP</option>
+                    <option value="CB">CB</option>
+                    <option value="SC">SC</option>
+                    <option value="OR">OR</option>
+                    <option value="PT">PT</option>
+                    <option value="TJ">TJ</option>
+                    <option value="CH">CH</option>
+                    <option value="BN">BN</option>
+                    <option value="PA">PA</option>
+                  </select>
                 </div>
 
                 {/* Teléfono Laboral */}
                 <div className="space-y-1">
                   <label htmlFor="telefonoLaboral" className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
                     <Briefcase className="w-3.5 h-3.5 text-gray-400" />
-                    Teléfono Laboral
+                    Tel. Laboral
                   </label>
                   <input
                     id="telefonoLaboral"
@@ -417,60 +416,59 @@ export default function DetalleClientePage() {
                   />
                 </div>
 
-                {/* Dirección de Oficina */}
+                {/* Dirección Oficina */}
                 <div className="space-y-1">
                   <label htmlFor="direccionOficina" className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                    Dirección de Oficina
+                    Oficina
                   </label>
                   <input
                     id="direccionOficina"
                     type="text"
-                    placeholder="Ej. Av. 6 de Agosto #2905, Of. 302"
+                    placeholder="Ej. Av. 6 de Agosto"
                     className="w-full px-3 py-2.5 rounded-xl border border-gray-300 bg-gray-50/50 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400"
                     value={formData.direccionOficina}
                     onChange={(e) => actualizarCampo("direccionOficina", e.target.value)}
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Submit — anclado al fondo de la tarjeta */}
-              <div className="mt-auto pt-5">
-                <Button type="submit" variant="primary" loading={guardando} fullWidth>
-                  {guardando ? "Guardando..." : "Guardar Cambios"}
-                </Button>
-              </div>
-            </form>
-          </div>
+            {/* 2. El botón de Guardar ahora está anclado y nunca se esconde */}
+            <div className="shrink-0 p-4 border-t border-gray-100 bg-gray-50/50">
+              <Button type="submit" variant="primary" loading={guardando} fullWidth>
+                {guardando ? "Guardando..." : "Guardar Cambios"}
+              </Button>
+            </div>
+          </form>
         </div>
 
-        {/* ─── COLUMNA DERECHA: Historial y Admin ─────────────── */}
-        <div className="lg:col-span-8 lg:h-full flex flex-col gap-3 min-h-0">
+        {/* ─── Panel Derecho: Historial y Danger Zone (lg:col-span-7) ── */}
+        <div className="lg:col-span-7 flex flex-col gap-4 min-h-0">
 
           {/* Historial Legal (absorbe espacio, scroll interno) */}
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between shrink-0">
-              <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <FolderOpen className="w-5 h-5 text-blue-600" />
+          <div className="flex-1 flex flex-col min-h-0 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between shrink-0">
+              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <FolderOpen className="w-4 h-4 text-blue-600" />
                 Historial de Expedientes
               </h2>
               {expedientes.length > 0 && (
-                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-0.5 rounded-full">
                   {expedientes.length} {expedientes.length === 1 ? "caso" : "casos"}
                 </span>
               )}
             </div>
 
-            {/* ÚNICO scroll de toda la pantalla */}
-            <div className="flex-1 overflow-y-auto p-3 pr-2">
+            <div className="flex-1 overflow-y-auto p-4">
               {expedientes.length === 0 ? (
-                <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-                  <FolderOpen className="w-7 h-7 text-gray-300 mx-auto mb-1.5" />
-                  <h3 className="text-sm font-semibold text-gray-900 mb-0.5">Sin expedientes</h3>
+                <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                  <FolderOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <h3 className="text-sm font-semibold text-gray-900 mb-1">Sin expedientes</h3>
                   <p className="text-xs text-gray-500">Este cliente no tiene expedientes asociados.</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {expedientes.map((exp) => (
                     <div
                       key={exp.id}
@@ -481,26 +479,26 @@ export default function DetalleClientePage() {
                           <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 block">
                             NUREJ: {exp.numeroCaso}
                           </span>
-                          <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate" title={exp.titulo}>
+                          <h3 className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate" title={exp.titulo}>
                             {exp.titulo}
                           </h3>
                         </div>
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap shrink-0 ${getEstadoDesign(exp.estado)}`}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shrink-0 ${getEstadoDesign(exp.estado)}`}
                         >
                           {exp.estado?.replace(/_/g, " ") || "Desconocido"}
                         </span>
                       </div>
 
-                      <div className="flex justify-between items-center text-sm pt-3 border-t border-gray-50">
+                      <div className="flex justify-between items-center text-xs pt-3 border-t border-gray-50">
                         <p className="text-gray-500 font-medium">
                           Materia:{" "}
-                          <span className="text-gray-900 bg-gray-100 px-2 py-0.5 rounded-md ml-1 text-xs font-semibold">
+                          <span className="text-gray-900 bg-gray-100 px-2 py-0.5 rounded-md ml-1 font-semibold">
                             {exp.materia}
                           </span>
                         </p>
                         <Link href={`/dashboard/casos/${exp.id}`}>
-                          <button className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
+                          <button className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
                             Revisar Expediente &rarr;
                           </button>
                         </Link>
@@ -512,77 +510,85 @@ export default function DetalleClientePage() {
             </div>
           </div>
 
-          {/* Administración de Cuenta (compacta, anclada al fondo) */}
-          <div className="shrink-0 h-fit bg-gray-50/50 border border-gray-200 rounded-xl p-3 shadow-sm space-y-2.5">
+          {/* Administración de Cuenta (Danger Zone) - Anclada al fondo (shrink-0) */}
+          <div className="shrink-0 flex flex-col bg-red-50/30 border border-red-100 rounded-2xl shadow-sm p-4 space-y-3">
             <h2 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
               <ShieldAlert className="w-4 h-4 text-gray-500" />
               Administración de Cuenta
             </h2>
 
-            {/* Restablecer Contraseña */}
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-500">Enviar enlace de restablecimiento al correo del cliente.</p>
-              <button
-                type="button"
-                onClick={handleResetPassword}
-                disabled={enviandoLink}
-                className="px-4 py-1.5 text-xs font-bold text-blue-600 bg-white border border-blue-200 rounded-lg shadow-sm hover:bg-blue-50 hover:border-blue-300 transition-colors disabled:opacity-50 flex items-center gap-1.5 shrink-0 ml-3"
-              >
-                {enviandoLink ? (
-                  <>
-                    <div className="w-3 h-3 rounded-full border-2 border-blue-300/40 border-t-blue-600 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    <KeyRound className="w-3.5 h-3.5" />
-                    Restablecer Contraseña
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Separador visual */}
-            <div className="border-t border-red-100" />
-
-            {/* Zona de Peligro — Eliminar */}
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-red-500 font-medium">Eliminar permanentemente este cliente.</p>
-              {!confirmarEliminacion ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Restablecer Contraseña */}
+              <div className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-xs font-bold text-gray-900 flex items-center gap-1.5 mb-1">
+                    <KeyRound className="w-3.5 h-3.5 text-blue-500" />
+                    Contraseña
+                  </h3>
+                  <p className="text-[11px] text-gray-500 leading-tight mb-3">
+                    Enviar enlace de restablecimiento al correo del cliente.
+                  </p>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setConfirmarEliminacion(true)}
-                  className="px-4 py-1.5 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg shadow-sm hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-1.5 shrink-0 ml-3"
+                  onClick={handleResetPassword}
+                  disabled={enviandoLink}
+                  className="w-full py-1.5 text-xs font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Eliminar Cliente
+                  {enviandoLink ? (
+                    <>
+                      <div className="w-3 h-3 rounded-full border-2 border-blue-300/40 border-t-blue-600 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    "Restablecer Contraseña"
+                  )}
                 </button>
-              ) : (
-                <div className="flex items-center gap-2 shrink-0 ml-3">
-                  <button
-                    type="button"
-                    onClick={() => setConfirmarEliminacion(false)}
-                    className="px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={eliminando}
-                    className="px-4 py-1.5 text-xs font-bold text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-1.5"
-                  >
-                    {eliminando ? (
-                      <>
-                        <div className="w-3 h-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                        Eliminando...
-                      </>
-                    ) : (
-                      "Sí, Eliminar"
-                    )}
-                  </button>
+              </div>
+
+              {/* Eliminar Cliente */}
+              <div className="bg-white border border-red-100 rounded-xl p-3 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-xs font-bold text-red-600 flex items-center gap-1.5 mb-1">
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Zona de Peligro
+                  </h3>
+                  <p className="text-[11px] text-gray-500 leading-tight mb-3">
+                    Eliminar permanentemente este cliente.
+                  </p>
                 </div>
-              )}
+                {!confirmarEliminacion ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmarEliminacion(true)}
+                    className="w-full py-1.5 text-xs font-bold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    Eliminar Cliente
+                  </button>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmarEliminacion(false)}
+                      className="py-1.5 text-xs font-bold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      disabled={eliminando}
+                      className="py-1.5 text-xs font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    >
+                      {eliminando ? (
+                        <div className="w-3 h-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                      ) : (
+                        "Confirmar"
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

@@ -344,12 +344,12 @@ export default function ClientesPage() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6"
         >
           <div
-            className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh]"
+            className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
 
             {/* ── Header ──────────────────────────────────────── */}
-            <div className="px-8 py-5 flex items-center justify-between border-b border-gray-100">
+            <div className="px-8 py-5 flex items-center justify-between border-b border-gray-100 shrink-0">
               <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                 <UserPlus className="w-6 h-6 text-blue-600" />
                 Registrar Nuevo Cliente
@@ -372,9 +372,9 @@ export default function ClientesPage() {
             <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col overflow-hidden min-h-0">
 
               {/* ── Body ──────────────────────────────────────── */}
-              <div 
-                className="px-8 py-6 overflow-y-auto flex-1 min-h-0"
-                style={{ maxHeight: '80vh', paddingRight: '10px' }}
+              <div
+                className="px-8 py-6 overflow-y-auto flex-1"
+                style={{ maxHeight: 'calc(90vh - 150px)', paddingRight: '10px' }}
               >
 
                 {/* Stepper Visual */}

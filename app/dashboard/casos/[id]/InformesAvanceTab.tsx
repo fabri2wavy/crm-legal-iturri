@@ -69,8 +69,8 @@ export default function InformesAvanceTab({ expedienteId }: InformesAvanceTabPro
       if (resultado) {
         setModalAbierto(false);
         addToast("success", "Informe guardado correctamente.");
-        /* Actualización optimista: inserta en el estado local */
-        setInformes((prev) => [resultado, ...prev]);
+        /* FIX ESTRICTO: Obligar a recargar los datos de Supabase para actualizar la tabla */
+        await cargarInformes();
       } else {
         addToast("error", "Error al guardar el informe. Intente de nuevo.");
       }
