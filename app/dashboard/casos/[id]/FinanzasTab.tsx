@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { DollarSign, CreditCard, TrendingDown, Receipt, Plus, Banknote, X, Calendar, FileText, CheckCircle } from "lucide-react";
+import { DollarSign, CreditCard, TrendingDown, Receipt, Plus, Banknote, X, Calendar, FileText, CheckCircle, Lock } from "lucide-react";
 import {
   EstadoCuentaExpediente,
   Honorario,
@@ -949,6 +949,56 @@ export default function FinanzasTab({ expedienteId }: FinanzasTabProps) {
         moneda={honorario.moneda}
         onRegistrar={() => setIsModalGastoOpen(true)}
       />
+
+      {/* ── Cascarón Facturación SIAT (Próximamente) ───────────── */}
+      <div
+        className="rounded-xl border border-dashed border-[var(--color-surface-border)] bg-[var(--color-surface-card)]
+                   p-5 shadow-[var(--shadow-sm)] animate-fade-up"
+        style={{ animationDelay: "300ms" }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
+              <FileText className="w-4.5 h-4.5 text-gray-400" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-[var(--color-text-primary)]">
+                Facturación Electrónica
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                Emisión de facturas a través del SIAT
+              </p>
+            </div>
+          </div>
+
+          <div className="relative group">
+            <button
+              id="finanzas-generar-factura-siat-btn"
+              type="button"
+              disabled={true}
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg
+                         border border-[var(--color-surface-border)] bg-[var(--color-surface-hover)]
+                         text-[var(--color-text-muted)] cursor-not-allowed
+                         opacity-60 transition-all duration-200"
+            >
+              <Lock className="w-4 h-4" />
+              Generar Factura (SIAT)
+            </button>
+
+            {/* Tooltip */}
+            <div
+              className="absolute bottom-full right-0 mb-2 px-3 py-2 rounded-lg
+                         bg-gray-900 text-white text-xs font-medium whitespace-nowrap
+                         shadow-lg pointer-events-none
+                         opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                         after:content-[''] after:absolute after:top-full after:right-4
+                         after:border-4 after:border-transparent after:border-t-gray-900"
+            >
+              Próximamente: Integración con Impuestos Nacionales
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* ── Modales ─────────────────────────────────────────────── */}
       {isModalGastoOpen && (

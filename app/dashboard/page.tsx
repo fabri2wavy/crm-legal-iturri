@@ -30,7 +30,7 @@ export default function DashboardInicio() {
 
       setPerfil(data);
 
-      /* ── Pre-carga paralela para rol abogado ───────────── */
+      /* ── Pre-carga paralela para roles con agenda ──────── */
       if (data.rol === "abogado") {
         try {
           const [expData, evtData] = await Promise.all([
@@ -41,6 +41,13 @@ export default function DashboardInicio() {
           setEventos(evtData);
         } catch (err) {
           console.error("Error cargando datos del abogado:", err);
+        }
+      } else if (data.rol === "admin") {
+        try {
+          const evtData = await obtenerEventos();
+          setEventos(evtData);
+        } catch (err) {
+          console.error("Error cargando eventos del admin:", err);
         }
       }
 
@@ -62,7 +69,7 @@ export default function DashboardInicio() {
   // Renderizado Condicional Basado en Roles
   switch (perfil?.rol) {
     case 'admin':
-      return <AdminDashboard nombre={perfil.nombre_completo} />;
+      return <AdminDashboard nombre={perfil.nombre_completo} eventos={eventos} />;
     case 'abogado':
       return (
         <AbogadoDashboard
