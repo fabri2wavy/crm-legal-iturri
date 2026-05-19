@@ -32,7 +32,7 @@ export default function PerfilUsuario() {
       className="mb-3 p-3 rounded-lg"
       style={{
         background: "var(--color-navy-card)",
-        border: "1px solid rgba(201, 168, 76, 0.12)",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
       }}
     >
       <div className="flex items-center gap-3">
@@ -42,7 +42,7 @@ export default function PerfilUsuario() {
           style={{
             background: "var(--color-gold-dim)",
             color: "var(--color-gold-light)",
-            border: "1px solid rgba(201, 168, 76, 0.25)",
+            border: "1px solid rgba(204, 0, 0, 0.3)",
           }}
         >
           {iniciales}

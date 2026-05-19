@@ -174,7 +174,7 @@ export default function DashboardLayout({
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 lg:hidden"
-          style={{ background: "rgba(13, 27, 42, 0.6)", backdropFilter: "blur(4px)" }}
+          style={{ background: "rgba(26, 26, 26, 0.6)", backdropFilter: "blur(4px)" }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -188,14 +188,14 @@ export default function DashboardLayout({
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}
         style={{
-          background: "linear-gradient(180deg, var(--color-navy) 0%, #0a1422 100%)",
+          background: "linear-gradient(180deg, var(--color-navy) 0%, #111111 100%)",
           borderRight: "1px solid var(--color-navy-border)",
         }}
       >
         {/* Logo / brand */}
         <div
           className="px-6 py-5 flex items-center gap-3"
-          style={{ borderBottom: "1px solid rgba(201, 168, 76, 0.12)" }}
+          style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}
         >
           <div
             className="flex items-center justify-center w-10 h-10 rounded-full text-sm font-light tracking-wide"
@@ -242,7 +242,7 @@ export default function DashboardLayout({
                   {item.section && (
                     <p
                       className="text-[9px] font-bold uppercase tracking-[0.2em] px-4 pt-5 pb-2"
-                      style={{ color: "rgba(201, 168, 76, 0.5)" }}
+                      style={{ color: "rgba(204, 0, 0, 0.7)" }}
                     >
                       {item.section}
                     </p>
@@ -252,11 +252,11 @@ export default function DashboardLayout({
                     className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
                     style={{
                       background: active
-                        ? "rgba(201, 168, 76, 0.12)"
+                        ? "rgba(204, 0, 0, 0.15)"
                         : "transparent",
                       color: active
                         ? "var(--color-gold-light)"
-                        : "rgba(200, 210, 225, 0.7)",
+                        : "rgba(200, 200, 200, 0.7)",
                       borderLeft: active
                         ? "3px solid var(--color-gold)"
                         : "3px solid transparent",
@@ -264,13 +264,13 @@ export default function DashboardLayout({
                     onMouseEnter={(e) => {
                       if (!active) {
                         e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                        e.currentTarget.style.color = "rgba(240, 234, 216, 0.95)";
+                        e.currentTarget.style.color = "rgba(240, 240, 240, 0.95)";
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!active) {
                         e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.color = "rgba(200, 210, 225, 0.7)";
+                        e.currentTarget.style.color = "rgba(200, 200, 200, 0.7)";
                       }
                     }}
                   >
@@ -286,7 +286,7 @@ export default function DashboardLayout({
         {/* Footer con perfil y salir */}
         <div
           className="px-4 py-4"
-          style={{ borderTop: "1px solid rgba(201, 168, 76, 0.12)" }}
+          style={{ borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}
         >
           <PerfilUsuario />
           <BotonSalir />

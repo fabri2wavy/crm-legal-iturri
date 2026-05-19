@@ -126,7 +126,7 @@
 .fc .fc-day-today .fc-daygrid-day-number {
   color: var(--color-text-primary) !important;
   font-weight: 700 !important;
-  background: rgba(201, 168, 76, 0.15);
+  background: var(--color-gold-dim);
   border-radius: var(--radius-full);
   width: 1.75rem;
   height: 1.75rem;
@@ -187,7 +187,8 @@
 }
 
 .fc .fc-daygrid-more-link:hover {
-  color: #1d4ed8 !important;
+  color: var(--color-info) !important;
+  filter: brightness(0.8);
 }
 
 /* ── Popover de "más eventos" ─────────────────────────────────── */

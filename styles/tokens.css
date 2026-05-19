@@ -1,16 +1,16 @@
 :root {
-  /* ── Colores Primarios (Navy) ─────────────────────────────── */
-  --color-navy:            #0d1b2a;
-  --color-navy-mid:        #122236;
-  --color-navy-card:       #162840;
-  --color-navy-light:      #1b3a5c;
-  --color-navy-border:     rgba(201, 168, 76, 0.2);
+  /* ── Colores Primarios (Dark / Charcoal) ──────────────────── */
+  --color-navy:            #1a1a1a;
+  --color-navy-mid:        #232323;
+  --color-navy-card:       #2a2a2a;
+  --color-navy-light:      #404040;
+  --color-navy-border:     rgba(255, 255, 255, 0.10);
 
-  /* ── Colores Accent (Gold) ────────────────────────────────── */
-  --color-gold:            #c9a84c;
-  --color-gold-light:      #e2c97e;
-  --color-gold-dim:        rgba(201, 168, 76, 0.15);
-  --color-gold-glow:       rgba(201, 168, 76, 0.08);
+  /* ── Colores Accent (Rojo Iturri) ─────────────────────────── */
+  --color-gold:            #CC0000;
+  --color-gold-light:      #E63333;
+  --color-gold-dim:        rgba(204, 0, 0, 0.12);
+  --color-gold-glow:       rgba(204, 0, 0, 0.06);
 
   /* ── Superficie (Light Theme — Dashboard) ─────────────────── */
   --color-surface:         #f8f9fc;
@@ -22,8 +22,8 @@
   --color-text-primary:    #1a2332;
   --color-text-secondary:  #5a6a7e;
   --color-text-muted:      #8a9ab0;
-  --color-text-on-dark:    #f0ead8;
-  --color-text-on-gold:    #0d1b2a;
+  --color-text-on-dark:    #e8e8e8;
+  --color-text-on-gold:    #ffffff;
 
   /* ── Estados Semánticos ───────────────────────────────────── */
   --color-success:         #10b981;
@@ -66,7 +66,7 @@
   --shadow-sm:             0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md:             0 4px 12px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-lg:             0 10px 30px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
-  --shadow-gold:           0 4px 20px rgba(201, 168, 76, 0.2);
+  --shadow-gold:           0 4px 20px rgba(204, 0, 0, 0.2);
 
   /* ── Bordes ───────────────────────────────────────────────── */
   --radius-sm:             0.375rem;

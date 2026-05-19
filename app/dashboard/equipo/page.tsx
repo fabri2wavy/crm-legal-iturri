@@ -367,9 +367,8 @@ export default function EquipoPage() {
       )}
 
       {/* ── Tabla de Datos ────────────────────────────────────── */}
-      <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-visible">
-        <div className="overflow-x-visible">
-          <table className="w-full text-left border-collapse whitespace-nowrap">
+      <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
+        <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-200">
                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Miembro</th>
@@ -413,8 +412,7 @@ export default function EquipoPage() {
                 />
               ))}
             </tbody>
-          </table>
-        </div>
+        </table>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════

@@ -83,8 +83,8 @@ body {
 }
 
 @keyframes pulse-gold {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.3); }
-  50%      { box-shadow: 0 0 0 6px rgba(201, 168, 76, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(204, 0, 0, 0.3); }
+  50%      { box-shadow: 0 0 0 6px rgba(204, 0, 0, 0); }
 }
 
 @keyframes spin {
@@ -110,7 +110,7 @@ body {
 
 /* ── Skeleton loading ───────────────────────────────────────── */
 .skeleton {
-  background: linear-gradient(90deg, var(--color-surface-hover) 25%, #e8ecf4 50%, var(--color-surface-hover) 75%);
+  background: linear-gradient(90deg, var(--color-surface-hover) 25%, #e0e0e0 50%, var(--color-surface-hover) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-sm);

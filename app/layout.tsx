@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import type { Viewport } from "next";
 
 export const metadata: Metadata = {
   title: "Abogatech — Iturri & Asociados | CRM Legal",
   description:
     "Sistema integrado de gestión legal para la firma Iturri & Asociados. Administra expedientes, clientes y plazos legales desde una plataforma centralizada.",
 };
-
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
 export default function RootLayout({
   children,
 }: Readonly<{

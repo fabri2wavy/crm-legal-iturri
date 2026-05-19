@@ -43,13 +43,13 @@
 
 /* ── Variant: Primary (Gold gradient) ──────────────────────── */
 .primary {
-  background: linear-gradient(135deg, #b8922e, var(--color-gold), var(--color-gold));
+  background: linear-gradient(135deg, #a30000, var(--color-gold), var(--color-gold));
   color: var(--color-text-on-gold);
   box-shadow: var(--shadow-gold);
 }
 
 .primary:hover:not(:disabled) {
-  box-shadow: 0 6px 28px rgba(201, 168, 76, 0.4);
+  box-shadow: 0 6px 28px rgba(204, 0, 0, 0.35);
   transform: translateY(-1px);
 }
 
@@ -61,12 +61,12 @@
 .secondary {
   background: transparent;
   color: var(--color-gold);
-  border: 1px solid rgba(201, 168, 76, 0.3);
+  border: 1px solid rgba(204, 0, 0, 0.3);
 }
 
 .secondary:hover:not(:disabled) {
   background: var(--color-gold-dim);
-  border-color: rgba(201, 168, 76, 0.55);
+  border-color: rgba(204, 0, 0, 0.5);
 }
 
 /* ── Variant: Ghost (Minimal) ──────────────────────────────── */
@@ -92,7 +92,7 @@
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(13, 27, 42, 0.3);
+  border: 2px solid rgba(26, 26, 26, 0.3);
   border-top-color: var(--color-navy);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;

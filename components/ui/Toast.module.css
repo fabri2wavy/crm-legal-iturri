@@ -37,23 +37,23 @@
 /* ── Variantes ───────────────────────────────────────────────── */
 
 .success {
-  background: #ecfdf5;
+  background: var(--color-success-bg);
   color: #065f46;
-  border-color: #a7f3d0;
+  border-color: var(--color-success-border);
 }
 
 .success .icon {
-  color: #10b981;
+  color: var(--color-success);
 }
 
 .error {
-  background: #fef2f2;
+  background: var(--color-danger-bg);
   color: #991b1b;
-  border-color: #fecaca;
+  border-color: var(--color-danger-border);
 }
 
 .error .icon {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 /* ── Icono ───────────────────────────────────────────────────── */
