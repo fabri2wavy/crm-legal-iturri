@@ -19,7 +19,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [rol, setRol] = useState<string>("cliente"); // default seguro
+  const [rol, setRol] = useState<string>("cliente"); 
   const [cargandoObj, setCargandoObj] = useState(true);
   const pathname = usePathname();
 
@@ -161,7 +161,7 @@ export default function DashboardLayout({
     } else {
       return [
         inicioItem,
-        { href: "/dashboard/casos", label: "Mi Expediente", icon: casosIcon }, // El cliente usa la vista casos para ver el suyo
+        { href: "/dashboard/casos", label: "Mi Expediente", icon: casosIcon },
       ];
     }
   };

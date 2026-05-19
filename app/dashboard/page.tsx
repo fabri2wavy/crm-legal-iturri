@@ -14,7 +14,6 @@ export default function DashboardInicio() {
   const [perfil, setPerfil] = useState<UsuarioPerfil | null>(null);
   const [cargando, setCargando] = useState(true);
 
-  /* ── Datos del Abogado (cargados condicionalmente) ─────── */
   const [expedientes, setExpedientes] = useState<any[]>([]);
   const [eventos, setEventos] = useState<any[]>([]);
 
@@ -23,14 +22,12 @@ export default function DashboardInicio() {
       const data = await obtenerPerfilActual();
       
       if (!data) {
-        // Redirigir a login si no hay usuario o perfil
         router.push("/login");
         return;
       }
 
       setPerfil(data);
 
-      /* ── Pre-carga paralela para roles con agenda ──────── */
       if (data.rol === "abogado") {
         try {
           const [expData, evtData] = await Promise.all([
@@ -66,7 +63,6 @@ export default function DashboardInicio() {
     );
   }
 
-  // Renderizado Condicional Basado en Roles
   switch (perfil?.rol) {
     case 'admin':
       return <AdminDashboard nombre={perfil.nombre_completo} eventos={eventos} />;
@@ -81,7 +77,6 @@ export default function DashboardInicio() {
     case 'cliente':
       return <ClienteDashboard nombre={perfil.nombre_completo} />;
     default:
-      // Si no tiene rol definido o tiene un rol extraño, asumimos interfaz de cliente por seguridad
       return <ClienteDashboard nombre={perfil?.nombre_completo || "Usuario"} />;
   }
 }
