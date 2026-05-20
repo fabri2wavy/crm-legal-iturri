@@ -11,11 +11,14 @@ import {
   crearEvento,
   actualizarEvento,
 } from "@/infrastructure/repositories/agendaRepository";
-import { obtenerEquipo } from "@/infrastructure/repositories/equipoRepository";
+import {
+  obtenerAbogados,
+  obtenerPerfilActual,
+} from "@/infrastructure/repositories/usuarioRepository";
 import { obtenerExpedientes } from "@/infrastructure/repositories/expedienteRepository";
 import { obtenerConfiguraciones } from "@/infrastructure/repositories/configuracionRepository";
 import type { ConfiguracionGlobal } from "@/domain/entities/ConfiguracionGlobal";
-import { MiembroEquipo } from "@/domain/entities/MiembroEquipo";
+import type { UsuarioPerfil } from "@/infrastructure/repositories/usuarioRepository";
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { SelectField } from "@/components/ui/SelectField";
@@ -78,7 +81,7 @@ export default function ModalEvento({
   const [guardando, setGuardando] = useState(false);
 
   /* ── Opciones para selects ─────────────────────────────────── */
-  const [miembros, setMiembros] = useState<MiembroEquipo[]>([]);
+  const [asignables, setAsignables] = useState<UsuarioPerfil[]>([]);
   const [expedientes, setExpedientes] = useState<ExpedienteOption[]>([]);
   const [tiposEventoDB, setTiposEventoDB] = useState<ConfiguracionGlobal[]>([]);
   const [cargandoOpciones, setCargandoOpciones] = useState(true);
@@ -132,16 +135,17 @@ export default function ModalEvento({
     async function cargarOpciones() {
       setCargandoOpciones(true);
       try {
-        const [equipoData, expedientesData, resTiposEvento] =
+        const [asignablesData, expedientesData, resTiposEvento, perfilActual] =
           await Promise.all([
-            obtenerEquipo(),
+            obtenerAbogados(),
             obtenerExpedientes(),
             obtenerConfiguraciones("tipo_evento"),
+            obtenerPerfilActual(),
           ]);
 
         if (cancelado) return;
 
-        setMiembros(equipoData);
+        setAsignables(asignablesData);
         if (resTiposEvento.data) setTiposEventoDB(resTiposEvento.data);
         setExpedientes(
           expedientesData.map(
@@ -152,6 +156,13 @@ export default function ModalEvento({
             })
           )
         );
+
+        // Auto-seleccionar al usuario actual en modo crear si aún no hay uno elegido.
+        // Esto garantiza que el admin pueda crear eventos para sí mismo
+        // incluso cuando el sistema aún no tiene más miembros registrados.
+        if (modo === "crear" && !asignadoA && perfilActual) {
+          setAsignadoA(perfilActual.id);
+        }
       } catch {
         if (!cancelado) {
           onToast({
@@ -338,9 +349,9 @@ export default function ModalEvento({
               id={`${modo}-evento-asignado`}
               variant="light"
               placeholder={cargandoOpciones ? "Cargando..." : "Seleccionar"}
-              options={miembros.map((m) => ({
+              options={asignables.map((m) => ({
                 value: m.id,
-                label: `${m.nombres} ${m.apellidoPaterno}`,
+                label: m.nombre_completo,
               }))}
               value={asignadoA}
               onChange={(e) => setAsignadoA(e.target.value)}

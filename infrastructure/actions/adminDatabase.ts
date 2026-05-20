@@ -10,17 +10,17 @@ const supabaseAdmin = createClient(
 
 export async function completarRegistroClienteAdmin(userId: string, datos: any, creadoPorId?: string) {
     try {
-const { error: perfilError } = await supabaseAdmin
-    .from('perfiles')
-    .upsert({
-        id: userId,       
-        nombres: datos.nombres || null,
-        apellido_paterno: datos.apellidoPaterno || null,
-        apellido_materno: datos.apellidoMaterno || null,
-        telefono: datos.telefono || null,
-        rol: 'cliente',
-        creado_por: creadoPorId || null,
-    }, { onConflict: 'id' });
+        const { error: perfilError } = await supabaseAdmin
+            .from('perfiles')
+            .upsert({
+                id: userId,       
+                nombres: datos.nombres || null,
+                apellido_paterno: datos.apellidoPaterno || null,
+                apellido_materno: datos.apellidoMaterno || null,
+                telefono: datos.telefono || null,
+                rol: 'cliente',
+                creado_por: creadoPorId || null,
+            }, { onConflict: 'id' });
 
         if (perfilError) throw new Error(perfilError.message);
 
