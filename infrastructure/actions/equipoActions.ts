@@ -74,19 +74,20 @@ export async function registrarNuevoMiembro(
     userId = authData.user.id;
 
     /* ── Paso 2: Insertar en `perfiles` ──────────────────────── */
+    /* ── Paso 2: Insertar o Actualizar en `perfiles` ──────────────────────── */
     const { error: perfilError } = await supabaseAdmin
       .from('perfiles')
-      .update({
+      .upsert({ // Cambiamos update() por upsert()
+        id: userId, // ¡CRÍTICO! Debemos enviar el ID
         nombres: datos.nombres,
         apellido_paterno: datos.apellidoPaterno,
         apellido_materno: datos.apellidoMaterno || null,
         telefono: datos.telefono || null,
         rol: datos.rol,
-      })
-      .eq('id', userId);
+      });
 
     if (perfilError) {
-      console.error('[equipoActions] Error insert perfiles:', perfilError.message);
+      console.error('[equipoActions] Error upsert perfiles:', perfilError.message);
       /* Rollback: eliminar el usuario de Auth */
       await supabaseAdmin.auth.admin.deleteUser(userId);
       return { success: false, error: `Error al crear el perfil: ${perfilError.message}` };
