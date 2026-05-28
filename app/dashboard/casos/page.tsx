@@ -171,7 +171,7 @@ export default function CasosPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="relative min-w-[220px]">
+        <div className="relative min-w-55">
           <Filter className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <select
             className="w-full pl-10 pr-8 py-2 text-sm text-gray-700 bg-gray-50 border border-transparent rounded-lg appearance-none cursor-pointer focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors outline-none"
@@ -232,7 +232,7 @@ export default function CasosPage() {
                       </div>
                       <div>
                         <div className="text-sm font-bold text-gray-900 tracking-tight">{caso.numeroCaso}</div>
-                        <div className="text-xs text-gray-500 max-w-[200px] truncate" title={caso.titulo}>{caso.titulo}</div>
+                        <div className="text-xs text-gray-500 max-w-50 truncate" title={caso.titulo}>{caso.titulo}</div>
                       </div>
                     </div>
                   </td>
@@ -240,7 +240,7 @@ export default function CasosPage() {
                     <div className="text-sm font-medium text-gray-800">
                       {caso.nombreCliente} <span className="text-gray-400 font-normal mx-1">vs</span> {caso.parteContraria}
                     </div>
-                    <div className="text-xs text-gray-500 truncate max-w-[250px]">{caso.juzgado}</div>
+                    <div className="text-xs text-gray-500 truncate max-w-62.5">{caso.juzgado}</div>
                   </td>
                   <td className="py-4 px-6">
                     <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
