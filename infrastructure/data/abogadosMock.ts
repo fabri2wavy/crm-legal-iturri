@@ -4,6 +4,7 @@ export interface AbogadoPerfil {
   cargo: string;
   fotoUrl: string;
   email: string;
+  linkedinPersonal?: string;
 }
 
 export const abogadosMock: Record<string, AbogadoPerfil> = {
@@ -12,21 +13,23 @@ export const abogadosMock: Record<string, AbogadoPerfil> = {
     nombre: "Martín Iturri",
     cargo: "Director",
     fotoUrl: "/tarjetas/doctor_iturri.jpg",
-    email: "miturri@abogados.bo"
+    email: "miturri@abogados.bo",
+    linkedinPersonal: "https://linkedin.com/in/martin-iturri"
   },
   "victor-martin": {
     id: "victor-martin",
     nombre: "Victor Martin",
     cargo: "Asociado Senior",
     fotoUrl: "/tarjetas/doctor_martin.jpg",
-    email: "vmartin@abogados.bo"
+    email: "vmartin@abogados.bo",
+    linkedinPersonal: "https://www.linkedin.com/in/v%C3%ADctor-martin-a7962548/"
   },
-
   "andrea-garrett": {
     id: "andrea-garrett",
     nombre: "Andrea Garrett",
     cargo: "Abogado",
     fotoUrl: "/tarjetas/doctora_andrea.jpg",
-    email: "agarrett@abogados.bo"
+    email: "agarrett@abogados.bo",
+    linkedinPersonal: "https://linkedin.com/in/andrea-garrett"
   }
 };
