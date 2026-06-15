@@ -20,10 +20,10 @@ export default function TarjetaVista({ perfil }: Props) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white flex flex-col items-center font-sans">
-      
+
       {/* Contenedor Principal de la Tarjeta */}
       <div className="w-full max-w-md mx-auto min-h-screen shadow-2xl flex flex-col pb-12 bg-[#111111]">
-        
+
         {/* Banner Rojo Corporativo */}
         <div className="bg-[#cc0000] h-40 w-full relative overflow-hidden">
           <div className="absolute inset-0 opacity-10 bg-cover bg-center mix-blend-overlay"></div>
@@ -36,7 +36,7 @@ export default function TarjetaVista({ perfil }: Props) {
               src={perfil.fotoUrl}
               alt={perfil.nombre}
               className="w-full h-full object-cover"
-              onError={(e) => { 
+              onError={(e) => {
                 e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(perfil.nombre)}&background=0D8ABC&color=fff`;
               }}
             />
@@ -52,7 +52,7 @@ export default function TarjetaVista({ perfil }: Props) {
 
         {/* Bloques de Información y Enlaces */}
         <div className="px-6 mt-8 space-y-8">
-          
+
           {/* Sede La Paz */}
           <div className="bg-gray-800/50 p-5 rounded-2xl border border-gray-700/50">
             <div className="flex items-center space-x-2 mb-2">
@@ -95,11 +95,11 @@ export default function TarjetaVista({ perfil }: Props) {
               <LinkButton text="🌐 Página Web" href={ENLACES_GENERALES.web} />
               <LinkButton text="💼 LinkedIn" href={ENLACES_GENERALES.linkedin} />
               <LinkButton text="📘 Facebook" href={ENLACES_GENERALES.facebook} />
-              <LinkButton text="🐦 Twitter" href={ENLACES_GENERALES.twitter} />
+              <LinkButton text="🐦 X" href={ENLACES_GENERALES.twitter} />
               <LinkButton text="📸 Instagram" href={ENLACES_GENERALES.instagram} />
               <LinkButton text="🗺️ Oficina La Paz" href={ENLACES_GENERALES.oficinaLaPaz} />
               <LinkButton text="🗺️ Oficina Santa Cruz" href={ENLACES_GENERALES.oficinaSantaCruz} />
-              
+
               {/* Enlace Dinámico y Personal (Cambia según el abogado) */}
               <LinkButton text="👤 LinkedIn Personal" href={perfil.linkedinPersonal} highlight />
             </div>
@@ -107,8 +107,8 @@ export default function TarjetaVista({ perfil }: Props) {
 
           {/* Botón de Acción Principal */}
           <div className="pt-4">
-            <a 
-              href={`mailto:${perfil.email}`} 
+            <a
+              href={`mailto:${perfil.email}`}
               className="flex items-center justify-center w-full bg-[#cc0000] text-white py-4 rounded-xl font-bold hover:bg-red-700 active:scale-95 transition-all duration-200 shadow-lg shadow-red-900/50"
             >
               ✉️ Contactar por Correo
@@ -126,13 +126,13 @@ function LinkButton({ text, href, highlight = false }: { text: string; href?: st
   if (!href) return null;
 
   return (
-    <a 
+    <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
       className={`flex items-center justify-between w-full py-3.5 px-5 rounded-xl font-medium transition-all duration-300 active:scale-95
-        ${highlight 
-          ? 'bg-gray-800 border-2 border-gray-600 text-white hover:border-gray-400' 
+        ${highlight
+          ? 'bg-gray-800 border-2 border-gray-600 text-white hover:border-gray-400'
           : 'bg-gray-800/80 border border-gray-700/50 text-gray-200 hover:bg-gray-700 hover:text-white'
         }`}
     >

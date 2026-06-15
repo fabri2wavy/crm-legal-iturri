@@ -31,5 +31,13 @@ export const abogadosMock: Record<string, AbogadoPerfil> = {
     fotoUrl: "/tarjetas/doctora_andrea.jpg",
     email: "agarrett@abogados.bo",
     linkedinPersonal: "https://linkedin.com/in/andrea-garrett"
+  },
+  "zulema-espejo": {
+    id: "zulema-espejo",
+    nombre: "Zulema Espejo",
+    cargo: "Asociada Senior",
+    fotoUrl: "/tarjetas/doctora_zulema.jpg",
+    email: "zespejo@abogados.bo",
+    linkedinPersonal: "https://linkedin.com/in/zulema-espejp"
   }
 };
