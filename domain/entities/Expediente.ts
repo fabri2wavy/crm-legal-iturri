@@ -17,6 +17,7 @@ export interface Expediente {
   abogado_nombre?: string;
   fechaCreacion: Date;
   fechaActualizacion: Date;
+  archivado?: boolean;
 
   // ── Campos de nomenclatura legal (Flujo Civil / Penal) ──────────
   /** Rol del cliente en el proceso: Demandante, Demandado, Imputado, Víctima, etc. */

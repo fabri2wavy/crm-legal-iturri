@@ -3,9 +3,9 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
-  FolderOpen, Plus, Search, Filter, FileText,
+  FolderOpen, Plus, Search, Filter, FileText, Archive, Trash2, AlertTriangle,
 } from "lucide-react";
-import { obtenerExpedientes, crearExpediente } from "@/infrastructure/repositories/expedienteRepository";
+import { obtenerExpedientes, crearExpediente, archivarExpediente } from "@/infrastructure/repositories/expedienteRepository";
 import { obtenerClientes } from "@/infrastructure/repositories/clienteRepository";
 import { obtenerAbogados, obtenerPerfilActual } from "@/infrastructure/repositories/usuarioRepository";
 import { obtenerConfiguraciones } from "@/infrastructure/repositories/configuracionRepository";
@@ -45,6 +45,10 @@ export default function CasosPage() {
   const [materiaFilter, setMateriaFilter]   = useState("");
   const [mostrarModal, setMostrarModal]     = useState(false);
   const [guardando, setGuardando]           = useState(false);
+  
+  /* ── Archivar state ───────────────────────────────────────── */
+  const [expedienteAArchivar, setExpedienteAArchivar] = useState<any>(null);
+  const [archivando, setArchivando] = useState(false);
 
   const { toasts, addToast, removeToast } = useToasts();
 
@@ -132,6 +136,26 @@ export default function CasosPage() {
     }
   }, [addToast]);
 
+  /* ── Archivar expediente ──────────────────────────────────── */
+  const confirmarArchivar = async () => {
+    if (!expedienteAArchivar) return;
+    setArchivando(true);
+    try {
+      const exito = await archivarExpediente(expedienteAArchivar.id);
+      if (exito) {
+        setExpedientes((prev) => prev.filter((c) => c.id !== expedienteAArchivar.id));
+        addToast("success", "Expediente archivado correctamente. Ha pasado a revisión del Administrador.");
+      } else {
+        addToast("error", "Error al archivar el expediente.");
+      }
+    } catch {
+      addToast("error", "Error de conexión con la base de datos.");
+    } finally {
+      setArchivando(false);
+      setExpedienteAArchivar(null);
+    }
+  };
+
   /* ── Options para filtro de materia ──────────────────────── */
   const todasMaterias = [
     ...MATERIAS_BASE.filter(m => m !== "Otro"),
@@ -151,12 +175,22 @@ export default function CasosPage() {
               : "Gestión de causas legales y flujo procesal."}
           </p>
         </div>
-        {(perfilActual?.rol === "admin" || perfilActual?.rol === "abogado") && (
-          <Button variant="primary" onClick={() => setMostrarModal(true)}>
-            <Plus className="w-5 h-5 mr-2" />
-            Nuevo Expediente
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {perfilActual?.rol === "admin" && (
+            <Link href="/dashboard/casos/papelera">
+              <Button variant="secondary" className="text-gray-600 border-gray-300 hover:bg-gray-100">
+                <Trash2 className="w-5 h-5 mr-2" />
+                Papelera de Expedientes
+              </Button>
+            </Link>
+          )}
+          {(perfilActual?.rol === "admin" || perfilActual?.rol === "abogado") && (
+            <Button variant="primary" onClick={() => setMostrarModal(true)}>
+              <Plus className="w-5 h-5 mr-2" />
+              Nuevo Expediente
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Barra de filtros */}
@@ -254,11 +288,21 @@ export default function CasosPage() {
                   </td>
                   {perfilActual?.rol !== "cliente" && (
                     <td className="py-4 px-6 text-right">
-                      <Link href={`/dashboard/casos/${caso.id}`}>
-                        <button className="text-sm font-medium text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
-                          Revisar
+                      <div className="flex items-center justify-end gap-2">
+                        <Link href={`/dashboard/casos/${caso.id}`}>
+                          <button className="text-sm font-medium text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
+                            Revisar
+                          </button>
+                        </Link>
+                        <button
+                          onClick={() => setExpedienteAArchivar(caso)}
+                          className="text-sm font-medium text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-1.5"
+                          title="Archivar Expediente"
+                        >
+                          <Archive className="w-4 h-4" />
+                          <span className="hidden sm:inline">Archivar</span>
                         </button>
-                      </Link>
+                      </div>
                     </td>
                   )}
                 </tr>
@@ -280,6 +324,46 @@ export default function CasosPage() {
           onClose={() => setMostrarModal(false)}
           onSubmit={handleGuardarExpediente}
         />
+      )}
+
+      {/* Modal Confirmación Archivar */}
+      {expedienteAArchivar && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                  <Archive className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">¿Archivar expediente?</h3>
+                  <p className="text-sm text-gray-500 font-mono mt-0.5">{expedienteAArchivar.numeroCaso}</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed mb-6">
+                Este expediente desaparecerá de tu vista principal y pasará a revisión del <strong>Administrador</strong>. ¿Estás seguro de que deseas archivar este caso?
+              </p>
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => setExpedienteAArchivar(null)}
+                  disabled={archivando}
+                  className="px-5"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={confirmarArchivar}
+                  disabled={archivando}
+                  className="px-5 bg-amber-600 hover:bg-amber-700 focus:ring-amber-500 text-white border-transparent"
+                >
+                  {archivando ? "Archivando..." : "Sí, Archivar"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Toasts */}

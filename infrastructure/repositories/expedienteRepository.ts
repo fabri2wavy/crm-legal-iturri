@@ -97,6 +97,7 @@ export async function crearExpediente(expedienteData: Omit<Expediente, 'id' | 'f
     investigadorAsignado: data.investigador_asignado ?? undefined,
     etapaProcesal: data.etapa_procesal ?? undefined,
     cuantia: data.cuantia ?? undefined,
+    archivado: data.archivado ?? false,
   };
 }
 
@@ -109,6 +110,7 @@ export async function obtenerExpedientes(): Promise<any[]> {
       cliente:perfiles!cliente_id(nombres, apellido_paterno, apellido_materno), 
       abogado:perfiles!abogado_asignado_id(nombres, apellido_paterno, apellido_materno)
     `)
+    .is('archivado', false)
     .order('fecha_creacion', { ascending: false });
 
   if (error || !data) {
@@ -150,6 +152,7 @@ export async function obtenerExpedientes(): Promise<any[]> {
     investigadorAsignado: fila.investigador_asignado ?? undefined,
     etapaProcesal: fila.etapa_procesal ?? undefined,
     cuantia: fila.cuantia ?? undefined,
+    archivado: fila.archivado ?? false,
   }));
 }
 
@@ -218,6 +221,7 @@ export async function obtenerExpedientePorId(id: string): Promise<any | null> {
     investigadorAsignado: data.investigador_asignado ?? undefined,
     etapaProcesal: data.etapa_procesal ?? undefined,
     cuantia: data.cuantia ?? undefined,
+    archivado: data.archivado ?? false,
   };
 }
 
@@ -310,4 +314,156 @@ export async function obtenerTotalExpedientes(): Promise<number> {
   }
 
   return count || 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAPELERA DE EXPEDIENTES (SOFT DELETE Y HARD DELETE)
+   ══════════════════════════════════════════════════════════════ */
+
+export async function obtenerExpedientesArchivados(): Promise<any[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('expedientes')
+    .select(`
+      *, 
+      cliente:perfiles!cliente_id(nombres, apellido_paterno, apellido_materno), 
+      abogado:perfiles!abogado_asignado_id(nombres, apellido_paterno, apellido_materno)
+    `)
+    .eq('archivado', true)
+    .order('fecha_actualizacion', { ascending: false });
+
+  if (error || !data) {
+    console.error("Error al obtener expedientes archivados:", error?.message);
+    return [];
+  }
+
+  return data.map(fila => ({
+    id: fila.id,
+    numeroCaso: fila.numero_caso,
+    titulo: fila.titulo,
+    materia: fila.materia,
+    juzgado: fila.juzgado,
+    parteContraria: fila.parte_contraria,
+    estado: fila.estado,
+    nombreCliente: construirNombre(
+      fila.cliente?.nombres,
+      fila.cliente?.apellido_paterno,
+      fila.cliente?.apellido_materno,
+      'Cliente Desconocido'
+    ),
+    abogado_id: fila.abogado_asignado_id,
+    abogado_nombre: construirNombre(
+      fila.abogado?.nombres,
+      fila.abogado?.apellido_paterno,
+      fila.abogado?.apellido_materno,
+      'Sin asignar'
+    ),
+    fechaCreacion: new Date(fila.fecha_creacion),
+    fechaActualizacion: new Date(fila.fecha_actualizacion),
+    archivado: fila.archivado ?? false,
+  }));
+}
+
+export async function archivarExpediente(id: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('expedientes')
+    .update({ archivado: true })
+    .eq('id', id);
+
+  if (error) {
+    console.error("Error al archivar expediente:", error.message);
+    return false;
+  }
+
+  try {
+    await registrarLog({
+      accion: 'ARCHIVAR',
+      entidad: 'expedientes',
+      entidad_id: id,
+      detalles: { timestamp_operacion: new Date().toISOString() },
+    });
+  } catch { /* log fail */ }
+  return true;
+}
+
+export async function restaurarExpediente(id: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from('expedientes')
+    .update({ archivado: false })
+    .eq('id', id);
+
+  if (error) {
+    console.error("Error al restaurar expediente:", error.message);
+    return false;
+  }
+
+  try {
+    await registrarLog({
+      accion: 'RESTAURAR',
+      entidad: 'expedientes',
+      entidad_id: id,
+      detalles: { timestamp_operacion: new Date().toISOString() },
+    });
+  } catch { /* log fail */ }
+  return true;
+}
+
+export async function eliminarExpedienteDefinitivo(id: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient();
+  
+  try {
+    // 1. Manejo de honorarios y sus cuotas_pago
+    const { data: honorarios } = await supabase.from('honorarios').select('id').eq('expediente_id', id);
+    if (honorarios && honorarios.length > 0) {
+      const honorarioIds = honorarios.map(h => h.id);
+      const { error: errCuotas } = await supabase.from('cuotas_pago').delete().in('honorario_id', honorarioIds);
+      if (errCuotas) return { success: false, error: `Error al eliminar cuotas de pago: ${errCuotas.message}` };
+      
+      const { error: errHon } = await supabase.from('honorarios').delete().eq('expediente_id', id);
+      if (errHon) return { success: false, error: `Error al eliminar honorarios: ${errHon.message}` };
+    }
+
+    // 2. Limpieza de otras tablas dependientes
+    const tablasDependientes = [
+      'documentos', 
+      'agenda_eventos', 
+      'bitacora', 
+      'gastos_expediente', 
+      'informes_avance'
+    ];
+    
+    for (const tabla of tablasDependientes) {
+      const { error } = await supabase.from(tabla).delete().eq('expediente_id', id);
+      if (error) {
+        return { success: false, error: `Error al eliminar registros dependientes en la tabla ${tabla}: ${error.message}` };
+      }
+    }
+
+    // 3. Eliminación final del expediente
+    const { error: errorFinal } = await supabase
+      .from('expedientes')
+      .delete()
+      .eq('id', id);
+
+    if (errorFinal) {
+      console.error("Error al eliminar expediente definitivamente:", errorFinal.message);
+      return { success: false, error: errorFinal.message };
+    }
+
+    // Audit log
+    try {
+      await registrarLog({
+        accion: 'ELIMINAR',
+        entidad: 'expedientes',
+        entidad_id: id,
+        detalles: { motivo: 'Borrado definitivo desde papelera', timestamp_operacion: new Date().toISOString() },
+      });
+    } catch { /* log fail */ }
+    
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Excepción desconocida al intentar eliminar.' };
+  }
 }
