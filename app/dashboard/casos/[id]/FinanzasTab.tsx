@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { DollarSign, CreditCard, TrendingDown, Receipt, Plus, Banknote, X, Calendar, FileText, CheckCircle, Lock } from "lucide-react";
+import { DollarSign, CreditCard, TrendingDown, Receipt, Plus, Banknote, X, Calendar, FileText, CheckCircle, Lock, Percent, AlertTriangle, Clock, Bell } from "lucide-react";
 import {
   EstadoCuentaExpediente,
   Honorario,
@@ -178,6 +178,106 @@ function ResumenFinancieroCards({
   );
 }
 
+/* ── Helper: calcular urgencia de vencimiento ─────────────── */
+function calcularUrgenciaCuota(fechaVencimiento: string, estado: EstadoCuota): {
+  tipo: 'vencida' | 'vence_hoy' | 'proxima' | 'normal' | 'pagada';
+  diasRestantes: number;
+  label: string;
+  classes: string;
+} {
+  if (estado === 'pagado') return { tipo: 'pagada', diasRestantes: 0, label: '', classes: '' };
+
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const venc = new Date(fechaVencimiento);
+  venc.setHours(0, 0, 0, 0);
+  const diff = Math.round((venc.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diff < 0) return {
+    tipo: 'vencida', diasRestantes: diff,
+    label: `Vencida hace ${Math.abs(diff)} día${Math.abs(diff) !== 1 ? 's' : ''}`,
+    classes: 'bg-red-100 text-red-700 border border-red-200',
+  };
+  if (diff === 0) return {
+    tipo: 'vence_hoy', diasRestantes: 0,
+    label: '⚠️ Vence hoy',
+    classes: 'bg-orange-100 text-orange-700 border border-orange-200 animate-pulse',
+  };
+  if (diff <= 7) return {
+    tipo: 'proxima', diasRestantes: diff,
+    label: `Vence en ${diff} día${diff !== 1 ? 's' : ''}`,
+    classes: 'bg-blue-100 text-blue-700 border border-blue-200',
+  };
+  return { tipo: 'normal', diasRestantes: diff, label: '', classes: '' };
+}
+
+/* ── Panel de Alertas Activas ─────────────────────────────── */
+function AlertasActivasPanel({ cuotas, moneda }: { cuotas: CuotaPago[]; moneda: MonedaHonorario }) {
+  const alertas = cuotas
+    .filter((c) => c.estado !== 'pagado')
+    .map((c) => ({ cuota: c, urgencia: calcularUrgenciaCuota(c.fechaVencimiento, c.estado) }))
+    .filter((a) => a.urgencia.tipo !== 'normal' && a.urgencia.tipo !== 'pagada')
+    .sort((a, b) => a.urgencia.diasRestantes - b.urgencia.diasRestantes);
+
+  if (alertas.length === 0) return null;
+
+  return (
+    <div
+      className="rounded-xl border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50
+                 shadow-[var(--shadow-sm)] overflow-hidden animate-fade-up"
+      style={{ animationDelay: "180ms" }}
+    >
+      <div className="px-5 py-3.5 border-b border-orange-200 flex items-center gap-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-100">
+          <Bell className="w-3.5 h-3.5 text-orange-600" strokeWidth={2.5} />
+        </div>
+        <h3 className="text-sm font-bold text-orange-800">
+          Alertas de Cobro
+          <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-orange-200 text-orange-800">
+            {alertas.length}
+          </span>
+        </h3>
+      </div>
+      <div className="divide-y divide-orange-100">
+        {alertas.map(({ cuota, urgencia }) => (
+          <div key={cuota.id} className="px-5 py-3 flex items-center justify-between hover:bg-orange-50/80 transition-colors">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                urgencia.tipo === 'vencida' ? 'bg-red-100' :
+                urgencia.tipo === 'vence_hoy' ? 'bg-orange-100' : 'bg-blue-100'
+              }`}>
+                {urgencia.tipo === 'vencida' ? (
+                  <AlertTriangle className="w-4 h-4 text-red-600" strokeWidth={2} />
+                ) : urgencia.tipo === 'vence_hoy' ? (
+                  <Clock className="w-4 h-4 text-orange-600" strokeWidth={2} />
+                ) : (
+                  <Calendar className="w-4 h-4 text-blue-600" strokeWidth={2} />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate max-w-[200px]">
+                  {cuota.descripcion}
+                </p>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold mt-0.5 ${urgencia.classes}`}>
+                  {urgencia.label}
+                </span>
+              </div>
+            </div>
+            <div className="text-right flex-shrink-0 ml-3">
+              <p className="text-sm font-bold text-[var(--color-text-primary)]">
+                {formatearMoneda(cuota.monto, moneda)}
+              </p>
+              <p className="text-xs text-[var(--color-text-muted)]">
+                {formatearFecha(cuota.fechaVencimiento)}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TablaPlanPagos({ cuotas, moneda }: { cuotas: CuotaPago[]; moneda: MonedaHonorario }) {
   return (
     <div
@@ -224,8 +324,12 @@ function TablaPlanPagos({ cuotas, moneda }: { cuotas: CuotaPago[]; moneda: Moned
             <tbody className="divide-y divide-[var(--color-surface-border)]">
               {cuotas.map((cuota) => {
                 const badge = ESTADO_BADGE[cuota.estado];
+                const urgencia = calcularUrgenciaCuota(cuota.fechaVencimiento, cuota.estado);
                 return (
-                  <tr key={cuota.id} className="hover:bg-[var(--color-surface-hover)] transition-colors">
+                  <tr key={cuota.id} className={`hover:bg-[var(--color-surface-hover)] transition-colors ${
+                    urgencia.tipo === 'vencida' ? 'bg-red-50/40' :
+                    urgencia.tipo === 'vence_hoy' ? 'bg-orange-50/40' : ''
+                  }`}>
                     <td className="py-3.5 px-5">
                       <span
                         className="text-sm font-medium text-[var(--color-text-primary)] truncate block max-w-[220px]"
@@ -233,6 +337,12 @@ function TablaPlanPagos({ cuotas, moneda }: { cuotas: CuotaPago[]; moneda: Moned
                       >
                         {cuota.descripcion}
                       </span>
+                      {/* Badge de urgencia */}
+                      {urgencia.label && (
+                        <span className={`inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-xs font-bold ${urgencia.classes}`}>
+                          {urgencia.label}
+                        </span>
+                      )}
                     </td>
                     <td className="py-3.5 px-5 text-right">
                       <span className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -240,7 +350,11 @@ function TablaPlanPagos({ cuotas, moneda }: { cuotas: CuotaPago[]; moneda: Moned
                       </span>
                     </td>
                     <td className="py-3.5 px-5 hidden sm:table-cell">
-                      <span className="text-sm text-[var(--color-text-secondary)]">
+                      <span className={`text-sm ${
+                        urgencia.tipo === 'vencida' ? 'text-red-600 font-semibold' :
+                        urgencia.tipo === 'vence_hoy' ? 'text-orange-600 font-semibold' :
+                        'text-[var(--color-text-secondary)]'
+                      }`}>
                         {formatearFecha(cuota.fechaVencimiento)}
                       </span>
                     </td>
@@ -382,11 +496,44 @@ function ModalCrearContrato({
     );
   };
 
+  /* ══════════════════════════════════════════════════════════════
+     VALIDADOR MATEMÁTICO EN TIEMPO REAL
+     ══════════════════════════════════════════════════════════════ */
+  const montoNum = parseFloat(montoTotal) || 0;
+  const sumaCuotas = cuotasForm.reduce((sum, c) => sum + (parseFloat(c.monto) || 0), 0);
+  const diferencia = montoNum - sumaCuotas;
+  const cuadra = montoNum > 0 && Math.abs(diferencia) < 0.01;
+  const exceso = sumaCuotas > montoNum + 0.009;
+  const porcentajeDistribuido = montoNum > 0 ? Math.min((sumaCuotas / montoNum) * 100, 100) : 0;
+
+  const simboloMoneda = moneda === "USD" ? "$" : "Bs.";
+
+  /* ── Distribución equitativa ─────────────────────────────── */
+  const distribuirEquitativamente = () => {
+    if (montoNum <= 0 || cuotasForm.length === 0) return;
+
+    const montoPorCuota = Math.floor((montoNum / cuotasForm.length) * 100) / 100;
+    const residuo = Math.round((montoNum - montoPorCuota * cuotasForm.length) * 100) / 100;
+
+    setCuotasForm((prev) =>
+      prev.map((c, i) => ({
+        ...c,
+        monto: (i === prev.length - 1 ? montoPorCuota + residuo : montoPorCuota).toFixed(2),
+      }))
+    );
+  };
+
+  /* ── Calcular porcentaje de una cuota individual ────────── */
+  const obtenerPorcentajeCuota = (montoStr: string): number => {
+    if (montoNum <= 0) return 0;
+    const val = parseFloat(montoStr) || 0;
+    return (val / montoNum) * 100;
+  };
+
   const handleGuardar = async () => {
     setFormError("");
 
     /* ── Validación ──────────────────────────────────────────── */
-    const montoNum = parseFloat(montoTotal);
     if (isNaN(montoNum) || montoNum <= 0) {
       setFormError("El monto total debe ser un número positivo.");
       return;
@@ -412,6 +559,20 @@ function ModalCrearContrato({
         setFormError(`Cuota ${i + 1}: la fecha de vencimiento es obligatoria.`);
         return;
       }
+    }
+
+    /* ── VALIDADOR MATEMÁTICO ESTRICTO (Barrera Frontend) ───── */
+    if (!cuadra) {
+      const fmtTotal = montoNum.toLocaleString("es-BO", { minimumFractionDigits: 2 });
+      const fmtSuma = sumaCuotas.toLocaleString("es-BO", { minimumFractionDigits: 2 });
+      const fmtDiff = Math.abs(diferencia).toLocaleString("es-BO", { minimumFractionDigits: 2 });
+      const direccion = diferencia > 0
+        ? `Faltan ${simboloMoneda} ${fmtDiff} por distribuir.`
+        : `Exceso de ${simboloMoneda} ${fmtDiff}.`;
+      setFormError(
+        `Las cuotas suman ${simboloMoneda} ${fmtSuma} pero el contrato es por ${simboloMoneda} ${fmtTotal}. ${direccion}`
+      );
+      return;
     }
 
     setGuardando(true);
@@ -468,8 +629,9 @@ function ModalCrearContrato({
         <div className="p-6 space-y-6">
           {/* Error */}
           {formError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {formError}
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-red-500" />
+              <span>{formError}</span>
             </div>
           )}
 
@@ -477,7 +639,7 @@ function ModalCrearContrato({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)] mb-1.5">
-                Monto Total
+                Monto Total (Iguala)
               </label>
               <input
                 id="contrato-monto-total"
@@ -512,34 +674,138 @@ function ModalCrearContrato({
             </div>
           </div>
 
+          {/* ══════════════════════════════════════════════════════
+             PANEL VALIDADOR MATEMÁTICO EN TIEMPO REAL
+             ══════════════════════════════════════════════════════ */}
+          {montoNum > 0 && (
+            <div
+              className={`rounded-xl border-2 p-4 transition-all duration-300 ${
+                cuadra
+                  ? "border-emerald-300 bg-emerald-50/50"
+                  : exceso
+                    ? "border-red-300 bg-red-50/50"
+                    : "border-amber-300 bg-amber-50/50"
+              }`}
+            >
+              {/* Barra de progreso */}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
+                  Distribución de Cuotas
+                </span>
+                {cuadra ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    Cuadra exacto
+                  </span>
+                ) : exceso ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-red-700">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    Exceso
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700">
+                    <Clock className="w-3.5 h-3.5" />
+                    Falta distribuir
+                  </span>
+                )}
+              </div>
+
+              {/* Barra visual */}
+              <div className="w-full h-3 rounded-full bg-gray-200 overflow-hidden mb-3">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ease-out ${
+                    cuadra
+                      ? "bg-gradient-to-r from-emerald-400 to-emerald-500"
+                      : exceso
+                        ? "bg-gradient-to-r from-red-400 to-red-500"
+                        : "bg-gradient-to-r from-amber-400 to-amber-500"
+                  }`}
+                  style={{ width: `${Math.min(porcentajeDistribuido, 100)}%` }}
+                />
+              </div>
+
+              {/* Resumen numérico */}
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div>
+                  <p className="text-xs text-[var(--color-text-muted)] mb-0.5">Iguala Total</p>
+                  <p className="text-sm font-bold text-[var(--color-text-primary)]">
+                    {simboloMoneda} {montoNum.toLocaleString("es-BO", { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--color-text-muted)] mb-0.5">Suma Cuotas</p>
+                  <p className={`text-sm font-bold ${cuadra ? "text-emerald-700" : exceso ? "text-red-700" : "text-amber-700"}`}>
+                    {simboloMoneda} {sumaCuotas.toLocaleString("es-BO", { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--color-text-muted)] mb-0.5">
+                    {diferencia >= 0 ? "Por asignar" : "Exceso"}
+                  </p>
+                  <p className={`text-sm font-bold ${cuadra ? "text-emerald-700" : exceso ? "text-red-700" : "text-amber-700"}`}>
+                    {diferencia >= 0 ? "" : "+"}{simboloMoneda} {Math.abs(diferencia).toLocaleString("es-BO", { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Cuotas */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <label className="text-xs font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">
                 Cuotas de Pago
               </label>
-              <button
-                type="button"
-                onClick={agregarCuota}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-gold)]
-                           hover:text-[var(--color-text-primary)] transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Añadir Cuota
-              </button>
+              <div className="flex items-center gap-2">
+                {montoNum > 0 && cuotasForm.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={distribuirEquitativamente}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600
+                               hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors"
+                    title="Divide el monto total equitativamente entre todas las cuotas"
+                  >
+                    <Percent className="w-3 h-3" />
+                    Distribuir Equitativo
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={agregarCuota}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-gold)]
+                             hover:text-[var(--color-text-primary)] transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Añadir Cuota
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3">
-              {cuotasForm.map((cuota, index) => (
+              {cuotasForm.map((cuota, index) => {
+                const porcentaje = obtenerPorcentajeCuota(cuota.monto);
+                return (
                 <div
                   key={index}
                   className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-hover)]
                              p-4 space-y-3"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[var(--color-text-muted)]">
-                      Cuota {index + 1}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-[var(--color-text-muted)]">
+                        Cuota {index + 1}
+                      </span>
+                      {/* Indicador de porcentaje */}
+                      {montoNum > 0 && parseFloat(cuota.monto) > 0 && (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                          porcentaje > 100
+                            ? "bg-red-100 text-red-700"
+                            : "bg-blue-100 text-blue-700"
+                        }`}>
+                          {porcentaje.toFixed(1)}%
+                        </span>
+                      )}
+                    </div>
                     {cuotasForm.length > 1 && (
                       <button
                         type="button"
@@ -550,6 +816,18 @@ function ModalCrearContrato({
                       </button>
                     )}
                   </div>
+
+                  {/* Mini-barra de proporción de esta cuota */}
+                  {montoNum > 0 && parseFloat(cuota.monto) > 0 && (
+                    <div className="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          porcentaje > 100 ? "bg-red-400" : "bg-blue-400"
+                        }`}
+                        style={{ width: `${Math.min(porcentaje, 100)}%` }}
+                      />
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input
@@ -562,18 +840,20 @@ function ModalCrearContrato({
                                  focus:outline-none focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)]
                                  transition-all placeholder:text-[var(--color-text-muted)]"
                     />
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Monto"
-                      value={cuota.monto}
-                      onChange={(e) => actualizarCuota(index, "monto", e.target.value)}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-surface-border)]
-                                 bg-[var(--color-surface-card)] text-[var(--color-text-primary)]
-                                 focus:outline-none focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)]
-                                 transition-all placeholder:text-[var(--color-text-muted)]"
-                    />
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Monto"
+                        value={cuota.monto}
+                        onChange={(e) => actualizarCuota(index, "monto", e.target.value)}
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-surface-border)]
+                                   bg-[var(--color-surface-card)] text-[var(--color-text-primary)]
+                                   focus:outline-none focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold)]
+                                   transition-all placeholder:text-[var(--color-text-muted)]"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -606,40 +886,59 @@ function ModalCrearContrato({
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-[var(--color-surface-card)] px-6 py-4 border-t border-[var(--color-surface-border)] flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={guardando}
-            className="px-4 py-2.5 text-sm font-semibold rounded-lg border border-[var(--color-surface-border)]
-                       text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]
-                       transition-colors disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-          <button
-            id="contrato-guardar-btn"
-            type="button"
-            onClick={handleGuardar}
-            disabled={guardando}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg
-                       bg-[var(--color-navy)] text-[var(--color-gold-light)]
-                       shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)]
-                       transition-all disabled:opacity-50"
-          >
-            {guardando ? (
-              <div className="w-4 h-4 rounded-full border-2 border-[var(--color-gold-light)]/30 border-t-[var(--color-gold-light)] animate-spin" />
-            ) : (
-              <FileText className="w-4 h-4" />
+        <div className="sticky bottom-0 bg-[var(--color-surface-card)] px-6 py-4 border-t border-[var(--color-surface-border)] flex items-center justify-between gap-3">
+          {/* Indicador compacto en el footer */}
+          <div className="text-xs text-[var(--color-text-muted)] hidden sm:block">
+            {montoNum > 0 && (
+              cuadra ? (
+                <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                  <CheckCircle className="w-3.5 h-3.5" /> Cuotas cuadran
+                </span>
+              ) : (
+                <span className={`font-semibold flex items-center gap-1 ${exceso ? "text-red-600" : "text-amber-600"}`}>
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  {exceso ? "Exceso" : "Faltan"} {simboloMoneda} {Math.abs(diferencia).toLocaleString("es-BO", { minimumFractionDigits: 2 })}
+                </span>
+              )
             )}
-            {guardando ? "Guardando..." : "Crear Contrato"}
-          </button>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={guardando}
+              className="px-4 py-2.5 text-sm font-semibold rounded-lg border border-[var(--color-surface-border)]
+                         text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]
+                         transition-colors disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              id="contrato-guardar-btn"
+              type="button"
+              onClick={handleGuardar}
+              disabled={guardando || !cuadra}
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg
+                         bg-[var(--color-navy)] text-[var(--color-gold-light)]
+                         shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)]
+                         transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              title={!cuadra ? "La suma de las cuotas debe coincidir exactamente con el monto total" : ""}
+            >
+              {guardando ? (
+                <div className="w-4 h-4 rounded-full border-2 border-[var(--color-gold-light)]/30 border-t-[var(--color-gold-light)] animate-spin" />
+              ) : (
+                <FileText className="w-4 h-4" />
+              )}
+              {guardando ? "Guardando..." : "Crear Contrato"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -941,6 +1240,8 @@ export default function FinanzasTab({ expedienteId }: FinanzasTabProps) {
   return (
     <div className="space-y-6">
       <ResumenFinancieroCards honorario={honorario} cuotas={cuotas} gastos={gastos} />
+
+      <AlertasActivasPanel cuotas={cuotas} moneda={honorario.moneda} />
 
       <TablaPlanPagos cuotas={cuotas} moneda={honorario.moneda} />
 

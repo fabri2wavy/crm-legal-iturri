@@ -2,14 +2,15 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { DollarSign, AlertTriangle, Clock, Filter, ExternalLink, Banknote } from "lucide-react";
+import { DollarSign, AlertTriangle, Clock, Filter, ExternalLink, Banknote, Bell, Calendar } from "lucide-react";
 import {
   FilaReporteFinanciero,
   ReporteFinancieroGlobal,
   EstadoPagoExpediente,
   MonedaHonorario,
+  AlertaCuotaVencida,
 } from "@/domain/entities/Finanzas";
-import { obtenerReporteFinancieroGlobal } from "@/infrastructure/repositories/finanzasRepository";
+import { obtenerReporteFinancieroGlobal, obtenerAlertasCuotasVencidas } from "@/infrastructure/repositories/finanzasRepository";
 import { obtenerAbogados, UsuarioPerfil } from "@/infrastructure/repositories/usuarioRepository";
 import { ToastContainer, useToasts } from "@/components/ui/Toast";
 
@@ -98,7 +99,7 @@ function GlobalKPICard({ icon, label, valor, accentClass = "text-[var(--color-te
   );
 }
 
-function GlobalFinancialKPIs({ reporte, filasFiltradas }: { reporte: ReporteFinancieroGlobal; filasFiltradas: FilaReporteFinanciero[] }) {
+function GlobalFinancialKPIs({ reporte, filasFiltradas, totalAlertasCobro }: { reporte: ReporteFinancieroGlobal; filasFiltradas: FilaReporteFinanciero[]; totalAlertasCobro: number }) {
   const totalFacturado = filasFiltradas.reduce((s, f) => s + f.montoTotal, 0);
   const totalPendiente = filasFiltradas.reduce((s, f) => s + f.totalPendiente, 0);
   const totalMora = filasFiltradas
@@ -106,7 +107,7 @@ function GlobalFinancialKPIs({ reporte, filasFiltradas }: { reporte: ReporteFina
     .reduce((s, f) => s + f.totalPendiente, 0);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
       <GlobalKPICard
         icon={<DollarSign className="w-5 h-5 text-[var(--color-gold)]" strokeWidth={2} />}
         label="Total Facturado"
@@ -127,6 +128,117 @@ function GlobalFinancialKPIs({ reporte, filasFiltradas }: { reporte: ReporteFina
         accentClass="text-rose-600"
         delay={120}
       />
+      <GlobalKPICard
+        icon={<Bell className="w-5 h-5 text-orange-500" strokeWidth={2} />}
+        label="Cuotas por Vencer"
+        valor={totalAlertasCobro.toString()}
+        accentClass={totalAlertasCobro > 0 ? "text-orange-600" : "text-emerald-600"}
+        delay={180}
+      />
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Panel de Alertas Globales
+   ══════════════════════════════════════════════════════════════ */
+
+function AlertasGlobalesPanel({ alertas }: { alertas: AlertaCuotaVencida[] }) {
+  if (alertas.length === 0) return null;
+
+  const vencidas = alertas.filter((a) => a.urgencia === 'vencida');
+  const venceHoy = alertas.filter((a) => a.urgencia === 'vence_hoy');
+  const proximas = alertas.filter((a) => a.urgencia === 'proxima');
+
+  const URGENCIA_CONFIG = {
+    vencida: { icon: <AlertTriangle className="w-4 h-4" strokeWidth={2} />, iconBg: 'bg-red-100', iconColor: 'text-red-600', rowBg: '' },
+    vence_hoy: { icon: <Clock className="w-4 h-4" strokeWidth={2} />, iconBg: 'bg-orange-100', iconColor: 'text-orange-600', rowBg: '' },
+    proxima: { icon: <Calendar className="w-4 h-4" strokeWidth={2} />, iconBg: 'bg-blue-100', iconColor: 'text-blue-600', rowBg: '' },
+  };
+
+  return (
+    <div
+      className="rounded-xl border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50
+                 shadow-[var(--shadow-md)] overflow-hidden animate-fade-up"
+      style={{ animationDelay: "60ms" }}
+    >
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-orange-200 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100">
+            <Bell className="w-4 h-4 text-orange-600" strokeWidth={2.5} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-orange-900">
+              Alertas de Cobro
+              <span className="ml-2 inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-200 text-orange-800">
+                {alertas.length}
+              </span>
+            </h3>
+            <p className="text-xs text-orange-700/70 mt-0.5">
+              {vencidas.length > 0 && <span className="font-semibold text-red-700">{vencidas.length} vencida{vencidas.length !== 1 ? 's' : ''}</span>}
+              {vencidas.length > 0 && (venceHoy.length > 0 || proximas.length > 0) && ' · '}
+              {venceHoy.length > 0 && <span className="font-semibold text-orange-700">{venceHoy.length} vence{venceHoy.length !== 1 ? 'n' : ''} hoy</span>}
+              {venceHoy.length > 0 && proximas.length > 0 && ' · '}
+              {proximas.length > 0 && <span className="font-semibold text-blue-700">{proximas.length} próxima{proximas.length !== 1 ? 's' : ''}</span>}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Lista */}
+      <div className="divide-y divide-orange-100 max-h-[320px] overflow-y-auto">
+        {alertas.map((alerta) => {
+          const config = URGENCIA_CONFIG[alerta.urgencia];
+          return (
+            <div key={alerta.cuotaId} className="px-5 py-3 flex items-center justify-between hover:bg-orange-50/80 transition-colors group">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${config.iconBg} ${config.iconColor}`}>
+                  {config.icon}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate max-w-[200px]" title={alerta.tituloExpediente}>
+                      {alerta.tituloExpediente}
+                    </p>
+                    <span className="text-xs text-[var(--color-text-muted)] hidden sm:inline">{alerta.numeroCaso}</span>
+                  </div>
+                  <p className="text-xs text-[var(--color-text-muted)] truncate max-w-[240px]">
+                    {alerta.descripcion} · {alerta.nombreCliente}
+                  </p>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold mt-0.5 ${
+                    alerta.urgencia === 'vencida' ? 'bg-red-100 text-red-700 border border-red-200' :
+                    alerta.urgencia === 'vence_hoy' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                    'bg-blue-100 text-blue-700 border border-blue-200'
+                  }`}>
+                    {alerta.urgencia === 'vencida' ? `Vencida hace ${Math.abs(alerta.diasRestantes)} día${Math.abs(alerta.diasRestantes) !== 1 ? 's' : ''}` :
+                     alerta.urgencia === 'vence_hoy' ? '⚠️ Vence hoy' :
+                     `Vence en ${alerta.diasRestantes} día${alerta.diasRestantes !== 1 ? 's' : ''}`}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right flex-shrink-0 ml-3 flex items-center gap-3">
+                <div>
+                  <p className="text-sm font-bold text-[var(--color-text-primary)]">
+                    {formatearMoneda(alerta.monto, alerta.moneda)}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-muted)]">
+                    {new Date(alerta.fechaVencimiento).toLocaleDateString('es-BO', { day: '2-digit', month: 'short' })}
+                  </p>
+                </div>
+                <Link
+                  href={`/dashboard/casos/${alerta.expedienteId}`}
+                  className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-gold)]
+                             hover:bg-[var(--color-gold-dim)] transition-all opacity-0 group-hover:opacity-100"
+                  title="Ver expediente"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -317,6 +429,7 @@ function MasterCollectionsTable({ filas }: { filas: FilaReporteFinanciero[] }) {
 export default function FinanzasDashboardPage() {
   const [reporte, setReporte] = useState<ReporteFinancieroGlobal | null>(null);
   const [abogados, setAbogados] = useState<UsuarioPerfil[]>([]);
+  const [alertasCobro, setAlertasCobro] = useState<AlertaCuotaVencida[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -330,9 +443,10 @@ export default function FinanzasDashboardPage() {
     setIsLoading(true);
     setError("");
 
-    const [reporteRes, abogadosRes] = await Promise.all([
+    const [reporteRes, abogadosRes, alertasRes] = await Promise.all([
       obtenerReporteFinancieroGlobal(),
       obtenerAbogados(),
+      obtenerAlertasCuotasVencidas(),
     ]);
 
     if (reporteRes.error) {
@@ -343,6 +457,7 @@ export default function FinanzasDashboardPage() {
 
     setReporte(reporteRes.data);
     setAbogados(abogadosRes);
+    setAlertasCobro(alertasRes.data ?? []);
     setIsLoading(false);
   }, []);
 
@@ -429,7 +544,9 @@ export default function FinanzasDashboardPage() {
       </div>
 
       <div className="space-y-8">
-        <GlobalFinancialKPIs reporte={reporte} filasFiltradas={filasFiltradas} />
+        <GlobalFinancialKPIs reporte={reporte} filasFiltradas={filasFiltradas} totalAlertasCobro={alertasCobro.length} />
+
+        <AlertasGlobalesPanel alertas={alertasCobro} />
 
         <FilterBar
           abogados={abogados}

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import BotonSalir from "@/components/layout/BotonSalir";
 import PerfilUsuario from "@/components/layout/PerfilUsuario";
+import WidgetAsistente from "@/components/WidgetAsistente";
 import { obtenerPerfilActual } from "@/infrastructure/repositories/usuarioRepository";
 
 type NavItem = {
@@ -21,6 +22,7 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rol, setRol] = useState<string>("cliente"); 
   const [cargandoObj, setCargandoObj] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -28,6 +30,7 @@ export default function DashboardLayout({
       const perfil = await obtenerPerfilActual();
       if (perfil) {
         setRol(perfil.rol);
+        setUserId(perfil.id);
       }
       setCargandoObj(false);
     }
@@ -329,6 +332,11 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
+
+      {/* ── Widget Asistente AI ─────────────────────────────── */}
+      {userId && (rol === 'abogado' || rol === 'admin') && (
+        <WidgetAsistente abogadoId={userId} />
+      )}
     </div>
   );
 }

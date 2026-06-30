@@ -15,6 +15,7 @@ import {
   FilaReporteFinanciero,
   ReporteFinancieroGlobal,
   EstadoPagoExpediente,
+  AlertaCuotaVencida,
 } from '../../domain/entities/Finanzas';
 
 /* ══════════════════════════════════════════════════════════════
@@ -191,6 +192,32 @@ export async function crearHonorarioConCuotas(
     }
 
     const userId = authData.user.id;
+
+    /* ══════════════════════════════════════════════════════════
+       VALIDADOR MATEMÁTICO ESTRICTO (Barrera Server-Side)
+       ──────────────────────────────────────────────────────────
+       Regla de oro financiera: la suma de las cuotas DEBE
+       coincidir exactamente con el monto total del contrato.
+       Tolerancia de 0.01 para errores de punto flotante.
+       ══════════════════════════════════════════════════════════ */
+    const sumaCuotas = cuotas.reduce((sum, c) => sum + c.monto, 0);
+    const diferencia = Math.abs(sumaCuotas - data.montoTotal);
+
+    if (diferencia >= 0.01) {
+      const simbolo = data.moneda === 'USD' ? '$' : 'Bs.';
+      const fmtTotal = data.montoTotal.toLocaleString('es-BO', { minimumFractionDigits: 2 });
+      const fmtSuma = sumaCuotas.toLocaleString('es-BO', { minimumFractionDigits: 2 });
+      const fmtDiff = Math.abs(sumaCuotas - data.montoTotal).toLocaleString('es-BO', { minimumFractionDigits: 2 });
+
+      const direccion = sumaCuotas < data.montoTotal
+        ? `Faltan ${simbolo} ${fmtDiff} por distribuir.`
+        : `Exceso de ${simbolo} ${fmtDiff}.`;
+
+      return {
+        data: null,
+        error: `Error de integridad financiera: las cuotas suman ${simbolo} ${fmtSuma} pero el contrato es por ${simbolo} ${fmtTotal}. ${direccion}`,
+      };
+    }
 
     /* ── Paso 1: Insertar honorario con creado_por inyectado ─── */
     const { data: honorarioInsertado, error: honorarioError } = await supabase
@@ -426,6 +453,119 @@ export async function obtenerReporteFinancieroGlobal(): Promise<RepositoryRespon
     };
   } catch (err) {
     const mensaje = err instanceof Error ? err.message : 'Error desconocido al obtener reporte financiero.';
+    return { data: null, error: mensaje };
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   QUERY: Alertas de cuotas próximas a vencer o vencidas
+   ──────────────────────────────────────────────────────────────
+   Consulta todas las cuotas con estado 'pendiente' o 'atrasado'
+   cuya fecha_vencimiento sea ≤ 7 días en el futuro o ya pasada.
+   Incluye contexto completo: expediente, cliente y abogado.
+   ══════════════════════════════════════════════════════════════ */
+
+interface FilaCuotaAlerta {
+  id: string;
+  honorario_id: string;
+  descripcion: string;
+  monto: number;
+  fecha_vencimiento: string;
+  estado: string;
+  fecha_pago: string | null;
+  creado_en: string;
+  honorarios: {
+    id: string;
+    monto_total: number;
+    moneda: string;
+    expediente_id: string;
+    expedientes: {
+      id: string;
+      numero_caso: string;
+      titulo: string;
+      cliente: { nombres: string; apellido_paterno: string; apellido_materno: string } | null;
+      abogado: { nombres: string; apellido_paterno: string; apellido_materno: string } | null;
+    } | null;
+  } | null;
+}
+
+export async function obtenerAlertasCuotasVencidas(): Promise<RepositoryResponse<AlertaCuotaVencida[]>> {
+  const supabase = await createClient();
+
+  try {
+    // Fecha límite: 7 días a partir de hoy
+    const hoy = new Date();
+    const limite = new Date(hoy);
+    limite.setDate(limite.getDate() + 7);
+    const limiteISO = limite.toISOString().split('T')[0];
+
+    const { data: cuotasRaw, error: queryError } = await supabase
+      .from('cuotas_pago')
+      .select(`
+        *,
+        honorarios!honorario_id(
+          id, monto_total, moneda, expediente_id,
+          expedientes!expediente_id(
+            id, numero_caso, titulo,
+            cliente:perfiles!cliente_id(nombres, apellido_paterno, apellido_materno),
+            abogado:perfiles!abogado_asignado_id(nombres, apellido_paterno, apellido_materno)
+          )
+        )
+      `)
+      .in('estado', ['pendiente', 'atrasado'])
+      .lte('fecha_vencimiento', limiteISO)
+      .order('fecha_vencimiento', { ascending: true });
+
+    if (queryError) {
+      return { data: null, error: `Error al obtener alertas de cuotas: ${queryError.message}` };
+    }
+
+    const alertas: AlertaCuotaVencida[] = ((cuotasRaw ?? []) as unknown as FilaCuotaAlerta[]).map((fila) => {
+      const honorario = fila.honorarios;
+      const expediente = honorario?.expedientes;
+
+      const hoyDate = new Date();
+      hoyDate.setHours(0, 0, 0, 0);
+      const vencimiento = new Date(fila.fecha_vencimiento);
+      vencimiento.setHours(0, 0, 0, 0);
+      const diffMs = vencimiento.getTime() - hoyDate.getTime();
+      const diasRestantes = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+      let urgencia: AlertaCuotaVencida['urgencia'];
+      if (diasRestantes < 0) urgencia = 'vencida';
+      else if (diasRestantes === 0) urgencia = 'vence_hoy';
+      else urgencia = 'proxima';
+
+      return {
+        cuotaId: fila.id,
+        descripcion: fila.descripcion,
+        monto: fila.monto,
+        moneda: (honorario?.moneda ?? 'BS') as MonedaHonorario,
+        fechaVencimiento: fila.fecha_vencimiento,
+        estado: fila.estado as EstadoCuota,
+        diasRestantes,
+        urgencia,
+        expedienteId: honorario?.expediente_id ?? '',
+        numeroCaso: expediente?.numero_caso ?? '—',
+        tituloExpediente: expediente?.titulo ?? '—',
+        nombreCliente: construirNombre(
+          expediente?.cliente?.nombres,
+          expediente?.cliente?.apellido_paterno,
+          expediente?.cliente?.apellido_materno,
+          'Cliente desconocido'
+        ),
+        abogadoNombre: construirNombre(
+          expediente?.abogado?.nombres,
+          expediente?.abogado?.apellido_paterno,
+          expediente?.abogado?.apellido_materno,
+          'Sin asignar'
+        ),
+      };
+    });
+
+    return { data: alertas, error: null };
+  } catch (err) {
+    const mensaje = err instanceof Error ? err.message : 'Error desconocido al obtener alertas.';
     return { data: null, error: mensaje };
   }
 }

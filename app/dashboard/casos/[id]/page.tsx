@@ -8,6 +8,7 @@ import InformesTab from "./InformesTab";
 import InformesAvanceTab from "./InformesAvanceTab";
 import FinanzasTab from "./FinanzasTab";
 import PlantillasTab from "./PlantillasTab";
+import { ModalEditarExpediente } from "./ModalEditarExpediente";
 import { obtenerExpedientePorId, actualizarExpediente } from "@/infrastructure/repositories/expedienteRepository";
 import { 
   obtenerDocumentos, 
@@ -106,6 +107,9 @@ export default function DetalleExpedientePage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [documentoToDelete, setDocumentoToDelete] = useState<Documento | null>(null);
   const [eliminandoDoc, setEliminandoDoc] = useState(false);
+
+  /* ── Modal Edición de Expediente ────────────────────────────── */
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   /* ── Helpers para íconos de tipo de archivo ─────────────────── */
   const getFileIcon = (nombre: string) => {
@@ -477,7 +481,7 @@ export default function DetalleExpedientePage() {
                   Detalles Judiciales
                 </h3>
                 <button
-                  onClick={() => alert('Próximamente: Modal de edición de expediente')}
+                  onClick={() => setIsEditModalOpen(true)}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors px-2.5 py-1.5 rounded-md hover:bg-[var(--color-surface-hover)]"
                 >
                   <Pencil className="w-3.5 h-3.5" />
@@ -788,6 +792,17 @@ export default function DetalleExpedientePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Modal Edición de Expediente ─────────────────────────── */}
+      {isEditModalOpen && (
+        <ModalEditarExpediente
+          expediente={caso}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={(datosActualizados) => {
+            setCaso((prev: any) => ({ ...prev, ...datosActualizados }));
+          }}
+        />
       )}
 
     </div>

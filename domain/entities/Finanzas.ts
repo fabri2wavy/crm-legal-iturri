@@ -103,3 +103,25 @@ export interface ReporteFinancieroGlobal {
   totalPendiente: number;
   totalMora: number;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Entidad: AlertaCuotaVencida — Cuota próxima a vencer o vencida
+   ══════════════════════════════════════════════════════════════ */
+
+export type UrgenciaCuota = 'vencida' | 'vence_hoy' | 'proxima';
+
+export interface AlertaCuotaVencida {
+  cuotaId: string;
+  descripcion: string;
+  monto: number;
+  moneda: MonedaHonorario;
+  fechaVencimiento: string;      // ISO 8601
+  estado: EstadoCuota;
+  diasRestantes: number;          // Negativo si ya venció
+  urgencia: UrgenciaCuota;
+  expedienteId: string;
+  numeroCaso: string;
+  tituloExpediente: string;
+  nombreCliente: string;
+  abogadoNombre: string;
+}

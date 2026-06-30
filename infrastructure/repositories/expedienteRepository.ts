@@ -224,6 +224,11 @@ export async function obtenerExpedientePorId(id: string): Promise<any | null> {
 export async function actualizarExpediente(
   id: string,
   datosActualizados: {
+    numeroCaso?: string;
+    titulo?: string;
+    juzgado?: string;
+    materia?: string;
+    parteContraria?: string;
     estado?: string;
     informeDespacho?: string;
     informeCliente?: string;
@@ -245,6 +250,11 @@ export async function actualizarExpediente(
   const supabase = createClient();
   const paqueteActualizacion: any = {};
 
+  if (datosActualizados.numeroCaso !== undefined) paqueteActualizacion.numero_caso = datosActualizados.numeroCaso;
+  if (datosActualizados.titulo !== undefined) paqueteActualizacion.titulo = datosActualizados.titulo;
+  if (datosActualizados.juzgado !== undefined) paqueteActualizacion.juzgado = datosActualizados.juzgado;
+  if (datosActualizados.materia !== undefined) paqueteActualizacion.materia = datosActualizados.materia;
+  if (datosActualizados.parteContraria !== undefined) paqueteActualizacion.parte_contraria = datosActualizados.parteContraria;
   if (datosActualizados.estado) paqueteActualizacion.estado = datosActualizados.estado;
   if (datosActualizados.informeDespacho !== undefined) paqueteActualizacion.informe_despacho = datosActualizados.informeDespacho;
   if (datosActualizados.informeCliente !== undefined) paqueteActualizacion.informe_cliente = datosActualizados.informeCliente;
