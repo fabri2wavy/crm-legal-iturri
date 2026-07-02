@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { DollarSign, AlertTriangle, Clock, Filter, ExternalLink, Banknote, Bell, Calendar } from "lucide-react";
 import {
   FilaReporteFinanciero,
@@ -11,7 +12,7 @@ import {
   AlertaCuotaVencida,
 } from "@/domain/entities/Finanzas";
 import { obtenerReporteFinancieroGlobal, obtenerAlertasCuotasVencidas } from "@/infrastructure/repositories/finanzasRepository";
-import { obtenerAbogados, UsuarioPerfil } from "@/infrastructure/repositories/usuarioRepository";
+import { obtenerAbogados, UsuarioPerfil, obtenerPerfilActual } from "@/infrastructure/repositories/usuarioRepository";
 import { ToastContainer, useToasts } from "@/components/ui/Toast";
 
 /* ══════════════════════════════════════════════════════════════
@@ -431,12 +432,27 @@ export default function FinanzasDashboardPage() {
   const [abogados, setAbogados] = useState<UsuarioPerfil[]>([]);
   const [alertasCobro, setAlertasCobro] = useState<AlertaCuotaVencida[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [verificandoAcceso, setVerificandoAcceso] = useState(true);
   const [error, setError] = useState("");
 
   const [filtroAbogado, setFiltroAbogado] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
 
   const { toasts, addToast, removeToast } = useToasts();
+  const router = useRouter();
+
+  /* ── Verificación de Acceso ────────────────────────────────── */
+  useEffect(() => {
+    async function verificarAcceso() {
+      const perfil = await obtenerPerfilActual();
+      if (!perfil || (perfil.rol !== 'admin' && perfil.rol !== 'finanzas')) {
+        router.push('/dashboard');
+      } else {
+        setVerificandoAcceso(false);
+      }
+    }
+    verificarAcceso();
+  }, [router]);
 
   /* ── Carga inicial ─────────────────────────────────────────── */
   const cargarDatos = useCallback(async () => {
@@ -462,8 +478,10 @@ export default function FinanzasDashboardPage() {
   }, []);
 
   useEffect(() => {
-    cargarDatos();
-  }, [cargarDatos]);
+    if (!verificandoAcceso) {
+      cargarDatos();
+    }
+  }, [cargarDatos, verificandoAcceso]);
 
   /* ── Filtrado client-side ──────────────────────────────────── */
   const filasFiltradas = useMemo(() => {
@@ -483,14 +501,22 @@ export default function FinanzasDashboardPage() {
   }, [reporte, filtroAbogado, filtroEstado]);
 
   /* ── Render: Loading ───────────────────────────────────────── */
-  if (isLoading) {
+  if (verificandoAcceso || isLoading) {
     return (
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Finanzas</h1>
           <p className="text-sm text-[var(--color-text-muted)] mt-1">Panel financiero de la firma</p>
         </div>
-        <GlobalFinanzasSkeleton />
+        {verificandoAcceso ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <div className="w-10 h-10 rounded-full border-2 border-[var(--color-surface-border)]
+                            border-t-[var(--color-gold)] animate-spin" />
+            <span className="text-[var(--color-text-muted)]">Verificando permisos...</span>
+          </div>
+        ) : (
+          <GlobalFinanzasSkeleton />
+        )}
       </div>
     );
   }

@@ -42,7 +42,7 @@ export default function InformesTab({ expedienteId }: InformesTabProps) {
       const data = await obtenerBitacoraPorExpediente(expedienteId);
       setEntradas(data);
     } catch {
-      setError("Error al cargar la bitácora.");
+      setError("Error al cargar las comunicaciones.");
     } finally {
       setCargando(false);
     }
@@ -190,7 +190,7 @@ export default function InformesTab({ expedienteId }: InformesTabProps) {
             <Clock className="w-6 h-6 text-gray-400" strokeWidth={1.5} />
           </div>
           <p className="text-sm font-medium text-gray-500">
-            Aún no hay notas en la bitácora
+            Aún no hay mensajes en las comunicaciones
           </p>
           <p className="text-xs text-gray-400 mt-1">
             Publica la primera actualización del caso.

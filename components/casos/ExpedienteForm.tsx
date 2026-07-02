@@ -140,7 +140,7 @@ export function ExpedienteForm({
           <div>
             <Label req>Cliente Patrocinado</Label>
             {listaClientes.length === 0
-              ? <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-sm"><ShieldAlert className="w-4 h-4 flex-shrink-0"/>No hay clientes registrados.</div>
+              ? <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 text-sm"><ShieldAlert className="w-4 h-4 flex-shrink-0"/>No hay clientes registrados.</div>
               : <select {...register("clienteId")} className={sel} disabled={isLoading}>
                   <option value="">Seleccione un cliente...</option>
                   {listaClientes.map(c => <option key={c.id} value={c.id}>{c.nombreCompleto}</option>)}
@@ -273,7 +273,7 @@ export function ExpedienteForm({
       {/* SECCIÓN 4: Bloque Penal (condicional) */}
       <div className={`overflow-hidden transition-all duration-300 ease-in-out ${esPenal ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0 pointer-events-none"}`}>
         <section className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-          <h4 className="text-xs font-extrabold text-rose-500 uppercase tracking-widest mb-4 pb-2 border-b border-rose-100 flex items-center gap-2">
+          <h4 className="text-xs font-extrabold text-slate-700 uppercase tracking-widest mb-4 pb-2 border-b border-slate-200 flex items-center gap-2">
             <ShieldAlert className="w-3.5 h-3.5" />
             Datos específicos — Proceso Penal
           </h4>

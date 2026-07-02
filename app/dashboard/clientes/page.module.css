@@ -397,15 +397,15 @@
 }
 
 .stepCircle.active {
-  background: var(--color-gold);
-  border-color: var(--color-gold);
-  color: var(--color-text-on-gold);
-  box-shadow: 0 0 0 4px var(--color-gold-dim);
+  background: var(--color-navy);
+  border-color: var(--color-navy);
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(26, 26, 26, 0.1);
 }
 
 .stepCircle.completed {
-  background: var(--color-success);
-  border-color: var(--color-success);
+  background: var(--color-info);
+  border-color: var(--color-info);
   color: #ffffff;
 }
 
@@ -424,7 +424,7 @@
 }
 
 .stepLabel.completed {
-  color: var(--color-success);
+  color: var(--color-info);
 }
 
 /* ── Connector line between steps ──────────────────────────── */
@@ -441,7 +441,7 @@
 }
 
 .stepConnector.completed {
-  background: var(--color-success);
+  background: var(--color-info);
 }
 
 /* ── Step content section ──────────────────────────────────── */

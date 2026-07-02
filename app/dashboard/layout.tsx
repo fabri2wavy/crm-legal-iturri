@@ -145,7 +145,7 @@ export default function DashboardLayout({
         { href: "/dashboard/configuracion", label: "Configuración", icon: configuracionIcon, section: "ADMINISTRACIÓN" },
         { href: "/dashboard/auditoria", label: "Auditoría", icon: auditoriaIcon },
       ];
-    } else if (userRol === 'abogado') {
+    } else if (userRol === 'abogado' || userRol === 'socio') {
       const perfilIcon = (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -153,12 +153,33 @@ export default function DashboardLayout({
         </svg>
       );
 
-      return [
+      const items: NavItem[] = [
         inicioItem,
         { href: "/dashboard/casos", label: "Mis Casos", icon: casosIcon },
         { href: "/dashboard/clientes", label: "Mis Clientes", icon: clientesIcon },
         { href: "/dashboard/agenda", label: "Agenda", icon: agendaIcon },
         { href: "/dashboard/plantillas", label: "Plantillas", icon: plantillasIcon },
+      ];
+
+      // Socio puede ver el equipo y reportes
+      if (userRol === 'socio') {
+        items.push({ href: "/dashboard/equipo", label: "Equipo", icon: equipoIcon });
+        items.push({ href: "/dashboard/reportes", label: "Reportes", icon: reportesIcon });
+      }
+
+      items.push({ href: "/dashboard/perfil", label: "Mi Perfil", icon: perfilIcon, section: "MI CUENTA" });
+
+      return items;
+    } else if (userRol === 'finanzas') {
+      const perfilIcon = (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      );
+      return [
+        inicioItem,
+        { href: "/dashboard/finanzas", label: "Finanzas", icon: finanzasIcon },
         { href: "/dashboard/perfil", label: "Mi Perfil", icon: perfilIcon, section: "MI CUENTA" },
       ];
     } else {
@@ -245,7 +266,7 @@ export default function DashboardLayout({
                   {item.section && (
                     <p
                       className="text-[9px] font-bold uppercase tracking-[0.2em] px-4 pt-5 pb-2"
-                      style={{ color: "rgba(204, 0, 0, 0.7)" }}
+                      style={{ color: "rgba(163, 32, 32, 0.7)" }}
                     >
                       {item.section}
                     </p>
@@ -255,7 +276,7 @@ export default function DashboardLayout({
                     className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
                     style={{
                       background: active
-                        ? "rgba(204, 0, 0, 0.15)"
+                        ? "rgba(163, 32, 32, 0.15)"
                         : "transparent",
                       color: active
                         ? "var(--color-gold-light)"

@@ -1,46 +1,46 @@
 :root {
   /* ── Colores Primarios (Dark / Charcoal) ──────────────────── */
-  --color-navy:            #1a1a1a;
-  --color-navy-mid:        #232323;
-  --color-navy-card:       #2a2a2a;
-  --color-navy-light:      #404040;
+  --color-navy:            #202124; /* Sidebar */
+  --color-navy-mid:        #2a2b2e;
+  --color-navy-card:       #303134;
+  --color-navy-light:      #4a4b50;
   --color-navy-border:     rgba(255, 255, 255, 0.10);
 
   /* ── Colores Accent (Rojo Iturri) ─────────────────────────── */
-  --color-gold:            #CC0000;
-  --color-gold-light:      #E63333;
-  --color-gold-dim:        rgba(204, 0, 0, 0.12);
-  --color-gold-glow:       rgba(204, 0, 0, 0.06);
+  --color-gold:            #A32020; /* Rojo corporativo */
+  --color-gold-light:      #C92E2E;
+  --color-gold-dim:        rgba(163, 32, 32, 0.12);
+  --color-gold-glow:       rgba(163, 32, 32, 0.06);
 
   /* ── Superficie (Light Theme — Dashboard) ─────────────────── */
-  --color-surface:         #f8f9fc;
-  --color-surface-card:    #ffffff;
-  --color-surface-hover:   #f1f3f8;
-  --color-surface-border:  #e2e6ef;
+  --color-surface:         #F8F9FA; /* Fondo */
+  --color-surface-card:    #FFFFFF; /* Tarjetas */
+  --color-surface-hover:   #F1F3F5; /* Hover */
+  --color-surface-border:  #E5E7EB; /* Bordes */
 
   /* ── Texto ────────────────────────────────────────────────── */
-  --color-text-primary:    #1a2332;
-  --color-text-secondary:  #5a6a7e;
-  --color-text-muted:      #8a9ab0;
-  --color-text-on-dark:    #e8e8e8;
-  --color-text-on-gold:    #ffffff;
+  --color-text-primary:    #2B2B2B; /* Texto principal */
+  --color-text-secondary:  #6B7280; /* Texto secundario */
+  --color-text-muted:      #9CA3AF;
+  --color-text-on-dark:    #F9FAFB;
+  --color-text-on-gold:    #FFFFFF;
 
   /* ── Estados Semánticos ───────────────────────────────────── */
-  --color-success:         #10b981;
-  --color-success-bg:      rgba(16, 185, 129, 0.1);
-  --color-success-border:  rgba(16, 185, 129, 0.25);
+  --color-success:         #4F8A5B; /* Éxito */
+  --color-success-bg:      rgba(79, 138, 91, 0.1);
+  --color-success-border:  rgba(79, 138, 91, 0.25);
 
-  --color-warning:         #f59e0b;
-  --color-warning-bg:      rgba(245, 158, 11, 0.1);
-  --color-warning-border:  rgba(245, 158, 11, 0.25);
+  --color-warning:         #C58B1C; /* Advertencia */
+  --color-warning-bg:      rgba(197, 139, 28, 0.1);
+  --color-warning-border:  rgba(197, 139, 28, 0.25);
 
-  --color-danger:          #ef4444;
+  --color-danger:          #ef4444; /* Not specified, keeping tailwind default */
   --color-danger-bg:       rgba(239, 68, 68, 0.08);
   --color-danger-border:   rgba(239, 68, 68, 0.2);
 
-  --color-info:            #3b82f6;
-  --color-info-bg:         rgba(59, 130, 246, 0.08);
-  --color-info-border:     rgba(59, 130, 246, 0.2);
+  --color-info:            #5B728A; /* Información */
+  --color-info-bg:         rgba(91, 114, 138, 0.08);
+  --color-info-border:     rgba(91, 114, 138, 0.2);
 
   /* ── Tipografía ───────────────────────────────────────────── */
   --font-brand:            'Cormorant Garamond', Georgia, serif;

@@ -362,7 +362,7 @@ export default function EquipoPage() {
   };
 
   const inputClass = (campo: keyof ErroresForm) =>
-    `${INPUT} ${erroresForm[campo] ? "!border-red-400 !ring-red-100 focus:!border-red-500 focus:!ring-red-200" : ""}`;
+    `${INPUT} ${erroresForm[campo] ? "!border-rose-300 !ring-rose-50 focus:!border-rose-400 focus:!ring-rose-100" : ""}`;
 
   /* ── Guard ──────────────────────────────────────────────────── */
   if (verificando) {
@@ -531,7 +531,7 @@ export default function EquipoPage() {
               className="flex-1 overflow-y-auto p-6 space-y-6"
             >
               {errorFormGlobal && (
-                <div className="p-4 rounded-xl bg-red-50 border border-red-200 flex gap-3 text-red-800 text-sm font-medium">
+                <div className="p-4 rounded-xl bg-rose-50 border border-rose-100 flex gap-3 text-rose-800 text-sm font-medium">
                   <AlertCircle className="w-5 h-5 flex-shrink-0" />
                   {errorFormGlobal}
                 </div>

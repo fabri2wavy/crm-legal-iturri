@@ -3,12 +3,13 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { User, Mail, Phone, ExternalLink, Gavel, Hash, FileText, Pencil, Users, UploadCloud, Download, Trash2, FileImage, File, FileSpreadsheet, AlertTriangle } from "lucide-react";
+import { User, Mail, Phone, ExternalLink, Gavel, Hash, FileText, Pencil, Users, UploadCloud, Download, Trash2, FileImage, File, FileSpreadsheet, AlertTriangle, Share2 } from "lucide-react";
 import InformesTab from "./InformesTab";
 import InformesAvanceTab from "./InformesAvanceTab";
 import FinanzasTab from "./FinanzasTab";
 import PlantillasTab from "./PlantillasTab";
 import { ModalEditarExpediente } from "./ModalEditarExpediente";
+import { ModalCompartirExpediente } from "./ModalCompartirExpediente";
 import { obtenerExpedientePorId, actualizarExpediente } from "@/infrastructure/repositories/expedienteRepository";
 import { 
   obtenerDocumentos, 
@@ -75,7 +76,7 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
 const TAB_ITEMS = [
   { key: "info", label: "Información" },
   { key: "docs", label: "Documentos" },
-  { key: "informe", label: "Bitácora" },
+  { key: "informe", label: "Comunicaciones" },
   { key: "avance", label: "Informes Avance" },
   { key: "finanzas", label: "Finanzas" },
   { key: "plantillas", label: "Plantillas" },
@@ -110,6 +111,9 @@ export default function DetalleExpedientePage() {
 
   /* ── Modal Edición de Expediente ────────────────────────────── */
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  /* ── Modal Compartir Expediente ─────────────────────────────── */
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   /* ── Helpers para íconos de tipo de archivo ─────────────────── */
   const getFileIcon = (nombre: string) => {
@@ -357,22 +361,33 @@ export default function DetalleExpedientePage() {
           </div>
         </div>
         <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
-          <select
-            value={caso.estado}
-            onChange={(e) => handleCambiarEstado(e.target.value)}
-            className="px-4 py-2.5 rounded-lg font-bold uppercase text-xs cursor-pointer outline-none
-                       transition-all duration-200"
-            style={{
-              background: estadoStyle.bg,
-              color: estadoStyle.color,
-              border: `1px solid ${estadoStyle.border}`,
-            }}
-          >
-            <option value="en_espera">En Espera</option>
-            <option value="mediacion">Mediación</option>
-            <option value="juicio">En Juicio</option>
-            <option value="cerrado">Caso Cerrado</option>
-          </select>
+          <div className="flex items-center gap-2">
+            {(perfilUsuario?.rol === 'admin' || perfilUsuario?.rol === 'socio') && (
+              <button
+                onClick={() => setIsShareModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-[var(--color-gold)] bg-transparent border border-[var(--color-gold)] rounded-lg hover:bg-[var(--color-gold-dim)] transition-colors"
+              >
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Compartir</span>
+              </button>
+            )}
+            <select
+              value={caso.estado}
+              onChange={(e) => handleCambiarEstado(e.target.value)}
+              className="px-4 py-2.5 rounded-lg font-bold uppercase text-xs cursor-pointer outline-none
+                         transition-all duration-200"
+              style={{
+                background: estadoStyle.bg,
+                color: estadoStyle.color,
+                border: `1px solid ${estadoStyle.border}`,
+              }}
+            >
+              <option value="en_espera">En Espera</option>
+              <option value="mediacion">Mediación</option>
+              <option value="juicio">En Juicio</option>
+              <option value="cerrado">Caso Cerrado</option>
+            </select>
+          </div>
           <p className="text-xs text-[var(--color-text-muted)]">
             Creado: {caso.fechaCreacion.toLocaleDateString()}
           </p>
@@ -801,6 +816,18 @@ export default function DetalleExpedientePage() {
           onClose={() => setIsEditModalOpen(false)}
           onSuccess={(datosActualizados) => {
             setCaso((prev: any) => ({ ...prev, ...datosActualizados }));
+          }}
+        />
+      )}
+
+      {/* ── Modal Compartir Expediente ────────────────────────── */}
+      {isShareModalOpen && perfilUsuario && (
+        <ModalCompartirExpediente
+          expedienteId={idCaso}
+          usuarioActualId={perfilUsuario.id}
+          onClose={() => setIsShareModalOpen(false)}
+          onSuccess={() => {
+            // Se puede agregar un toast global de éxito aquí si lo deseas
           }}
         />
       )}
