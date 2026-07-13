@@ -296,8 +296,10 @@ export default function DetalleMiembroPage() {
                   <div className="space-y-1">
                     <label htmlFor="rol" className={LABEL}>Rol de Sistema</label>
                     <select id="rol" className={INPUT} value={formData.rol} onChange={(e) => actualizarCampo("rol", e.target.value)}>
+                      <option value="socio">Asociado Senior / Socio</option>
                       <option value="abogado">Abogado</option>
                       <option value="paralegal">Paralegal</option>
+                      <option value="finanzas">Administración / Finanzas</option>
                       <option value="admin">Administrador</option>
                     </select>
                   </div>

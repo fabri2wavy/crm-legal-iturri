@@ -39,6 +39,11 @@ export async function completarRegistroClienteAdmin(userId: string, datos: any, 
                 direccion_oficina: datos.direccionOficina || null,
                 referido_por: datos.referidoPor || null,
                 contacto_referidor: datos.contactoReferidor || null,
+                etapa_comercial: datos.etapaComercial || 'activo',
+                tipo_cliente: datos.tipoCliente || 'persona',
+                nombre_empresa: datos.nombreEmpresa || null,
+                representante_legal: datos.representanteLegal || null,
+                area_especialidad: datos.areaEspecialidad || null,
             }]);
 
         if (detalleError) throw new Error(detalleError.message);

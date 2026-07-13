@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DollarSign, AlertTriangle, Clock, Filter, ExternalLink, Banknote, Bell, Calendar } from "lucide-react";
+import { DollarSign, AlertTriangle, Clock, Filter, ExternalLink, Banknote, Bell, Calendar, Target } from "lucide-react";
 import {
   FilaReporteFinanciero,
   ReporteFinancieroGlobal,
@@ -155,6 +155,7 @@ function AlertasGlobalesPanel({ alertas }: { alertas: AlertaCuotaVencida[] }) {
     vencida: { icon: <AlertTriangle className="w-4 h-4" strokeWidth={2} />, iconBg: 'bg-red-100', iconColor: 'text-red-600', rowBg: '' },
     vence_hoy: { icon: <Clock className="w-4 h-4" strokeWidth={2} />, iconBg: 'bg-orange-100', iconColor: 'text-orange-600', rowBg: '' },
     proxima: { icon: <Calendar className="w-4 h-4" strokeWidth={2} />, iconBg: 'bg-blue-100', iconColor: 'text-blue-600', rowBg: '' },
+    hito_pendiente: { icon: <Target className="w-4 h-4" strokeWidth={2} />, iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600', rowBg: '' },
   };
 
   return (

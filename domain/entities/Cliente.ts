@@ -5,6 +5,14 @@ export interface Cliente {
   telefono: string;
   rol: string;
 
+  tipoCliente?: 'persona' | 'empresa';
+  etapaComercial?: 'potencial' | 'activo';
+  nombreEmpresa?: string | null;
+  nit?: string;
+  representanteLegal?: string | null;
+  areaEspecialidad?: string | null;
+  abogadoContacto?: string;
+
   nombresLegales?: string;
   apellidoPaterno?: string;
   apellidoMaterno?: string;

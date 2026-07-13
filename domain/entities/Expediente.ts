@@ -42,4 +42,9 @@ export interface Expediente {
   etapaProcesal?: string;
   /** Cuantía o valor económico del proceso. */
   cuantia?: string;
+
+  // ── Campos Adicionales (v1.1) ──────────
+  historialJuzgados?: any[] | any;
+  oficiosSolicitados?: string;
+  medidasPreviasRemate?: string;
 }

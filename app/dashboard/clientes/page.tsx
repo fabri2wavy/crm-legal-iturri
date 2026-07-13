@@ -33,6 +33,10 @@ const LABEL = "text-base font-semibold text-gray-900 block";
 
 /* ── Estado inicial del formulario ───────────────────────────── */
 const FORM_INIT = {
+  tipoCliente: "Natural",
+  nit: "",
+  representanteLegal: "",
+  abogadoContacto: "",
   nombres: "",
   apellidoPaterno: "",
   apellidoMaterno: "",
@@ -59,6 +63,8 @@ type ErroresPaso1 = {
   email?: string;
   password?: string;
   telefono?: string;
+  nit?: string;
+  representanteLegal?: string;
 };
 
 /* ── Pasos del wizard ────────────────────────────────────────── */
@@ -168,11 +174,22 @@ export default function ClientesPage() {
     const errores: ErroresPaso1 = {};
 
     if (!formData.nombres.trim()) {
-      errores.nombres = "Los nombres son obligatorios.";
+      errores.nombres = formData.tipoCliente === 'Juridico' ? "La Razón Social es obligatoria." : "Los nombres son obligatorios.";
     }
-    if (!formData.apellidoPaterno.trim()) {
-      errores.apellidoPaterno = "El apellido paterno es obligatorio.";
+    
+    if (formData.tipoCliente === 'Natural') {
+      if (!formData.apellidoPaterno.trim()) {
+        errores.apellidoPaterno = "El apellido paterno es obligatorio.";
+      }
+    } else {
+      if (!formData.nit.trim()) {
+        errores.nit = "El NIT es obligatorio para empresas.";
+      }
+      if (!formData.representanteLegal.trim()) {
+        errores.representanteLegal = "El Representante Legal es obligatorio.";
+      }
     }
+
     if (!formData.email.trim()) {
       errores.email = "El correo electrónico es obligatorio.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -404,13 +421,44 @@ export default function ClientesPage() {
                     </div>
 
                     <div className={css.stepGrid}>
-                      {/* Nombres */}
-                      <div className="space-y-2">
-                        <label htmlFor="nombres" className={LABEL}>Nombres *</label>
+                      {/* Tipo de Cliente */}
+                      <div className="space-y-2 md:col-span-2">
+                        <label className={LABEL}>Tipo de Cliente *</label>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="tipoCliente"
+                              value="Natural"
+                              checked={formData.tipoCliente === "Natural"}
+                              onChange={(e) => actualizarCampo("tipoCliente", e.target.value)}
+                              className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm font-medium text-gray-700">Persona Natural</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="tipoCliente"
+                              value="Juridico"
+                              checked={formData.tipoCliente === "Juridico"}
+                              onChange={(e) => actualizarCampo("tipoCliente", e.target.value)}
+                              className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm font-medium text-gray-700">Persona Jurídica</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Nombres / Razón Social */}
+                      <div className="space-y-2 md:col-span-2">
+                        <label htmlFor="nombres" className={LABEL}>
+                          {formData.tipoCliente === 'Juridico' ? 'Razón Social *' : 'Nombres *'}
+                        </label>
                         <input
                           id="nombres"
                           type="text"
-                          placeholder="Ej. María Elena"
+                          placeholder={formData.tipoCliente === 'Juridico' ? 'Ej. Empresa XYZ S.A.' : 'Ej. María Elena'}
                           className={inputClass("nombres")}
                           value={formData.nombres}
                           onChange={(e) => actualizarCampo("nombres", e.target.value)}
@@ -420,34 +468,67 @@ export default function ClientesPage() {
                         )}
                       </div>
 
-                      {/* Apellido Paterno */}
-                      <div className="space-y-2">
-                        <label htmlFor="apellidoPaterno" className={LABEL}>Apellido Paterno *</label>
-                        <input
-                          id="apellidoPaterno"
-                          type="text"
-                          placeholder="Ej. García"
-                          className={inputClass("apellidoPaterno")}
-                          value={formData.apellidoPaterno}
-                          onChange={(e) => actualizarCampo("apellidoPaterno", e.target.value)}
-                        />
-                        {erroresPaso1.apellidoPaterno && (
-                          <p className={css.fieldError}>{erroresPaso1.apellidoPaterno}</p>
-                        )}
-                      </div>
-
-                      {/* Apellido Materno */}
-                      <div className="space-y-2">
-                        <label htmlFor="apellidoMaterno" className={LABEL}>Apellido Materno</label>
-                        <input
-                          id="apellidoMaterno"
-                          type="text"
-                          placeholder="Ej. Soliz"
-                          className={INPUT}
-                          value={formData.apellidoMaterno}
-                          onChange={(e) => actualizarCampo("apellidoMaterno", e.target.value)}
-                        />
-                      </div>
+                      {/* Campos condicionales según tipo de cliente */}
+                      {formData.tipoCliente === 'Natural' ? (
+                        <>
+                          <div className="space-y-2">
+                            <label htmlFor="apellidoPaterno" className={LABEL}>Apellido Paterno *</label>
+                            <input
+                              id="apellidoPaterno"
+                              type="text"
+                              placeholder="Ej. García"
+                              className={inputClass("apellidoPaterno")}
+                              value={formData.apellidoPaterno}
+                              onChange={(e) => actualizarCampo("apellidoPaterno", e.target.value)}
+                            />
+                            {erroresPaso1.apellidoPaterno && (
+                              <p className={css.fieldError}>{erroresPaso1.apellidoPaterno}</p>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            <label htmlFor="apellidoMaterno" className={LABEL}>Apellido Materno</label>
+                            <input
+                              id="apellidoMaterno"
+                              type="text"
+                              placeholder="Ej. Soliz"
+                              className={INPUT}
+                              value={formData.apellidoMaterno}
+                              onChange={(e) => actualizarCampo("apellidoMaterno", e.target.value)}
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="space-y-2">
+                            <label htmlFor="nit" className={LABEL}>NIT *</label>
+                            <input
+                              id="nit"
+                              type="text"
+                              placeholder="Ej. 1234567890"
+                              className={inputClass("nit")}
+                              value={formData.nit}
+                              onChange={(e) => actualizarCampo("nit", e.target.value)}
+                            />
+                            {erroresPaso1.nit && (
+                              <p className={css.fieldError}>{erroresPaso1.nit}</p>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            <label htmlFor="representanteLegal" className={LABEL}>Representante Legal *</label>
+                            <input
+                              id="representanteLegal"
+                              type="text"
+                              placeholder="Ej. Juan Pérez"
+                              className={inputClass("representanteLegal")}
+                              value={formData.representanteLegal}
+                              onChange={(e) => actualizarCampo("representanteLegal", e.target.value)}
+                            />
+                            {erroresPaso1.representanteLegal && (
+                              <p className={css.fieldError}>{erroresPaso1.representanteLegal}</p>
+                            )}
+                          </div>
+                        </>
+                      )}
 
                       {/* Email */}
                       <div className="space-y-2">
@@ -513,32 +594,35 @@ export default function ClientesPage() {
                     </div>
 
                     <div className={css.stepGrid}>
-                      {/* CI */}
-                      <div className="space-y-2">
-                        <label htmlFor="ci" className={LABEL}>Cédula de Identidad</label>
-                        <input
-                          id="ci"
-                          type="text"
-                          placeholder="Ej. 12345678"
-                          className={INPUT}
-                          value={formData.ci}
-                          onChange={(e) => actualizarCampo("ci", e.target.value)}
-                        />
-                      </div>
+                      {/* Mostrar CI y Expedido SOLO para Persona Natural */}
+                      {formData.tipoCliente === "Natural" && (
+                        <>
+                          <div className="space-y-2">
+                            <label htmlFor="ci" className={LABEL}>Cédula de Identidad</label>
+                            <input
+                              id="ci"
+                              type="text"
+                              placeholder="Ej. 12345678"
+                              className={INPUT}
+                              value={formData.ci}
+                              onChange={(e) => actualizarCampo("ci", e.target.value)}
+                            />
+                          </div>
 
-                      {/* Expedido */}
-                      <div className="space-y-2">
-                        <label htmlFor="expedido" className={LABEL}>Expedido</label>
-                        <select
-                          id="expedido"
-                          className={INPUT}
-                          value={formData.expedido}
-                          onChange={(e) => actualizarCampo("expedido", e.target.value)}
-                        >
-                          <option value="">Seleccione</option>
-                          {DEPARTAMENTOS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-                        </select>
-                      </div>
+                          <div className="space-y-2">
+                            <label htmlFor="expedido" className={LABEL}>Expedido</label>
+                            <select
+                              id="expedido"
+                              className={INPUT}
+                              value={formData.expedido}
+                              onChange={(e) => actualizarCampo("expedido", e.target.value)}
+                            >
+                              <option value="">Seleccione</option>
+                              {DEPARTAMENTOS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                            </select>
+                          </div>
+                        </>
+                      )}
 
                       {/* Fecha Nacimiento */}
                       <div className="space-y-2">

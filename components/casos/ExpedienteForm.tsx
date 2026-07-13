@@ -14,9 +14,9 @@ export const FLUJO_LEGAL: Record<string, string[]> = {
   Penal: ["Etapa Preliminar","Etapa Preparatoria","Juicio","Apelación","Casación","Ejecución Penal"],
   Familia: ["Estudio del caso","Demanda presentada","En conciliación","En audiencia","En etapa probatoria","Con sentencia","En ejecución","Concluido","Archivado"],
   Laboral: ["Estudio del caso","Demanda presentada","En conciliación","En audiencia","Con sentencia","En ejecución","Concluido","Archivado"],
-  Administrativo: ["Estudio del caso","Trámite presentado","En revisión","En observación","En aprobación","En firma","Aprobado","Rechazado","Concluido"],
   Comercial: ["Estudio del caso","Demanda presentada","En conciliación","En audiencia","Con sentencia","En ejecución","Concluido","Archivado"],
-  Otro: [],
+  "Trámites administrativos": ["Estudio del caso","Trámite presentado","En revisión","En observación","En aprobación","En firma","Aprobado","Rechazado","Concluido"],
+  Otros: [],
 };
 export const MATERIAS_BASE = Object.keys(FLUJO_LEGAL);
 
@@ -42,6 +42,8 @@ const expedienteSchema = z.object({
   informeDespacho:      z.string().optional(),
   informeCliente:       z.string().optional(),
   cuantia:              z.string().optional(),
+  oficiosSolicitados:   z.string().optional(),
+  medidasPreviasRemate: z.string().optional(),
 });
 export type ExpedienteFormValues = z.infer<typeof expedienteSchema>;
 
@@ -298,10 +300,18 @@ export function ExpedienteForm({
         </section>
       </div>
 
-      {/* SECCIÓN 5: Informes internos */}
+      {/* SECCIÓN 5: Informes y Control Adicional */}
       <section>
-        <SectionHead>Informes internos (opcionales)</SectionHead>
+        <SectionHead>Informes y control de oficios (Opcionales)</SectionHead>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label>Oficios Solicitados / Entregados</Label>
+            <textarea {...register("oficiosSolicitados")} rows={2} placeholder="Registro de oficios..." className={`${inp} resize-none`} disabled={isLoading} />
+          </div>
+          <div>
+            <Label>Medidas previas al remate</Label>
+            <textarea {...register("medidasPreviasRemate")} rows={2} placeholder="Detalle de medidas..." className={`${inp} resize-none`} disabled={isLoading} />
+          </div>
           <div>
             <Label>Informe Despacho</Label>
             <textarea {...register("informeDespacho")} rows={3} className={`${inp} resize-none`} disabled={isLoading} />

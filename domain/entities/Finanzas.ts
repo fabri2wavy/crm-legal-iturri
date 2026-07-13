@@ -32,7 +32,9 @@ export interface CuotaPago {
    honorarioId: string;
    descripcion: string;
    monto: number;
-   fechaVencimiento: string; // ISO 8601
+   tipoVencimiento?: 'fecha' | 'hito';
+   hitoVencimiento?: string | null;
+   fechaVencimiento?: string | null; // ISO 8601
    estado: EstadoCuota;
    fechaPago: string | null;  // ISO 8601
    creadoEn: string;         // ISO 8601
@@ -108,7 +110,7 @@ export interface ReporteFinancieroGlobal {
    Entidad: AlertaCuotaVencida — Cuota próxima a vencer o vencida
    ══════════════════════════════════════════════════════════════ */
 
-export type UrgenciaCuota = 'vencida' | 'vence_hoy' | 'proxima';
+export type UrgenciaCuota = 'vencida' | 'vence_hoy' | 'proxima' | 'hito_pendiente';
 
 export interface AlertaCuotaVencida {
   cuotaId: string;

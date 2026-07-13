@@ -19,15 +19,15 @@ import { MATERIAS_BASE } from "@/components/casos/ExpedienteForm";
 
 /* ── Estado badge design ────────────────────────────────────── */
 function getEstadoDesign(estado: string | undefined | null) {
-  if (!estado) return "bg-gray-100 text-gray-800";
+  if (!estado) return "bg-slate-50 text-slate-500 border border-slate-200";
   const st = estado.toLowerCase();
   if (st.includes("concluido") || st.includes("archivado") || st.includes("cerrado") || st.includes("aprobado"))
-    return "bg-gray-100 text-gray-600";
+    return "bg-slate-100 text-slate-500 border border-slate-200";
   if (st.includes("juicio") || st.includes("denuncia") || st.includes("demanda") || st.includes("rechazado"))
-    return "bg-rose-50 text-rose-700";
+    return "bg-slate-200 text-slate-900 border border-slate-300 font-semibold";
   if (st.includes("conciliación") || st.includes("estudio") || st.includes("preliminar") || st.includes("revisión") || st.includes("espera"))
-    return "bg-amber-50 text-amber-700";
-  return "bg-blue-50 text-blue-700";
+    return "bg-slate-100 text-slate-700 border border-slate-200";
+  return "bg-slate-100 text-slate-800 border border-slate-300";
 }
 
 export default function CasosPage() {

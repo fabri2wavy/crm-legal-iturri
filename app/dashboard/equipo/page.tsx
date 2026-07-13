@@ -64,6 +64,18 @@ const ROL_CONFIG: Record<
     text: "text-violet-700",
     border: "border-violet-200",
   },
+  socio: {
+    label: "Socio",
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    border: "border-amber-200",
+  },
+  finanzas: {
+    label: "Finanzas",
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    border: "border-emerald-200",
+  },
   abogado: {
     label: "Abogado",
     bg: "bg-blue-50",
@@ -90,8 +102,10 @@ function getRolConfig(rol: string) {
 }
 
 const ROLES_OPTIONS = [
+  { value: "socio", label: "Asociado Senior / Socio" },
   { value: "abogado", label: "Abogado" },
   { value: "paralegal", label: "Paralegal" },
+  { value: "finanzas", label: "Administración / Finanzas" },
   { value: "admin", label: "Administrador" },
 ];
 

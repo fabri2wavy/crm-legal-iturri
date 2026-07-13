@@ -1,11 +1,3 @@
-/* ══════════════════════════════════════════════════════════════
-   FullCalendar — Design System Overrides
-   ──────────────────────────────────────────────────────────────
-   Alinea FullCalendar con los tokens corporativos de Iturri & Asociados.
-   Variables consumidas desde: styles/tokens.css
-   ══════════════════════════════════════════════════════════════ */
-
-/* ── Toolbar ──────────────────────────────────────────────────── */
 .fc .fc-toolbar {
   margin-bottom: 1rem !important;
   gap: 0.75rem;
@@ -18,7 +10,6 @@
   color: var(--color-text-primary) !important;
 }
 
-/* ── Botones de navegación ────────────────────────────────────── */
 .fc .fc-button-primary {
   background: var(--color-surface-card) !important;
   border: 1px solid var(--color-surface-border) !important;
@@ -54,20 +45,18 @@
   opacity: 0.5 !important;
 }
 
-/* ── Agrupación de botones (button groups) ────────────────────── */
-.fc .fc-button-group > .fc-button {
+.fc .fc-button-group>.fc-button {
   border-radius: 0 !important;
 }
 
-.fc .fc-button-group > .fc-button:first-child {
+.fc .fc-button-group>.fc-button:first-child {
   border-radius: var(--radius-md) 0 0 var(--radius-md) !important;
 }
 
-.fc .fc-button-group > .fc-button:last-child {
+.fc .fc-button-group>.fc-button:last-child {
   border-radius: 0 var(--radius-md) var(--radius-md) 0 !important;
 }
 
-/* ── Cabeceras de columnas (días de la semana) ────────────────── */
 .fc .fc-col-header {
   background: transparent;
 }
@@ -88,7 +77,6 @@
   font-family: var(--font-body) !important;
 }
 
-/* ── Celdas de la cuadrícula ──────────────────────────────────── */
 .fc .fc-theme-standard td,
 .fc .fc-theme-standard th {
   border-color: var(--color-surface-border) !important;
@@ -108,7 +96,6 @@
   background: rgba(59, 130, 246, 0.03);
 }
 
-/* ── Número del día ───────────────────────────────────────────── */
 .fc .fc-daygrid-day-number {
   font-size: var(--text-sm) !important;
   font-weight: 500 !important;
@@ -118,7 +105,6 @@
   font-family: var(--font-body) !important;
 }
 
-/* ── Día actual ───────────────────────────────────────────────── */
 .fc .fc-day-today {
   background: var(--color-gold-glow) !important;
 }
@@ -135,13 +121,11 @@
   justify-content: center;
 }
 
-/* ── Días fuera del mes ───────────────────────────────────────── */
 .fc .fc-day-other .fc-daygrid-day-number {
   color: var(--color-text-muted) !important;
   opacity: 0.6;
 }
 
-/* ── Tarjetas de eventos ──────────────────────────────────────── */
 .fc .fc-event {
   border: none !important;
   border-radius: var(--radius-sm) !important;
@@ -172,13 +156,11 @@
   font-size: 0.625rem !important;
 }
 
-/* ── Dot events (lista de más de 2) ──────────────────────────── */
 .fc .fc-daygrid-event-dot {
   border: none !important;
   margin: 0 4px 0 0 !important;
 }
 
-/* ── "More" link (+2 más) ─────────────────────────────────────── */
 .fc .fc-daygrid-more-link {
   font-size: var(--text-xs) !important;
   font-weight: 600 !important;
@@ -191,7 +173,6 @@
   filter: brightness(0.8);
 }
 
-/* ── Popover de "más eventos" ─────────────────────────────────── */
 .fc .fc-popover {
   border-radius: var(--radius-lg) !important;
   border: 1px solid var(--color-surface-border) !important;
@@ -212,7 +193,6 @@
   padding: 0.5rem !important;
 }
 
-/* ── TimeGrid (vista semana/día) ──────────────────────────────── */
 .fc .fc-timegrid-slot {
   height: 2.5rem !important;
   border-color: var(--color-surface-border) !important;
@@ -235,7 +215,6 @@
   border-color: var(--color-danger) !important;
 }
 
-/* ── Drag & drop visual feedback ──────────────────────────────── */
 .fc .fc-event-dragging {
   opacity: 0.85 !important;
   box-shadow: var(--shadow-lg) !important;
@@ -247,12 +226,10 @@
   box-shadow: var(--shadow-md) !important;
 }
 
-/* ── Highlight de celda al arrastrar ──────────────────────────── */
 .fc .fc-highlight {
   background: rgba(59, 130, 246, 0.08) !important;
 }
 
-/* ── Responsive: pantallas pequeñas ──────────────────────────── */
 @media (max-width: 768px) {
   .fc .fc-toolbar {
     flex-direction: column;

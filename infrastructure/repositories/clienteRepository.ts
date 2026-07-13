@@ -39,6 +39,12 @@ export interface DatosNuevoCliente {
   /** Teléfono, email u otro dato de contacto del referidor. */
   contactoReferidor?: string;
 
+  etapaComercial?: 'potencial' | 'activo';
+  tipoCliente?: 'persona' | 'empresa';
+  nombreEmpresa?: string | null;
+  representanteLegal?: string | null;
+  areaEspecialidad?: string | null;
+
   telefonoLaboral?: string;
   direccionOficina?: string;
 }
@@ -67,6 +73,11 @@ function mapearCliente(fila: any): Cliente {
 
     referidoPor: detalle.referido_por ?? undefined,
     contactoReferidor: detalle.contacto_referidor ?? undefined,
+    etapaComercial: detalle.etapa_comercial ?? 'activo',
+    tipoCliente: detalle.tipo_cliente ?? 'persona',
+    nombreEmpresa: detalle.nombre_empresa ?? null,
+    representanteLegal: detalle.representante_legal ?? null,
+    areaEspecialidad: detalle.area_especialidad ?? null,
     telefonoLaboral: detalle.telefono_laboral ?? undefined,
     direccionOficina: detalle.direccion_oficina ?? undefined,
   };
@@ -116,6 +127,11 @@ export async function crearCliente(
       direccion: datos.direccion,
       referidoPor: datos.referidoPor,
       contactoReferidor: datos.contactoReferidor,
+      etapaComercial: datos.etapaComercial ?? 'activo',
+      tipoCliente: datos.tipoCliente ?? 'persona',
+      nombreEmpresa: datos.nombreEmpresa ?? null,
+      representanteLegal: datos.representanteLegal ?? null,
+      areaEspecialidad: datos.areaEspecialidad ?? null,
       telefonoLaboral: datos.telefonoLaboral,
       direccionOficina: datos.direccionOficina,
     },
@@ -223,6 +239,11 @@ export async function actualizarCliente(
   if (clienteData.expedido !== undefined) detallesData.expedido = clienteData.expedido || null;
   if (clienteData.referidoPor !== undefined) detallesData.referido_por = clienteData.referidoPor || null;
   if (clienteData.contactoReferidor !== undefined) detallesData.contacto_referidor = clienteData.contactoReferidor || null;
+  if (clienteData.etapaComercial !== undefined) detallesData.etapa_comercial = clienteData.etapaComercial || null;
+  if (clienteData.tipoCliente !== undefined) detallesData.tipo_cliente = clienteData.tipoCliente || null;
+  if (clienteData.nombreEmpresa !== undefined) detallesData.nombre_empresa = clienteData.nombreEmpresa || null;
+  if (clienteData.representanteLegal !== undefined) detallesData.representante_legal = clienteData.representanteLegal || null;
+  if (clienteData.areaEspecialidad !== undefined) detallesData.area_especialidad = clienteData.areaEspecialidad || null;
   if (clienteData.telefonoLaboral !== undefined) detallesData.telefono_laboral = clienteData.telefonoLaboral || null;
   if (clienteData.direccionOficina !== undefined) detallesData.direccion_oficina = clienteData.direccionOficina || null;
 

@@ -49,7 +49,9 @@ interface FilaCuota {
   honorario_id: string;
   descripcion: string;
   monto: number;
-  fecha_vencimiento: string;
+  tipo_vencimiento?: 'fecha' | 'hito';
+  hito_vencimiento?: string | null;
+  fecha_vencimiento?: string | null;
   estado: string;
   fecha_pago: string | null;
   creado_en: string;
@@ -84,6 +86,8 @@ function mapearCuota(fila: FilaCuota): CuotaPago {
     honorarioId: fila.honorario_id,
     descripcion: fila.descripcion,
     monto: fila.monto,
+    tipoVencimiento: fila.tipo_vencimiento ?? 'fecha',
+    hitoVencimiento: fila.hito_vencimiento,
     fechaVencimiento: fila.fecha_vencimiento,
     estado: fila.estado as EstadoCuota,
     fechaPago: fila.fecha_pago,
@@ -146,7 +150,7 @@ export async function obtenerEstadoCuenta(
     const honorarioFila = honorarioRaw as FilaHonorario | null;
 
     const cuotasOrdenadas = (honorarioFila?.cuotas_pago ?? [])
-      .sort((a, b) => a.fecha_vencimiento.localeCompare(b.fecha_vencimiento))
+      .sort((a, b) => (a.fecha_vencimiento || '9999-12-31').localeCompare(b.fecha_vencimiento || '9999-12-31'))
       .map(mapearCuota);
 
     const estadoCuenta: EstadoCuentaExpediente = {
@@ -246,9 +250,11 @@ export async function crearHonorarioConCuotas(
       honorario_id: honorarioId,
       descripcion: cuota.descripcion,
       monto: cuota.monto,
-      fecha_vencimiento: cuota.fechaVencimiento,
+      tipo_vencimiento: cuota.tipoVencimiento ?? 'fecha',
+      hito_vencimiento: cuota.hitoVencimiento ?? null,
+      fecha_vencimiento: cuota.fechaVencimiento ?? null,
       estado: cuota.estado,
-      fecha_pago: cuota.fechaPago,
+      fecha_pago: cuota.fechaPago ?? null,
     }));
 
     const { data: cuotasInsertadas, error: cuotasError } = await supabase

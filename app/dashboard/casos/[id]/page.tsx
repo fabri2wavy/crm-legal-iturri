@@ -22,12 +22,12 @@ import { Documento } from "@/domain/entities/Documento";
 import { obtenerAbogados, obtenerPerfilActual } from "@/infrastructure/repositories/usuarioRepository";
 import { Alert } from "@/components/ui/Alert";
 
-/* ── Mapa de colores semánticos por estado ─────────────────── */
-const ESTADO_STYLES: Record<string, { bg: string; color: string; border: string }> = {
-  en_espera: { bg: "var(--color-warning-bg)", color: "var(--color-warning)", border: "var(--color-warning-border)" },
-  mediacion: { bg: "var(--color-info-bg)", color: "var(--color-info)", border: "var(--color-info-border)" },
-  juicio:    { bg: "var(--color-danger-bg)", color: "var(--color-danger)", border: "var(--color-danger-border)" },
-  cerrado:   { bg: "var(--color-success-bg)", color: "var(--color-success)", border: "var(--color-success-border)" },
+/* ── Mapa de clases Tailwind neutras por estado ─────────────────── */
+const ESTADO_CLASSES: Record<string, string> = {
+  en_espera: "bg-slate-100 text-slate-700 border-slate-200",
+  mediacion: "bg-slate-100 text-slate-800 border-slate-300",
+  juicio:    "bg-slate-200 text-slate-900 border-slate-300",
+  cerrado:   "bg-gray-100 text-gray-500 border-gray-200",
 };
 
 const TAB_ICONS: Record<string, React.ReactNode> = {
@@ -314,7 +314,8 @@ export default function DetalleExpedientePage() {
     );
   }
 
-  const estadoStyle = ESTADO_STYLES[caso.estado] || ESTADO_STYLES["en_espera"];
+  const estadoActual = caso?.estado || "en_espera";
+  const estadoClass = ESTADO_CLASSES[estadoActual] || ESTADO_CLASSES.en_espera;
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -342,7 +343,6 @@ export default function DetalleExpedientePage() {
         className="p-5 sm:p-6 rounded-xl mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4
                    animate-fade-up bg-[var(--color-surface-card)] border border-[var(--color-surface-border)]
                    shadow-[var(--shadow-md)]"
-        style={{ borderLeft: `4px solid ${estadoStyle.color}` }}
       >
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">
@@ -374,13 +374,7 @@ export default function DetalleExpedientePage() {
             <select
               value={caso.estado}
               onChange={(e) => handleCambiarEstado(e.target.value)}
-              className="px-4 py-2.5 rounded-lg font-bold uppercase text-xs cursor-pointer outline-none
-                         transition-all duration-200"
-              style={{
-                background: estadoStyle.bg,
-                color: estadoStyle.color,
-                border: `1px solid ${estadoStyle.border}`,
-              }}
+              className={`px-4 py-2.5 rounded-lg font-bold uppercase text-xs cursor-pointer outline-none border transition-all duration-200 ${estadoClass}`}
             >
               <option value="en_espera">En Espera</option>
               <option value="mediacion">Mediación</option>
@@ -751,7 +745,7 @@ export default function DetalleExpedientePage() {
         )}
 
         {pestañaActiva === "finanzas" && (
-          <FinanzasTab expedienteId={idCaso} />
+          <FinanzasTab expedienteId={idCaso} expediente={caso} />
         )}
 
         {pestañaActiva === "plantillas" && (
