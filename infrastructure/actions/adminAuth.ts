@@ -1,6 +1,8 @@
 'use server';
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createAdminSupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '../supabase/server';
+import crypto from 'crypto';
 
 function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -10,7 +12,7 @@ function createAdminClient() {
     throw new Error('Faltan variables de entorno SUPABASE_URL o SERVICE_ROLE_KEY');
   }
 
-  return createClient(url, serviceKey, {
+  return createAdminSupabaseClient(url, serviceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -19,15 +21,32 @@ function createAdminClient() {
 }
 
 export async function crearUsuarioDesdeAdmin(
-  email: string,
-  password: string
+  email: string
 ): Promise<{ userId: string } | { error: string }> {
   try {
+    const supabase = await createClient();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !userData?.user) {
+      return { error: 'No autorizado. Debe iniciar sesión.' };
+    }
+
+    const { data: perfilData, error: perfilError } = await supabase
+      .from('perfiles')
+      .select('rol')
+      .eq('id', userData.user.id)
+      .single();
+
+    if (perfilError || !perfilData || (perfilData.rol !== 'admin' && perfilData.rol !== 'abogado')) {
+      return { error: 'Permisos insuficientes. Solo administradores y abogados pueden crear clientes.' };
+    }
+
+    const securePassword = crypto.randomBytes(16).toString('base64').slice(0, 16) + 'A1!';
     const adminClient = createAdminClient();
 
     const { data, error } = await adminClient.auth.admin.createUser({
       email,
-      password,
+      password: securePassword,
       email_confirm: true,
     });
 
@@ -39,6 +58,15 @@ export async function crearUsuarioDesdeAdmin(
     if (!data.user?.id) {
       return { error: 'No se pudo obtener el ID del usuario creado.' };
     }
+
+    // Notificación temporal (placeholder) mientras no haya proveedor de 
+    // email/SMS conectado. Este es el ÚNICO registro de la contraseña 
+    // generada, ya que email_confirm:true no envía correo de Supabase.
+    console.log('[NOTIFICACION_CLIENTE_NUEVO]', {
+      email,
+      passwordTemporal: securePassword,
+      timestamp: new Date().toISOString(),
+    });
 
     return { userId: data.user.id };
   } catch (e: any) {

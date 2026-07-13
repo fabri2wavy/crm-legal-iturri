@@ -41,11 +41,15 @@ export async function obtenerPerfilActual(): Promise<UsuarioPerfil | null> {
     return null;
   }
 
+  console.log('[DEBUG] Usuario de Auth:', user.id, user.email);
+
   const { data, error } = await supabase
     .from('perfiles')
     .select('id, nombres, apellido_paterno, apellido_materno, rol')
     .eq('id', user.id)
     .single();
+
+  console.log('[DEBUG] Resultado de perfiles:', data, error);
 
   if (error || !data) {
     console.error('Error al obtener perfil actual:', error?.message);

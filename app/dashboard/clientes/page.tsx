@@ -2,148 +2,13 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { UserPlus, CheckCircle2, Users, Plus, Check, ArrowRight, ArrowLeft, Search } from "lucide-react";
+import { UserPlus, CheckCircle2, Users, Plus, User, Building2, AlertTriangle } from "lucide-react";
 import { Cliente } from "@/domain/entities/Cliente";
 import { obtenerClientes, crearCliente } from "@/infrastructure/repositories/clienteRepository";
 import type { DatosNuevoCliente } from "@/infrastructure/repositories/clienteRepository";
 import { Button } from "@/components/ui/Button";
+import { ClienteForm, ClienteFormValues } from "@/components/clientes/ClienteForm";
 import css from "./page.module.css";
-
-const DEPARTAMENTOS = [
-  { value: "LP", label: "La Paz" },
-  { value: "SCZ", label: "Santa Cruz" },
-  { value: "CBBA", label: "Cochabamba" },
-  { value: "OR", label: "Oruro" },
-  { value: "PT", label: "Potosí" },
-  { value: "TJ", label: "Tarija" },
-  { value: "CH", label: "Chuquisaca" },
-  { value: "BE", label: "Beni" },
-  { value: "PD", label: "Pando" },
-];
-
-const ESTADOS_CIVILES = [
-  { value: "Soltero/a", label: "Soltero/a" },
-  { value: "Casado/a", label: "Casado/a" },
-  { value: "Divorciado/a", label: "Divorciado/a" },
-  { value: "Viudo/a", label: "Viudo/a" },
-];
-
-/* ── Clases Tailwind (sistema existente) ─────────────────────── */
-const INPUT = "w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 placeholder:text-gray-400";
-const LABEL = "text-base font-semibold text-gray-900 block";
-
-/* ── Tipo del estado del formulario ──────────────────────────── */
-interface FormCliente {
-  tipoCliente: 'persona' | 'empresa';
-  etapaComercial: 'potencial' | 'activo';
-  nombreEmpresa: string;
-  representanteLegal: string;
-  areaEspecialidad: string;
-  nit: string;
-  abogadoContacto: string;
-  nombres: string;
-  apellidoPaterno: string;
-  apellidoMaterno: string;
-  email: string;
-  password: string;
-  telefono: string;
-  ci: string;
-  expedido: string;
-  nacionalidad: string;
-  fechaNacimiento: string;
-  estadoCivil: string;
-  profesion: string;
-  direccion: string;
-  telefonoLaboral: string;
-  direccionOficina: string;
-  referidoPor: string;
-  contactoReferidor: string;
-}
-
-/* ── Estado inicial del formulario ───────────────────────────── */
-const FORM_INIT: FormCliente = {
-  tipoCliente: 'persona',
-  etapaComercial: 'activo',
-  nombreEmpresa: '',
-  representanteLegal: '',
-  areaEspecialidad: '',
-  nit: '',
-  abogadoContacto: '',
-  nombres: '',
-  apellidoPaterno: '',
-  apellidoMaterno: '',
-  email: '',
-  password: '',
-  telefono: '',
-  ci: '',
-  expedido: '',
-  nacionalidad: 'Boliviana',
-  fechaNacimiento: '',
-  estadoCivil: '',
-  profesion: '',
-  direccion: '',
-  telefonoLaboral: '',
-  direccionOficina: '',
-  referidoPor: '',
-  contactoReferidor: '',
-};
-
-/* ── Tipo para errores de validación ─────────────────────────── */
-type ErroresPaso1 = {
-  nombres?: string;
-  apellidoPaterno?: string;
-  email?: string;
-  password?: string;
-  telefono?: string;
-  nit?: string;
-  representanteLegal?: string;
-};
-
-/* ── Pasos del wizard ────────────────────────────────────────── */
-const PASOS = [
-  { numero: 1, titulo: "Datos Esenciales" },
-  { numero: 2, titulo: "Generales de Ley" },
-];
-
-/* ══════════════════════════════════════════════════════════════
-   COMPONENTE: Stepper Visual
-   ══════════════════════════════════════════════════════════════ */
-function Stepper({ pasoActual }: { pasoActual: number }) {
-  return (
-    <div className={css.stepper}>
-      {PASOS.map((paso, index) => {
-        const estaCompleto = pasoActual > paso.numero;
-        const estaActivo = pasoActual === paso.numero;
-
-        return (
-          <div key={paso.numero} style={{ display: "contents" }}>
-            {index > 0 && (
-              <div
-                className={`${css.stepConnector} ${estaCompleto ? css.completed : ""}`}
-              />
-            )}
-            <div className={css.stepItem}>
-              <div
-                className={`${css.stepCircle} ${estaActivo ? css.active : ""} ${estaCompleto ? css.completed : ""}`}
-              >
-                {estaCompleto ? (
-                  <Check className="w-4 h-4" strokeWidth={3} />
-                ) : (
-                  paso.numero
-                )}
-              </div>
-              <span
-                className={`${css.stepLabel} ${estaActivo ? css.active : ""} ${estaCompleto ? css.completed : ""}`}
-              >
-                {paso.titulo}
-              </span>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 /* ══════════════════════════════════════════════════════════════
    PÁGINA PRINCIPAL: Clientes
@@ -156,11 +21,6 @@ export default function ClientesPage() {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [formError, setFormError] = useState("");
-  const [formData, setFormData] = useState({ ...FORM_INIT });
-
-  /* ── Multi-step state ───────────────────────────────────────── */
-  const [paso, setPaso] = useState(1);
-  const [erroresPaso1, setErroresPaso1] = useState<ErroresPaso1>({});
 
   /* ── Carga inicial ──────────────────────────────────────────── */
   useEffect(() => {
@@ -186,129 +46,44 @@ export default function ClientesPage() {
   }, [clientes, searchTerm]);
 
   /* ── Helpers ────────────────────────────────────────────────── */
-  const actualizarCampo = <K extends keyof FormCliente>(campo: K, valor: FormCliente[K]) => {
-    setFormData(prev => ({ ...prev, [campo]: valor }));
-    if (campo in erroresPaso1) {
-      setErroresPaso1(prev => ({ ...prev, [campo]: undefined }));
-    }
-  };
-
   const cerrarModal = () => {
     setFormError("");
-    setFormData({ ...FORM_INIT });
-    setErroresPaso1({});
-    setPaso(1);
     setMostrarModal(false);
   };
 
-  /* ── Validación del Paso 1 ──────────────────────────────────── */
-  const validarPaso1 = (): boolean => {
-    const errores: ErroresPaso1 = {};
-
-    if (!formData.nombres.trim()) {
-      errores.nombres = formData.tipoCliente === 'empresa' ? "La Razón Social es obligatoria." : "Los nombres son obligatorios.";
-    }
-    
-    if (formData.tipoCliente === 'persona') {
-      if (!formData.apellidoPaterno.trim()) {
-        errores.apellidoPaterno = "El apellido paterno es obligatorio.";
-      }
-    } else {
-      if (!formData.nit.trim()) {
-        errores.nit = "El NIT es obligatorio para empresas.";
-      }
-      if (!formData.representanteLegal.trim()) {
-        errores.representanteLegal = "El Representante Legal es obligatorio.";
-      }
-    }
-
-    if (!formData.email.trim()) {
-      errores.email = "El correo electrónico es obligatorio.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errores.email = "Ingresa un correo electrónico válido.";
-    }
-    if (!formData.password) {
-      errores.password = "La contraseña es obligatoria.";
-    } else if (formData.password.length < 6) {
-      errores.password = "Mínimo 6 caracteres.";
-    }
-    if (!formData.telefono.trim()) {
-      errores.telefono = "El teléfono es obligatorio.";
-    }
-
-    setErroresPaso1(errores);
-    return Object.keys(errores).length === 0;
-  };
-
-  /* ── Navegación entre pasos ─────────────────────────────────── */
-  const siguientePaso = () => {
-    if (validarPaso1()) {
-      setPaso(2);
-    }
-  };
-
-  const pasoAnterior = () => {
-    setPaso(1);
-  };
-
-  /* ═══════════════════════════════════════════════════════════════
-     FIX CRÍTICO: onSubmit unificado.
-     El <form> envuelve AMBOS pasos. En Paso 1 el submit se
-     intercepta para solo avanzar de paso (nunca llamar al backend).
-     En Paso 2 ejecuta handleGuardar.
-     Esto evita que presionar Enter en Paso 1 cree un usuario.
-     ═══════════════════════════════════════════════════════════════ */
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (paso === 1) {
-      siguientePaso();
-      return;
-    }
-
-    /* Paso 2 → enviar al backend */
+  /* ── Enviar al Backend ──────────────────────────────────────── */
+  const handleGuardar = async (valores: ClienteFormValues) => {
     setGuardando(true);
     setFormError("");
 
-    /* ── Type-safe payload: castear literales del formulario ──── */
-    const TIPOS_CLIENTE_VALIDOS: DatosNuevoCliente['tipoCliente'][] = ['persona', 'empresa'];
-    const ETAPAS_VALIDAS: DatosNuevoCliente['etapaComercial'][] = ['potencial', 'activo'];
+    try {
+      const emailFinal = valores.email?.trim() || `lead_${Date.now()}@temp.local`;
 
-    const tipoClienteSeguro = TIPOS_CLIENTE_VALIDOS.includes(
-      formData.tipoCliente as DatosNuevoCliente['tipoCliente']
-    )
-      ? (formData.tipoCliente as DatosNuevoCliente['tipoCliente'])
-      : 'persona';
+      const payload: DatosNuevoCliente = {
+        ...valores,
+        email: emailFinal,
+        nombres: valores.nombres || "",
+        apellidoPaterno: valores.apellidoPaterno || "",
+        apellidoMaterno: valores.apellidoMaterno || "",
+        nombreEmpresa: valores.nombreEmpresa || null,
+        representanteLegal: valores.representanteLegal || null,
+        areaEspecialidad: valores.areaEspecialidad || null,
+      };
 
-    const etapaSegura = ETAPAS_VALIDAS.includes(
-      formData.etapaComercial as DatosNuevoCliente['etapaComercial']
-    )
-      ? (formData.etapaComercial as DatosNuevoCliente['etapaComercial'])
-      : 'activo';
+      const resultado = await crearCliente(payload);
 
-    const payload: DatosNuevoCliente = {
-      ...formData,
-      tipoCliente: tipoClienteSeguro,
-      etapaComercial: etapaSegura,
-      nombreEmpresa: formData.nombreEmpresa || null,
-      representanteLegal: formData.representanteLegal || null,
-      areaEspecialidad: formData.areaEspecialidad || null,
-    };
-
-    const resultado = await crearCliente(payload);
-
-    if (resultado.success && resultado.data) {
-      setClientes([resultado.data, ...clientes]);
-      cerrarModal();
-    } else {
-      setFormError(resultado.error || "Error desconocido al registrar el cliente.");
+      if (resultado.success && resultado.data) {
+        setClientes([resultado.data, ...clientes]);
+        cerrarModal();
+      } else {
+        setFormError(resultado.error || "Error desconocido al registrar el cliente.");
+      }
+    } catch (err: any) {
+      setFormError(err.message || "Ocurrió un error inesperado.");
+    } finally {
+      setGuardando(false);
     }
-    setGuardando(false);
   };
-
-  /* ── Helper: clase de input con error ───────────────────────── */
-  const inputClass = (campo: keyof ErroresPaso1) =>
-    `${INPUT} ${erroresPaso1[campo] ? css.inputError : ""}`;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
@@ -328,9 +103,7 @@ export default function ClientesPage() {
       {/* ── Barra de Búsqueda ─────────────────────────────────── */}
       <div className="bg-white p-4 border border-gray-200 rounded-xl shadow-sm">
         <div className="relative">
-          <Search className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
-            id="searchClientes"
             type="text"
             placeholder="Buscar por nombre, correo o teléfono..."
             className="w-full pl-11 pr-4 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-50/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400"
@@ -349,58 +122,31 @@ export default function ClientesPage() {
                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Nombre Completo</th>
                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Correo Electrónico</th>
                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Teléfono</th>
+                <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest">Estado</th>
                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-widest text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {cargando && (
-                <tr>
-                  <td colSpan={4} className="py-20 text-center">
-                    <div className="flex flex-col items-center justify-center space-y-3">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" />
-                      <p className="text-gray-500 text-sm">Cargando directorio...</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-              {!cargando && clientesFiltrados.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="py-24 text-center">
-                    <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                      <Users className="w-8 h-8 text-gray-300" strokeWidth={1.5} />
-                    </div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                      {searchTerm.trim() ? "Sin resultados" : "No hay clientes registrados"}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {searchTerm.trim()
-                        ? `No se encontraron clientes para "${searchTerm}".`
-                        : "Registra tu primer cliente usando el botón de arriba."}
-                    </p>
-                  </td>
-                </tr>
-              )}
               {!cargando && clientesFiltrados.map((c) => (
                 <tr key={c.id} className="hover:bg-gray-50 transition-colors group">
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-gray-50 border border-gray-100 rounded-md text-gray-400 group-hover:bg-white transition-colors">
-                        <Users className="w-4 h-4" />
+                      <div className={`p-2 rounded-md border ${c.tipoCliente === 'empresa' ? 'bg-purple-50/50 border-purple-100' : 'bg-gray-50 border-gray-100'}`}>
+                        {c.tipoCliente === 'empresa' ? <Building2 className="w-4 h-4" /> : <User className="w-4 h-4" />}
                       </div>
-                      <span className="text-sm font-bold text-gray-900 tracking-tight">{c.nombreCompleto}</span>
+                      <span className="text-sm font-bold text-gray-900">{c.nombreCompleto}</span>
                     </div>
                   </td>
+                  <td className="py-4 px-6 text-sm text-gray-500">{c.email || "—"}</td>
+                  <td className="py-4 px-6 text-sm text-gray-500">{c.telefono || "—"}</td>
                   <td className="py-4 px-6">
-                    <span className="text-sm text-gray-500">{c.email || "—"}</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-gray-500">{c.telefono || "—"}</span>
+                    <span className={`${css.badge} ${c.etapaComercial === 'potencial' ? css.badgePotencial : css.badgeActivo}`}>
+                      {c.etapaComercial === 'potencial' ? 'Potencial' : 'Activo'}
+                    </span>
                   </td>
                   <td className="py-4 px-6 text-right">
                     <Link href={`/dashboard/clientes/${c.id}`}>
-                      <button className="text-sm font-medium text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors">
-                        Ver Detalles
-                      </button>
+                      <button className="text-sm font-medium text-blue-600 hover:text-blue-800">Ver Detalles</button>
                     </Link>
                   </td>
                 </tr>
@@ -411,453 +157,35 @@ export default function ClientesPage() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          MODAL: REGISTRAR NUEVO CLIENTE (Multi-Step)
+          MODAL: REGISTRAR NUEVO CLIENTEt
          ═══════════════════════════════════════════════════════════ */}
       {mostrarModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6"
-        >
-          <div
-            className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-
-            {/* ── Header ──────────────────────────────────────── */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
             <div className="px-8 py-5 flex items-center justify-between border-b border-gray-100 shrink-0">
               <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                 <UserPlus className="w-6 h-6 text-blue-600" />
                 Registrar Nuevo Cliente
               </h3>
-              <button
-                type="button"
-                onClick={cerrarModal}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-              >
-                <span className="text-2xl leading-none">&times;</span>
-              </button>
+              <button onClick={cerrarModal} className="text-gray-400 hover:text-gray-900">&times;</button>
             </div>
-
-            {/* ═══════════════════════════════════════════════════
-                FORM UNIFICADO — envuelve ambos pasos.
-                onSubmit se intercepta:
-                  • Paso 1 → validar y avanzar (NUNCA crea usuario)
-                  • Paso 2 → crearCliente()
-               ═══════════════════════════════════════════════════ */}
-            <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col overflow-hidden min-h-0">
-
-              {/* ── Body ──────────────────────────────────────── */}
-              <div
-                className="px-8 py-6 overflow-y-auto flex-1"
-                style={{ maxHeight: 'calc(90vh - 150px)', paddingRight: '10px' }}
-              >
-
-                {/* Stepper Visual */}
-                <Stepper pasoActual={paso} />
-
-                {/* Error global del backend */}
+            
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+              <div className="px-8 py-6 overflow-y-auto flex-1" style={{ maxHeight: 'calc(90vh - 80px)' }}>
                 {formError && (
                   <div className="p-4 mb-6 rounded-xl bg-red-50 border border-red-200 flex gap-3 text-red-800 text-base font-medium">
-                    <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                      <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-                    </svg>
+                    <AlertTriangle className="w-6 h-6 flex-shrink-0" />
                     {formError}
                   </div>
                 )}
-
-                {/* ════════════════════════════════════════════════
-                    PASO 1: Datos Esenciales
-                   ════════════════════════════════════════════════ */}
-                {paso === 1 && (
-                  <div className={css.stepContent} key="paso-1">
-                    <div className={css.stepHeader}>
-                      <h4 className={css.stepTitle}>Identidad y Acceso</h4>
-                      <p className={css.stepDescription}>
-                        Datos obligatorios para crear la cuenta del cliente.
-                      </p>
-                    </div>
-
-                    <div className={css.stepGrid}>
-                      {/* Tipo de Cliente */}
-                      <div className="space-y-2 md:col-span-2">
-                        <label className={LABEL}>Tipo de Cliente *</label>
-                        <div className="flex items-center gap-4">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="radio"
-                              name="tipoCliente"
-                              value="persona"
-                              checked={formData.tipoCliente === "persona"}
-                              onChange={(e) => actualizarCampo("tipoCliente", e.target.value as FormCliente['tipoCliente'])}
-                              className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-sm font-medium text-gray-700">Persona Natural</span>
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="radio"
-                              name="tipoCliente"
-                              value="empresa"
-                              checked={formData.tipoCliente === "empresa"}
-                              onChange={(e) => actualizarCampo("tipoCliente", e.target.value as FormCliente['tipoCliente'])}
-                              className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-sm font-medium text-gray-700">Persona Jurídica</span>
-                          </label>
-                        </div>
-                      </div>
-
-                      {/* Nombres / Razón Social */}
-                      <div className="space-y-2 md:col-span-2">
-                        <label htmlFor="nombres" className={LABEL}>
-                          {formData.tipoCliente === 'empresa' ? 'Razón Social *' : 'Nombres *'}
-                        </label>
-                        <input
-                          id="nombres"
-                          type="text"
-                          placeholder={formData.tipoCliente === 'empresa' ? 'Ej. Empresa XYZ S.A.' : 'Ej. María Elena'}
-                          className={inputClass("nombres")}
-                          value={formData.nombres}
-                          onChange={(e) => actualizarCampo("nombres", e.target.value)}
-                        />
-                        {erroresPaso1.nombres && (
-                          <p className={css.fieldError}>{erroresPaso1.nombres}</p>
-                        )}
-                      </div>
-
-                      {/* Campos condicionales según tipo de cliente */}
-                      {formData.tipoCliente === 'persona' ? (
-                        <>
-                          <div className="space-y-2">
-                            <label htmlFor="apellidoPaterno" className={LABEL}>Apellido Paterno *</label>
-                            <input
-                              id="apellidoPaterno"
-                              type="text"
-                              placeholder="Ej. García"
-                              className={inputClass("apellidoPaterno")}
-                              value={formData.apellidoPaterno}
-                              onChange={(e) => actualizarCampo("apellidoPaterno", e.target.value)}
-                            />
-                            {erroresPaso1.apellidoPaterno && (
-                              <p className={css.fieldError}>{erroresPaso1.apellidoPaterno}</p>
-                            )}
-                          </div>
-                          <div className="space-y-2">
-                            <label htmlFor="apellidoMaterno" className={LABEL}>Apellido Materno</label>
-                            <input
-                              id="apellidoMaterno"
-                              type="text"
-                              placeholder="Ej. Soliz"
-                              className={INPUT}
-                              value={formData.apellidoMaterno}
-                              onChange={(e) => actualizarCampo("apellidoMaterno", e.target.value)}
-                            />
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="space-y-2">
-                            <label htmlFor="nit" className={LABEL}>NIT *</label>
-                            <input
-                              id="nit"
-                              type="text"
-                              placeholder="Ej. 1234567890"
-                              className={inputClass("nit")}
-                              value={formData.nit}
-                              onChange={(e) => actualizarCampo("nit", e.target.value)}
-                            />
-                            {erroresPaso1.nit && (
-                              <p className={css.fieldError}>{erroresPaso1.nit}</p>
-                            )}
-                          </div>
-                          <div className="space-y-2">
-                            <label htmlFor="representanteLegal" className={LABEL}>Representante Legal *</label>
-                            <input
-                              id="representanteLegal"
-                              type="text"
-                              placeholder="Ej. Juan Pérez"
-                              className={inputClass("representanteLegal")}
-                              value={formData.representanteLegal}
-                              onChange={(e) => actualizarCampo("representanteLegal", e.target.value)}
-                            />
-                            {erroresPaso1.representanteLegal && (
-                              <p className={css.fieldError}>{erroresPaso1.representanteLegal}</p>
-                            )}
-                          </div>
-                        </>
-                      )}
-
-                      {/* Email */}
-                      <div className="space-y-2">
-                        <label htmlFor="email" className={LABEL}>Correo Electrónico *</label>
-                        <input
-                          id="email"
-                          type="email"
-                          placeholder="Ej. maria@correo.com"
-                          className={inputClass("email")}
-                          value={formData.email}
-                          onChange={(e) => actualizarCampo("email", e.target.value)}
-                        />
-                        {erroresPaso1.email && (
-                          <p className={css.fieldError}>{erroresPaso1.email}</p>
-                        )}
-                      </div>
-
-                      {/* Password */}
-                      <div className="space-y-2">
-                        <label htmlFor="password" className={LABEL}>Contraseña de Acceso *</label>
-                        <input
-                          id="password"
-                          type="password"
-                          placeholder="Mín. 6 caracteres"
-                          className={inputClass("password")}
-                          value={formData.password}
-                          onChange={(e) => actualizarCampo("password", e.target.value)}
-                        />
-                        {erroresPaso1.password && (
-                          <p className={css.fieldError}>{erroresPaso1.password}</p>
-                        )}
-                      </div>
-
-                      {/* Teléfono */}
-                      <div className="space-y-2">
-                        <label htmlFor="telefono" className={LABEL}>Teléfono / Celular *</label>
-                        <input
-                          id="telefono"
-                          type="tel"
-                          placeholder="Ej. 70012345"
-                          className={inputClass("telefono")}
-                          value={formData.telefono}
-                          onChange={(e) => actualizarCampo("telefono", e.target.value)}
-                        />
-                        {erroresPaso1.telefono && (
-                          <p className={css.fieldError}>{erroresPaso1.telefono}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ════════════════════════════════════════════════
-                    PASO 2: Generales de Ley
-                   ════════════════════════════════════════════════ */}
-                {paso === 2 && (
-                  <div className={css.stepContent} key="paso-2">
-                    <div className={css.stepHeader}>
-                      <h4 className={css.stepTitle}>Generales de Ley</h4>
-                      <p className={css.stepDescription}>
-                        Información complementaria para expedientes. Todos los campos son opcionales.
-                      </p>
-                    </div>
-
-                    <div className={css.stepGrid}>
-                      {/* Mostrar CI y Expedido SOLO para Persona Natural */}
-                      {formData.tipoCliente === "persona" && (
-                        <>
-                          <div className="space-y-2">
-                            <label htmlFor="ci" className={LABEL}>Cédula de Identidad</label>
-                            <input
-                              id="ci"
-                              type="text"
-                              placeholder="Ej. 12345678"
-                              className={INPUT}
-                              value={formData.ci}
-                              onChange={(e) => actualizarCampo("ci", e.target.value)}
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <label htmlFor="expedido" className={LABEL}>Expedido</label>
-                            <select
-                              id="expedido"
-                              className={INPUT}
-                              value={formData.expedido}
-                              onChange={(e) => actualizarCampo("expedido", e.target.value)}
-                            >
-                              <option value="">Seleccione</option>
-                              {DEPARTAMENTOS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-                            </select>
-                          </div>
-                        </>
-                      )}
-
-                      {/* Fecha Nacimiento */}
-                      <div className="space-y-2">
-                        <label htmlFor="fechaNacimiento" className={LABEL}>Fecha de Nacimiento</label>
-                        <input
-                          id="fechaNacimiento"
-                          type="date"
-                          className={INPUT}
-                          value={formData.fechaNacimiento}
-                          onChange={(e) => actualizarCampo("fechaNacimiento", e.target.value)}
-                        />
-                      </div>
-
-                      {/* Nacionalidad */}
-                      <div className="space-y-2">
-                        <label htmlFor="nacionalidad" className={LABEL}>Nacionalidad</label>
-                        <input
-                          id="nacionalidad"
-                          type="text"
-                          className={INPUT}
-                          value={formData.nacionalidad}
-                          onChange={(e) => actualizarCampo("nacionalidad", e.target.value)}
-                        />
-                      </div>
-
-                      {/* Estado Civil */}
-                      <div className="space-y-2">
-                        <label htmlFor="estadoCivil" className={LABEL}>Estado Civil</label>
-                        <select
-                          id="estadoCivil"
-                          className={INPUT}
-                          value={formData.estadoCivil}
-                          onChange={(e) => actualizarCampo("estadoCivil", e.target.value)}
-                        >
-                          <option value="">Seleccione</option>
-                          {ESTADOS_CIVILES.map(ec => <option key={ec.value} value={ec.value}>{ec.label}</option>)}
-                        </select>
-                      </div>
-
-                      {/* Profesión */}
-                      <div className="space-y-2">
-                        <label htmlFor="profesion" className={LABEL}>Profesión / Ocupación</label>
-                        <input
-                          id="profesion"
-                          type="text"
-                          placeholder="Ej. Ingeniero Civil"
-                          className={INPUT}
-                          value={formData.profesion}
-                          onChange={(e) => actualizarCampo("profesion", e.target.value)}
-                        />
-                      </div>
-
-                      {/* Dirección (ancho completo) */}
-                      <div className={`space-y-2 ${css.fieldFullWidth}`}>
-                        <label htmlFor="direccion" className={LABEL}>Dirección de Domicilio</label>
-                        <textarea
-                          id="direccion"
-                          rows={3}
-                          placeholder="Ej. Av. Arce #2560, Zona Sopocachi, La Paz"
-                          className={INPUT + " resize-none"}
-                          value={formData.direccion}
-                          onChange={(e) => actualizarCampo("direccion", e.target.value)}
-                        />
-                      </div>
-
-                      {/* Teléfono Laboral */}
-                      <div className="space-y-2">
-                        <label htmlFor="telefonoLaboral" className={LABEL}>Teléfono Laboral</label>
-                        <input
-                          id="telefonoLaboral"
-                          type="tel"
-                          placeholder="Ej. 2-2440000"
-                          className={INPUT}
-                          value={formData.telefonoLaboral}
-                          onChange={(e) => actualizarCampo("telefonoLaboral", e.target.value)}
-                        />
-                      </div>
-
-                      {/* Dirección de Oficina */}
-                      <div className="space-y-2">
-                        <label htmlFor="direccionOficina" className={LABEL}>Dirección de Oficina</label>
-                        <input
-                          id="direccionOficina"
-                          type="text"
-                          placeholder="Ej. Av. 6 de Agosto #2905, Of. 302"
-                          className={INPUT}
-                          value={formData.direccionOficina}
-                          onChange={(e) => actualizarCampo("direccionOficina", e.target.value)}
-                        />
-                      </div>
-
-                      {/* Referido por */}
-                      <div className="space-y-2">
-                        <label htmlFor="referidoPor" className={LABEL}>Referido por</label>
-                        <input
-                          id="referidoPor"
-                          type="text"
-                          placeholder="Ej. Juan Pérez / Redes sociales"
-                          className={INPUT}
-                          value={formData.referidoPor}
-                          onChange={(e) => actualizarCampo("referidoPor", e.target.value)}
-                        />
-                      </div>
-
-                      {/* Contacto del Referidor */}
-                      <div className="space-y-2">
-                        <label htmlFor="contactoReferidor" className={LABEL}>Contacto del Referidor (Tel/Email)</label>
-                        <input
-                          id="contactoReferidor"
-                          type="text"
-                          placeholder="Ej. 70099999 / juan@correo.com"
-                          className={INPUT}
-                          value={formData.contactoReferidor}
-                          onChange={(e) => actualizarCampo("contactoReferidor", e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
+                
+                <ClienteForm
+                  onSubmit={handleGuardar}
+                  onCancel={cerrarModal}
+                  isSubmitting={guardando}
+                />
               </div>
-
-              {/* ── Footer ────────────────────────────────────────── */}
-              <div className="px-8 py-5 border-t border-gray-200 bg-gray-50/80 flex justify-between gap-4 rounded-b-2xl">
-
-                {/* Botón izquierdo */}
-                {paso === 1 ? (
-                  <button
-                    type="button"
-                    onClick={cerrarModal}
-                    disabled={guardando}
-                    className="px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={pasoAnterior}
-                    disabled={guardando}
-                    className="px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors flex items-center gap-1.5"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    Atrás
-                  </button>
-                )}
-
-                {/* Botón derecho */}
-               {/* Botón derecho */}
-                {paso === 1 ? (
-                  <button
-                    key="btn-siguiente" /* <--- ¡ESTA ES LA MAGIA QUE ROMPE EL BUG! */
-                    type="button"
-                    onClick={siguientePaso}
-                    className="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 border border-transparent rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all flex items-center gap-1.5"
-                  >
-                    Siguiente
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                ) : (
-                  <button
-                    key="btn-guardar" /* <--- ¡ESTA ES LA MAGIA QUE ROMPE EL BUG! */
-                    type="submit"
-                    disabled={guardando}
-                    className="px-6 py-2.5 text-sm font-bold text-white bg-blue-600 border border-transparent rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all flex items-center justify-center min-w-[160px]"
-                  >
-                    {guardando ? (
-                      <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-4 h-4 mr-1.5" strokeWidth={2.5} />
-                        Guardar Cliente
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-
-            </form>
+            </div>
           </div>
         </div>
       )}

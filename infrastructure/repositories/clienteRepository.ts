@@ -19,7 +19,6 @@ function construirNombreCompleto(
 export interface DatosNuevoCliente {
   /* Auth */
   email: string;
-  password: string;
 
   nombres: string;
   apellidoPaterno: string;
@@ -90,7 +89,7 @@ export async function crearCliente(
   const { data: userData } = await supabase.auth.getUser();
   const loggedInUserId = userData.user?.id;
 
-  const authResult = await crearUsuarioDesdeAdmin(datos.email, datos.password);
+  const authResult = await crearUsuarioDesdeAdmin(datos.email);
 
   if ('error' in authResult) {
     return { success: false, error: `Error Auth: ${authResult.error}` };
