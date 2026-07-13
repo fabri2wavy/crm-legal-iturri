@@ -5,6 +5,7 @@ import Link from "next/link";
 import { UserPlus, CheckCircle2, Users, Plus, Check, ArrowRight, ArrowLeft, Search } from "lucide-react";
 import { Cliente } from "@/domain/entities/Cliente";
 import { obtenerClientes, crearCliente } from "@/infrastructure/repositories/clienteRepository";
+import type { DatosNuevoCliente } from "@/infrastructure/repositories/clienteRepository";
 import { Button } from "@/components/ui/Button";
 import css from "./page.module.css";
 
@@ -31,29 +32,60 @@ const ESTADOS_CIVILES = [
 const INPUT = "w-full text-base lg:text-lg px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-gray-50/50 placeholder:text-gray-400";
 const LABEL = "text-base font-semibold text-gray-900 block";
 
+/* ── Tipo del estado del formulario ──────────────────────────── */
+interface FormCliente {
+  tipoCliente: 'persona' | 'empresa';
+  etapaComercial: 'potencial' | 'activo';
+  nombreEmpresa: string;
+  representanteLegal: string;
+  areaEspecialidad: string;
+  nit: string;
+  abogadoContacto: string;
+  nombres: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  email: string;
+  password: string;
+  telefono: string;
+  ci: string;
+  expedido: string;
+  nacionalidad: string;
+  fechaNacimiento: string;
+  estadoCivil: string;
+  profesion: string;
+  direccion: string;
+  telefonoLaboral: string;
+  direccionOficina: string;
+  referidoPor: string;
+  contactoReferidor: string;
+}
+
 /* ── Estado inicial del formulario ───────────────────────────── */
-const FORM_INIT = {
-  tipoCliente: "Natural",
-  nit: "",
-  representanteLegal: "",
-  abogadoContacto: "",
-  nombres: "",
-  apellidoPaterno: "",
-  apellidoMaterno: "",
-  email: "",
-  password: "",
-  telefono: "",
-  ci: "",
-  expedido: "",
-  nacionalidad: "Boliviana",
-  fechaNacimiento: "",
-  estadoCivil: "",
-  profesion: "",
-  direccion: "",
-  telefonoLaboral: "",
-  direccionOficina: "",
-  referidoPor: "",
-  contactoReferidor: "",
+const FORM_INIT: FormCliente = {
+  tipoCliente: 'persona',
+  etapaComercial: 'activo',
+  nombreEmpresa: '',
+  representanteLegal: '',
+  areaEspecialidad: '',
+  nit: '',
+  abogadoContacto: '',
+  nombres: '',
+  apellidoPaterno: '',
+  apellidoMaterno: '',
+  email: '',
+  password: '',
+  telefono: '',
+  ci: '',
+  expedido: '',
+  nacionalidad: 'Boliviana',
+  fechaNacimiento: '',
+  estadoCivil: '',
+  profesion: '',
+  direccion: '',
+  telefonoLaboral: '',
+  direccionOficina: '',
+  referidoPor: '',
+  contactoReferidor: '',
 };
 
 /* ── Tipo para errores de validación ─────────────────────────── */
@@ -154,7 +186,7 @@ export default function ClientesPage() {
   }, [clientes, searchTerm]);
 
   /* ── Helpers ────────────────────────────────────────────────── */
-  const actualizarCampo = (campo: string, valor: string) => {
+  const actualizarCampo = <K extends keyof FormCliente>(campo: K, valor: FormCliente[K]) => {
     setFormData(prev => ({ ...prev, [campo]: valor }));
     if (campo in erroresPaso1) {
       setErroresPaso1(prev => ({ ...prev, [campo]: undefined }));
@@ -174,10 +206,10 @@ export default function ClientesPage() {
     const errores: ErroresPaso1 = {};
 
     if (!formData.nombres.trim()) {
-      errores.nombres = formData.tipoCliente === 'Juridico' ? "La Razón Social es obligatoria." : "Los nombres son obligatorios.";
+      errores.nombres = formData.tipoCliente === 'empresa' ? "La Razón Social es obligatoria." : "Los nombres son obligatorios.";
     }
     
-    if (formData.tipoCliente === 'Natural') {
+    if (formData.tipoCliente === 'persona') {
       if (!formData.apellidoPaterno.trim()) {
         errores.apellidoPaterno = "El apellido paterno es obligatorio.";
       }
@@ -238,7 +270,32 @@ export default function ClientesPage() {
     setGuardando(true);
     setFormError("");
 
-    const resultado = await crearCliente(formData);
+    /* ── Type-safe payload: castear literales del formulario ──── */
+    const TIPOS_CLIENTE_VALIDOS: DatosNuevoCliente['tipoCliente'][] = ['persona', 'empresa'];
+    const ETAPAS_VALIDAS: DatosNuevoCliente['etapaComercial'][] = ['potencial', 'activo'];
+
+    const tipoClienteSeguro = TIPOS_CLIENTE_VALIDOS.includes(
+      formData.tipoCliente as DatosNuevoCliente['tipoCliente']
+    )
+      ? (formData.tipoCliente as DatosNuevoCliente['tipoCliente'])
+      : 'persona';
+
+    const etapaSegura = ETAPAS_VALIDAS.includes(
+      formData.etapaComercial as DatosNuevoCliente['etapaComercial']
+    )
+      ? (formData.etapaComercial as DatosNuevoCliente['etapaComercial'])
+      : 'activo';
+
+    const payload: DatosNuevoCliente = {
+      ...formData,
+      tipoCliente: tipoClienteSeguro,
+      etapaComercial: etapaSegura,
+      nombreEmpresa: formData.nombreEmpresa || null,
+      representanteLegal: formData.representanteLegal || null,
+      areaEspecialidad: formData.areaEspecialidad || null,
+    };
+
+    const resultado = await crearCliente(payload);
 
     if (resultado.success && resultado.data) {
       setClientes([resultado.data, ...clientes]);
@@ -429,9 +486,9 @@ export default function ClientesPage() {
                             <input
                               type="radio"
                               name="tipoCliente"
-                              value="Natural"
-                              checked={formData.tipoCliente === "Natural"}
-                              onChange={(e) => actualizarCampo("tipoCliente", e.target.value)}
+                              value="persona"
+                              checked={formData.tipoCliente === "persona"}
+                              onChange={(e) => actualizarCampo("tipoCliente", e.target.value as FormCliente['tipoCliente'])}
                               className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                             />
                             <span className="text-sm font-medium text-gray-700">Persona Natural</span>
@@ -440,9 +497,9 @@ export default function ClientesPage() {
                             <input
                               type="radio"
                               name="tipoCliente"
-                              value="Juridico"
-                              checked={formData.tipoCliente === "Juridico"}
-                              onChange={(e) => actualizarCampo("tipoCliente", e.target.value)}
+                              value="empresa"
+                              checked={formData.tipoCliente === "empresa"}
+                              onChange={(e) => actualizarCampo("tipoCliente", e.target.value as FormCliente['tipoCliente'])}
                               className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                             />
                             <span className="text-sm font-medium text-gray-700">Persona Jurídica</span>
@@ -453,12 +510,12 @@ export default function ClientesPage() {
                       {/* Nombres / Razón Social */}
                       <div className="space-y-2 md:col-span-2">
                         <label htmlFor="nombres" className={LABEL}>
-                          {formData.tipoCliente === 'Juridico' ? 'Razón Social *' : 'Nombres *'}
+                          {formData.tipoCliente === 'empresa' ? 'Razón Social *' : 'Nombres *'}
                         </label>
                         <input
                           id="nombres"
                           type="text"
-                          placeholder={formData.tipoCliente === 'Juridico' ? 'Ej. Empresa XYZ S.A.' : 'Ej. María Elena'}
+                          placeholder={formData.tipoCliente === 'empresa' ? 'Ej. Empresa XYZ S.A.' : 'Ej. María Elena'}
                           className={inputClass("nombres")}
                           value={formData.nombres}
                           onChange={(e) => actualizarCampo("nombres", e.target.value)}
@@ -469,7 +526,7 @@ export default function ClientesPage() {
                       </div>
 
                       {/* Campos condicionales según tipo de cliente */}
-                      {formData.tipoCliente === 'Natural' ? (
+                      {formData.tipoCliente === 'persona' ? (
                         <>
                           <div className="space-y-2">
                             <label htmlFor="apellidoPaterno" className={LABEL}>Apellido Paterno *</label>
@@ -595,7 +652,7 @@ export default function ClientesPage() {
 
                     <div className={css.stepGrid}>
                       {/* Mostrar CI y Expedido SOLO para Persona Natural */}
-                      {formData.tipoCliente === "Natural" && (
+                      {formData.tipoCliente === "persona" && (
                         <>
                           <div className="space-y-2">
                             <label htmlFor="ci" className={LABEL}>Cédula de Identidad</label>
