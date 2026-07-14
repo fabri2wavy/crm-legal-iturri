@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '../supabase/server';
+import { createClient, getUsuarioActual } from '../supabase/server';
 import {
   Honorario,
   CuotaPago,
@@ -186,17 +186,16 @@ export async function crearHonorarioConCuotas(
 
   try {
     /* ── Validación asíncrona de identidad (Early Return) ─────── */
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
-  const authData = { user: session?.user };
+    const usuario = await getUsuarioActual();
 
-    if (authError || !authData.user) {
+    if (!usuario) {
       return {
         data: null,
         error: 'No autorizado: Sesión expirada o inválida.',
       };
     }
 
-    const userId = authData.user.id;
+    const userId = usuario.id;
 
     /* ══════════════════════════════════════════════════════════
        VALIDADOR MATEMÁTICO ESTRICTO (Barrera Server-Side)
@@ -298,17 +297,16 @@ export async function registrarGasto(
 
   try {
     /* ── Validación asíncrona de identidad (Early Return) ─────── */
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
-  const authData = { user: session?.user };
+    const usuario = await getUsuarioActual();
 
-    if (authError || !authData.user) {
+    if (!usuario) {
       return {
         data: null,
         error: 'No autorizado: Sesión expirada o inválida.',
       };
     }
 
-    const userId = authData.user.id;
+    const userId = usuario.id;
 
     /* ── Inserción DML con creado_por inyectado ───────────────────── */
     const { data: gastoInsertado, error: gastoError } = await supabase

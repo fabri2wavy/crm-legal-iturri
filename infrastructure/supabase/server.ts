@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { cache } from 'react'
 
-export async function createClient() {
+export const createClient = cache(async () => {
   const cookieStore = await cookies()
 
   return createServerClient(
@@ -18,11 +19,15 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             )
           } catch (error) {
-            // Este catch es vital: ignora el error si Next.js intenta 
-            // modificar cookies desde un Server Component de solo lectura.
           }
         },
       },
     }
   )
-}
+})
+
+export const getUsuarioActual = cache(async () => {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
+})

@@ -3,9 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
     let response = NextResponse.next({
-        request: {
-            headers: request.headers,
-        },
+        request: { headers: request.headers },
     })
 
     const supabase = createServerClient(
@@ -17,12 +15,10 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) =>
+                    cookiesToSet.forEach(({ name, value }) =>
                         request.cookies.set(name, value)
                     )
-                    response = NextResponse.next({
-                        request,
-                    })
+                    response = NextResponse.next({ request })
                     cookiesToSet.forEach(({ name, value, options }) =>
                         response.cookies.set(name, value, options)
                     )
@@ -30,15 +26,12 @@ export async function middleware(request: NextRequest) {
             },
         }
     )
+    const { data: { user } } = await supabase.auth.getUser()
 
-    // Usamos getSession en lugar de getUser en el middleware para evitar 
-    // alcanzar el límite de peticiones (Rate Limit) de la API de Supabase Auth,
-    // ya que este middleware se ejecuta en casi todas las rutas y no hace protección estricta.
-    try {
-        await supabase.auth.getSession()
-    } catch (error) {
-        // Silenciar errores de rate limit o auth en el middleware
-        console.error("Middleware Auth Error:", error)
+    if (!user) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
+        return NextResponse.redirect(url)
     }
 
     return response
@@ -46,6 +39,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        '/dashboard/:path*',
+        '/asistente/:path*',
+        '/tarjeta/:path*',
     ],
 }
