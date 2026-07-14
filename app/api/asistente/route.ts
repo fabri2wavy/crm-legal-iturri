@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-// 🔥 LA MAGIA: Usamos la llave de servicio para tener acceso total a la DB
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -17,19 +16,17 @@ export async function POST(request: Request) {
 
         if (!abogadoId) throw new Error("No se recibió el ID del abogado");
 
-        // 1. Buscar Perfil (con manejo de errores visible)
         const { data: perfilAbogado, error: errorPerfil } = await supabase
             .from('perfiles')
             .select('nombres, apellido_paterno')
             .eq('id', abogadoId)
             .single();
 
-        if (errorPerfil) console.error("⚠️ Error al buscar perfil:", errorPerfil.message);
+        if (errorPerfil) console.error("Error al buscar perfil:", errorPerfil.message);
 
         const nombreDoctor = perfilAbogado ? `${perfilAbogado.nombres} ${perfilAbogado.apellido_paterno}` : "Abogado";
-        console.log("✅ Identidad confirmada:", nombreDoctor);
+        console.log("Identidad confirmada:", nombreDoctor);
 
-        // 2. Buscar Expedientes
         const { data: misExpedientes, error: errorExpedientes } = await supabase
             .from('expedientes')
             .select(`
@@ -41,10 +38,9 @@ export async function POST(request: Request) {
             .eq('abogado_asignado_id', abogadoId)
             .limit(10);
 
-        if (errorExpedientes) console.error("⚠️ Error al buscar expedientes:", errorExpedientes.message);
-        console.log(`✅ Expedientes encontrados: ${misExpedientes?.length || 0}`);
+        if (errorExpedientes) console.error("Error al buscar expedientes:", errorExpedientes.message);
+        console.log(`Expedientes encontrados: ${misExpedientes?.length || 0}`);
 
-        // 3. Prompt Maestro
         const systemPrompt = `
       Eres el Asistente Legal de Inteligencia Artificial de Iturri & Asociados.
       
@@ -82,7 +78,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ respuesta: interaction.output_text });
 
     } catch (error) {
-        console.error("❌ Falla crítica en el endpoint:", error);
+        console.error("Falla crítica en el endpoint:", error);
         return NextResponse.json({ error: 'Fallo el procesamiento.' }, { status: 500 });
     }
 }

@@ -29,7 +29,8 @@ export async function convertirClienteActivo(
     const supabase = await createServerClient();
     
     // 1. Validar sesión del usuario que invoca la acción
-    const { data: userData, error: authError } = await supabase.auth.getUser();
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+  const userData = { user: session?.user };
     if (authError || !userData?.user) {
       return { success: false, error: 'No autorizado o sesión expirada.' };
     }

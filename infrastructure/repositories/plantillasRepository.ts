@@ -70,7 +70,8 @@ export async function crearPlantilla(
   const supabase = await createClient();
 
   try {
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+  const authData = { user: session?.user };
 
     if (authError || !authData.user) {
       return { data: null, error: 'No autorizado: Sesión expirada o inválida.' };

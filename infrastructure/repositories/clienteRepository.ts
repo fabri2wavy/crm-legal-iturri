@@ -86,7 +86,8 @@ export async function crearCliente(
   datos: DatosNuevoCliente
 ): Promise<{ success: boolean; data?: Cliente; error?: string }> {
   const supabase = createClient();
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const userData = { user: session?.user };
   const loggedInUserId = userData.user?.id;
 
   const authResult = await crearUsuarioDesdeAdmin(datos.email);

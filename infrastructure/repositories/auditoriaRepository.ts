@@ -16,7 +16,8 @@ export async function obtenerLogs(): Promise<RepositoryResponse<AuditoriaLog[]>>
     const supabase = await createClient();
     
     // 1. Verificación Fail-Fast: Administrador requerido
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+  const authData = { user: session?.user };
     if (authError || !authData.user) {
       return { data: null, error: 'No autorizado: Sesión expirada o inválida.' };
     }
@@ -62,7 +63,8 @@ export async function registrarLog(
     const supabase = await createClient();
     
     // 1. Obtener usuario de forma segura server-side
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+  const authData = { user: session?.user };
     if (authError || !authData.user) {
       return { data: null, error: 'No autorizado para registrar acciones.' };
     }

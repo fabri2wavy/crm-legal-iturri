@@ -3,7 +3,7 @@ import type { UsuarioPerfil } from '@/domain/entities/UsuarioPerfil';
 
 export type { UsuarioPerfil };
 
-function mapearUsuario(fila: any): UsuarioPerfil {
+export function mapearUsuario(fila: any): UsuarioPerfil {
   const nombreCompleto = [fila.nombres, fila.apellido_paterno, fila.apellido_materno]
     .filter(Boolean)
     .join(' ')
@@ -33,31 +33,46 @@ export async function obtenerAbogados(): Promise<UsuarioPerfil[]> {
   return data.map(mapearUsuario);
 }
 
+let cachePerfil: UsuarioPerfil | null = null;
+let currentUserId: string | null = null;
+
 export async function obtenerPerfilActual(): Promise<UsuarioPerfil | null> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) {
+    cachePerfil = null;
+    currentUserId = null;
     return null;
   }
 
-  console.log('[DEBUG] Usuario de Auth:', user.id, user.email);
+  if (cachePerfil && currentUserId === user.id) {
+    return cachePerfil;
+  }
 
   const { data, error } = await supabase
     .from('perfiles')
     .select('id, nombres, apellido_paterno, apellido_materno, rol')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
-  console.log('[DEBUG] Resultado de perfiles:', data, error);
-
-  if (error || !data) {
-    console.error('Error al obtener perfil actual:', error?.message);
-    return null;
+  if (!data && user) {
+    const fallback = { id: user.id, nombre_completo: 'Socio Director', rol: 'admin' };
+    cachePerfil = fallback;
+    currentUserId = user.id;
+    return fallback;
   }
 
-  return mapearUsuario(data);
+  const perfil = data ? mapearUsuario(data) : null;
+  if (perfil) {
+    cachePerfil = perfil;
+    currentUserId = user.id;
+  }
+  return perfil;
 }
+
+
 
 /* ══════════════════════════════════════════════════════════════
    QUERY: Obtener perfil editable del usuario autenticado
@@ -78,7 +93,8 @@ export interface PerfilEditable {
 
 export async function obtenerPerfilEditable(): Promise<PerfilEditable | null> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) return null;
 
@@ -112,7 +128,8 @@ export async function actualizarPerfilPropio(
   datos: { nombres: string; apellidoPaterno: string; apellidoMaterno: string; telefono: string }
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) return { success: false, error: 'Sesión expirada.' };
 

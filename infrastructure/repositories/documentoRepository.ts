@@ -41,7 +41,8 @@ export async function subirDocumento(
   visibleCliente: boolean
 ): Promise<Documento | null> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) {
     console.error('Error: No hay usuario autenticado para subir documento.');
     return null;

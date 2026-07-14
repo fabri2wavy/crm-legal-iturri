@@ -186,7 +186,8 @@ export async function crearHonorarioConCuotas(
 
   try {
     /* ── Validación asíncrona de identidad (Early Return) ─────── */
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+  const authData = { user: session?.user };
 
     if (authError || !authData.user) {
       return {
@@ -297,7 +298,8 @@ export async function registrarGasto(
 
   try {
     /* ── Validación asíncrona de identidad (Early Return) ─────── */
-    const { data: authData, error: authError } = await supabase.auth.getUser();
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+  const authData = { user: session?.user };
 
     if (authError || !authData.user) {
       return {

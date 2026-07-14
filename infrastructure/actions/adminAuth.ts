@@ -25,7 +25,8 @@ export async function crearUsuarioDesdeAdmin(
 ): Promise<{ userId: string } | { error: string }> {
   try {
     const supabase = await createClient();
-    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const { data: { session }, error: userError } = await supabase.auth.getSession();
+  const userData = { user: session?.user };
 
     if (userError || !userData?.user) {
       return { error: 'No autorizado. Debe iniciar sesión.' };

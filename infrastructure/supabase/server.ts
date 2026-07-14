@@ -17,7 +17,9 @@ export async function createClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch {
+          } catch (error) {
+            // Este catch es vital: ignora el error si Next.js intenta 
+            // modificar cookies desde un Server Component de solo lectura.
           }
         },
       },
